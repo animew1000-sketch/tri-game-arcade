@@ -1,0 +1,12 @@
+{
+  "name": "tri-game-arcade",
+  "version": "1.0.0",
+  "description": "Arcade featuring Battleship, Hangman, and Blackjack",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

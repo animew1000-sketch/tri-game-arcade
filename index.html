@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade Suite - Battleship, Hangman & Blackjack</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1><i class="fa-solid fa-gamepad"></i> Tactical Arcade</h1>
+    <p>Select your game mode from the dashboard below</p>
+  </header>
+
+  <!-- Game Selector Navigation Bar -->
+  <nav class="game-nav">
+    <button class="nav-btn active" id="nav-battleship" onclick="switchGame('battleship')">
+      <i class="fa-solid fa-ship"></i> Battleship
+    </button>
+    <button class="nav-btn" id="nav-hangman" onclick="switchGame('hangman')">
+      <i class="fa-solid fa-font"></i> Hangman
+    </button>
+    <button class="nav-btn" id="nav-blackjack" onclick="switchGame('blackjack')">
+      <i class="fa-solid fa-cards"></i> Blackjack
+    </button>
+  </nav>
+
+  <main class="main-container">
+
+    <!-- ==================== GAME 1: BATTLESHIP ==================== -->
+    <section id="game-battleship" class="game-panel">
+      <!-- Battleship Setup Screen -->
+      <div id="bs-setup" class="sub-panel">
+        <h2><i class="fa-solid fa-sliders"></i> Battleship Configuration</h2>
+        
+        <div class="setup-group">
+          <label><i class="fa-solid fa-users"></i> Mode:</label>
+          <select id="bs-mode-select" onchange="toggleBsDifficulty()">
+            <option value="pve">Vs Computer</option>
+            <option value="pvp">Local 2-Player Pass & Play</option>
+          </select>
+        </div>
+
+        <div class="setup-group" id="bs-diff-group">
+          <label><i class="fa-solid fa-brain"></i> AI Difficulty:</label>
+          <select id="bs-diff-select">
+            <option value="easy">Easy (Random Attacks)</option>
+            <option value="medium" selected>Medium (Hunt Strategy)</option>
+            <option value="hard">Hard (Parity Search Pattern)</option>
+          </select>
+        </div>
+
+        <div class="placement-area">
+          <h3>Fleet Deployment</h3>
+          <p id="bs-instruction">Select axis orientation and click the grid to place your ship.</p>
+          
+          <div class="placement-controls">
+            <button class="btn" onclick="toggleBsOrientation()">
+              <i class="fa-solid fa-rotate"></i> Axis: <span id="bs-orientation-label">Horizontal</span>
+            </button>
+            <button class="btn btn-secondary" onclick="autoPlaceBsShips()">
+              <i class="fa-solid fa-shuffle"></i> Auto Deploy
+            </button>
+          </div>
+
+          <div id="bs-placement-grid" class="grid"></div>
+          <div class="ship-dock" id="bs-ship-dock"></div>
+        </div>
+
+        <button class="btn btn-start" id="bs-start-btn" onclick="startBsGame()" disabled>
+          <i class="fa-solid fa-play"></i> Commence Battle
+        </button>
+      </div>
+
+      <!-- Battleship Combat Screen -->
+      <div id="bs-combat" class="sub-panel hidden">
+        <div class="dashboard">
+          <div class="stat-card">
+            <i class="fa-solid fa-crosshairs"></i>
+            <div class="stat-info">
+              <div class="label">Shots Fired</div>
+              <div class="value" id="bs-shots">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-skull"></i>
+            <div class="stat-info">
+              <div class="label">Sunk Ships</div>
+              <div class="value" id="bs-sunk">0 / 5</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-trophy"></i>
+            <div class="stat-info">
+              <div class="label">Score</div>
+              <div class="value" id="bs-score">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="boards-container">
+          <div class="grid-wrapper">
+            <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet</div>
+            <div id="bs-player-board" class="grid"></div>
+          </div>
+          <div class="grid-wrapper">
+            <div class="grid-title"><i class="fa-solid fa-radar"></i> Target Grid</div>
+            <div id="bs-enemy-board" class="grid"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div id="bs-status" class="status-msg">Select coordinates to launch attack.</div>
+          <button class="btn" onclick="resetBsSetup()"><i class="fa-solid fa-rotate-right"></i> Reset Battleship</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== GAME 2: HANGMAN ==================== -->
+    <section id="game-hangman" class="game-panel hidden">
+      <div class="sub-panel">
+        <h2><i class="fa-solid fa-font"></i> Tactical Word Decryption</h2>
+        
+        <div class="dashboard">
+          <div class="stat-card">
+            <i class="fa-solid fa-heart-crack"></i>
+            <div class="stat-info">
+              <div class="label">Mistakes Left</div>
+              <div class="value" id="hm-lives">6</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-trophy"></i>
+            <div class="stat-info">
+              <div class="label">Score</div>
+              <div class="value" id="hm-score">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hangman Visual Graphic -->
+        <div class="hm-display">
+          <pre id="hm-gallows">
+  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========</pre>
+          <div id="hm-word-display" class="word-display"></div>
+        </div>
+
+        <div id="hm-keyboard" class="keyboard"></div>
+
+        <div class="controls">
+          <div id="hm-status" class="status-msg">Guess letters to reveal the secret word!</div>
+          <button class="btn" onclick="initHangman()"><i class="fa-solid fa-rotate-right"></i> New Word</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== GAME 3: BLACKJACK ==================== -->
+    <section id="game-blackjack" class="game-panel hidden">
+      <div class="sub-panel">
+        <h2><i class="fa-solid fa-layer-group"></i> Command Blackjack</h2>
+        
+        <div class="dashboard">
+          <div class="stat-card">
+            <i class="fa-solid fa-coins"></i>
+            <div class="stat-info">
+              <div class="label">Credits</div>
+              <div class="value" id="bj-credits">1000</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <div class="stat-info">
+              <div class="label">Current Bet</div>
+              <div class="value" id="bj-bet">50</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bj-table">
+          <!-- Dealer Section -->
+          <div class="hand-section">
+            <h3>Dealer's Hand (<span id="bj-dealer-score">?</span>)</h3>
+            <div id="bj-dealer-cards" class="card-container"></div>
+          </div>
+
+          <!-- Player Section -->
+          <div class="hand-section">
+            <h3>Your Hand (<span id="bj-player-score">0</span>)</h3>
+            <div id="bj-player-cards" class="card-container"></div>
+          </div>
+        </div>
+
+        <div class="bj-controls">
+          <div class="bet-controls" id="bj-bet-controls">
+            <button class="btn btn-secondary" onclick="adjustBet(-25)">-25</button>
+            <button class="btn btn-secondary" onclick="adjustBet(25)">+25</button>
+            <button class="btn btn-start" onclick="startBjHand()"><i class="fa-solid fa-play"></i> Deal Hand</button>
+          </div>
+
+          <div class="action-controls hidden" id="bj-action-controls">
+            <button class="btn" onclick="bjHit()"><i class="fa-solid fa-plus"></i> Hit</button>
+            <button class="btn btn-secondary" onclick="bjStand()"><i class="fa-solid fa-hand"></i> Stand</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div id="bj-status" class="status-msg">Place your bet and press Deal Hand to begin.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ==========================================================================
+       GLOBAL ARCADE NAVIGATION
+       ========================================================================== */
+    function switchGame(gameName) {
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(`game-${gameName}`).classList.remove('hidden');
+      document.getElementById(`nav-${gameName}`).classList.add('active');
+
+      if (gameName === 'hangman' && !hmInitialized) initHangman();
+      if (gameName === 'blackjack' && !bjInitialized) initBlackjack();
+    }
+
+    /* ==========================================================================
+       GAME 1: BATTLESHIP LOGIC
+       ========================================================================== */
+    const BS_SIZE = 10;
+    const BS_SHIPS = [
+      { name: 'Carrier', size: 5 },
+      { name: 'Battleship', size: 4 },
+      { name: 'Destroyer', size: 3 },
+      { name: 'Submarine', size: 3 },
+      { name: 'Patrol Boat', size: 2 }
+    ];
+
+    let bsPlayerGrid = [], bsEnemyGrid = [];
+    let bsPlayerShips = [], bsEnemyShips = [];
+    let bsIsHorizontal = true, bsSelectedShipIdx = 0, bsPlacedCount = 0;
+    let bsMode = 'pve', bsDiff = 'medium', bsTurn = 'player', bsGameOver = false;
+    let bsShots = 0, bsHits = 0, bsSunkCount = 0, bsScore = 0;
+    let bsAiHuntStack = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initBsPlacementGrid();
+      renderBsDock();
+    });
+
+    function toggleBsDifficulty() {
+      const mode = document.getElementById('bs-mode-select').value;
+      document.getElementById('bs-diff-group').style.display = mode === 'pve' ? 'flex' : 'none';
+    }
+
+    function toggleBsOrientation() {
+      bsIsHorizontal = !bsIsHorizontal;
+      document.getElementById('bs-orientation-label').innerText = bsIsHorizontal ? 'Horizontal' : 'Vertical';
+    }
+
+    function initBsPlacementGrid() {
+      bsPlayerGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
+      const gridEl = document.getElementById('bs-placement-grid');
+      gridEl.innerHTML = '';
+
+      for (let r = 0; r < BS_SIZE; r++) {
+        for (let c = 0; c < BS_SIZE; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.addEventListener('mouseover', handleBsHover);
+          cell.addEventListener('mouseout', clearBsHover);
+          cell.addEventListener('click', handleBsClick);
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function renderBsDock() {
+      const dock = document.getElementById('bs-ship-dock');
+      dock.innerHTML = '';
+      BS_SHIPS.forEach((ship, idx) => {
+        const item = document.createElement('div');
+        item.classList.add('dock-item');
+        if (idx === bsSelectedShipIdx) item.classList.add('selected');
+        if (ship.placed) item.classList.add('placed');
+        item.innerText = `${ship.name} (${ship.size})`;
+        item.onclick = () => {
+          if (!ship.placed) {
+            bsSelectedShipIdx = idx;
+            renderBsDock();
+          }
+        };
+        dock.appendChild(item);
+      });
+    }
+
+    function handleBsHover(e) {
+      if (bsPlacedCount >= BS_SHIPS.length) return;
+      const ship = BS_SHIPS[bsSelectedShipIdx];
+      if (!ship || ship.placed) return;
+
+      const r = parseInt(e.target.dataset.row);
+      const c = parseInt(e.target.dataset.col);
+      const canPlace = checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal);
+
+      for (let i = 0; i < ship.size; i++) {
+        const targetR = bsIsHorizontal ? r : r + i;
+        const targetC = bsIsHorizontal ? c + i : c;
+        if (targetR < BS_SIZE && targetC < BS_SIZE) {
+          const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${targetR}"][data-col="${targetC}"]`);
+          if (cell) cell.classList.add(canPlace ? 'preview-valid' : 'preview-invalid');
+        }
+      }
+    }
+
+    function clearBsHover() {
+      document.querySelectorAll('#bs-placement-grid .cell').forEach(c => c.classList.remove('preview-valid', 'preview-invalid'));
+    }
+
+    function handleBsClick(e) {
+      if (bsPlacedCount >= BS_SHIPS.length) return;
+      const ship = BS_SHIPS[bsSelectedShipIdx];
+      if (!ship || ship.placed) return;
+
+      const r = parseInt(e.target.dataset.row);
+      const c = parseInt(e.target.dataset.col);
+
+      if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal)) {
+        const coords = [];
+        for (let i = 0; i < ship.size; i++) {
+          const targetR = bsIsHorizontal ? r : r + i;
+          const targetC = bsIsHorizontal ? c + i : c;
+          bsPlayerGrid[targetR][targetC] = 1;
+          coords.push({ r: targetR, c: targetC, hit: false });
+          const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${targetR}"][data-col="${targetC}"]`);
+          if (cell) cell.classList.add('ship');
+        }
+
+        ship.placed = true;
+        bsPlayerShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+        bsPlacedCount++;
+
+        const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
+        if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
+
+        renderBsDock();
+        if (bsPlacedCount === BS_SHIPS.length) {
+          document.getElementById('bs-start-btn').disabled = false;
+          document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
+        }
+      }
+    }
+
+    function checkCanPlaceBs(grid, r, c, size, horiz) {
+      for (let i = 0; i < size; i++) {
+        const tr = horiz ? r : r + i;
+        const tc = horiz ? c + i : c;
+        if (tr >= BS_SIZE || tc >= BS_SIZE || grid[tr][tc] !== 0) return false;
+      }
+      return true;
+    }
+
+    function autoPlaceBsShips() {
+      initBsPlacementGrid();
+      bsPlayerShips = [];
+      BS_SHIPS.forEach(s => s.placed = false);
+      bsPlacedCount = 0;
+
+      BS_SHIPS.forEach(ship => {
+        let placed = false;
+        while (!placed) {
+          const horiz = Math.random() < 0.5;
+          const r = Math.floor(Math.random() * (horiz ? BS_SIZE : BS_SIZE - ship.size + 1));
+          const c = Math.floor(Math.random() * (horiz ? BS_SIZE - ship.size + 1 : BS_SIZE));
+
+          if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, horiz)) {
+            const coords = [];
+            for (let i = 0; i < ship.size; i++) {
+              const tr = horiz ? r : r + i;
+              const tc = horiz ? c + i : c;
+              bsPlayerGrid[tr][tc] = 1;
+              coords.push({ r: tr, c: tc, hit: false });
+              const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${tr}"][data-col="${tc}"]`);
+              if (cell) cell.classList.add('ship');
+            }
+            ship.placed = true;
+            bsPlayerShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+            placed = true;
+          }
+        }
+      });
+
+      bsPlacedCount = BS_SHIPS.length;
+      renderBsDock();
+      document.getElementById('bs-start-btn').disabled = false;
+      document.getElementById('bs-instruction').innerText = "Fleet automated successfully! Ready to engage.";
+    }
+
+    function generateBsEnemyBoard() {
+      bsEnemyGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
+      bsEnemyShips = [];
+
+      BS_SHIPS.forEach(ship => {
+        let placed = false;
+        while (!placed) {
+          const horiz = Math.random() < 0.5;
+          const r = Math.floor(Math.random() * (horiz ? BS_SIZE : BS_SIZE - ship.size + 1));
+          const c = Math.floor(Math.random() * (horiz ? BS_SIZE - ship.size + 1 : BS_SIZE));
+
+          if (checkCanPlaceBs(bsEnemyGrid, r, c, ship.size, horiz)) {
+            const coords = [];
+            for (let i = 0; i < ship.size; i++) {
+              const tr = horiz ? r : r + i;
+              const tc = horiz ? c + i : c;
+              bsEnemyGrid[tr][tc] = 1;
+              coords.push({ r: tr, c: tc, hit: false });
+            }
+            bsEnemyShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+            placed = true;
+          }
+        }
+      });
+    }
+
+    function startBsGame() {
+      bsMode = document.getElementById('bs-mode-select').value;
+      bsDiff = document.getElementById('bs-diff-select').value;
+      generateBsEnemyBoard();
+
+      document.getElementById('bs-setup').classList.add('hidden');
+      document.getElementById('bs-combat').classList.remove('hidden');
+
+      renderBsCombatBoards();
+    }
+
+    function renderBsCombatBoards() {
+      const pBoard = document.getElementById('bs-player-board');
+      const eBoard = document.getElementById('bs-enemy-board');
+      pBoard.innerHTML = '';
+      eBoard.innerHTML = '';
+
+      for (let r = 0; r < BS_SIZE; r++) {
+        for (let c = 0; c < BS_SIZE; c++) {
+          const pCell = document.createElement('div');
+          pCell.classList.add('cell');
+          if (bsPlayerGrid[r][c] === 1) pCell.classList.add('ship');
+          pCell.dataset.row = r;
+          pCell.dataset.col = c;
+          pBoard.appendChild(pCell);
+
+          const eCell = document.createElement('div');
+          eCell.classList.add('cell');
+          eCell.dataset.row = r;
+          eCell.dataset.col = c;
+          eCell.addEventListener('click', handleBsAttack);
+          eBoard.appendChild(eCell);
+        }
+      }
+    }
+
+    function handleBsAttack(e) {
+      if (bsGameOver || bsTurn !== 'player') return;
+
+      const cell = e.currentTarget;
+      const r = parseInt(cell.dataset.row);
+      const c = parseInt(cell.dataset.col);
+
+      if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+
+      bsShots++;
+
+      if (bsEnemyGrid[r][c] === 1) {
+        cell.classList.add('hit');
+        cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
+        bsHits++;
+        bsScore += 100;
+        document.getElementById('bs-status').innerText = "DIRECT HIT on enemy vessel!";
+        checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
+      } else {
+        cell.classList.add('miss');
+        cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
+        bsScore = Math.max(0, bsScore - 10);
+        document.getElementById('bs-status').innerText = "Splash! Target missed.";
+      }
+
+      updateBsDashboard();
+
+      if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
+
+      if (bsMode === 'pve') {
+        bsTurn = 'computer';
+        setTimeout(bsComputerTurn, 700);
+      }
+    }
+
+    function bsComputerTurn() {
+      if (bsGameOver) return;
+
+      let r, c;
+      if (bsDiff === 'easy' || bsAiHuntStack.length === 0) {
+        do {
+          r = Math.floor(Math.random() * BS_SIZE);
+          c = Math.floor(Math.random() * BS_SIZE);
+          if (bsDiff === 'hard' && (r + c) % 2 !== 0) continue;
+        } while (isBsTargeted(r, c));
+      } else {
+        const target = bsAiHuntStack.pop();
+        r = target.r;
+        c = target.c;
+      }
+
+      const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
+
+      if (bsPlayerGrid[r][c] === 1) {
+        pCell.classList.add('hit');
+        pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
+        document.getElementById('bs-status').innerText = `Computer hit your ship at (${r},${c})!`;
+
+        const adjs = [
+          { r: r - 1, c: c }, { r: r + 1, c: c },
+          { r: r, c: c - 1 }, { r: r, c: c + 1 }
+        ];
+        adjs.forEach(a => {
+          if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !isBsTargeted(a.r, a.c)) {
+            bsAiHuntStack.push(a);
+          }
+        });
+
+        checkBsShipSunk(bsPlayerShips, r, c, 'Player');
+      } else {
+        pCell.classList.add('miss');
+        pCell.innerHTML = '<i class="fa-solid fa-circle"></i>';
+        document.getElementById('bs-status').innerText = `Computer missed at (${r},${c}).`;
+      }
+
+      if (checkBsWin(bsPlayerShips, 'COMPUTER')) return;
+      bsTurn = 'player';
+    }
+
+    function isBsTargeted(r, c) {
+      const cell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
+      return cell && (cell.classList.contains('hit') || cell.classList.contains('miss'));
+    }
+
+    function checkBsShipSunk(ships, r, c, owner) {
+      ships.forEach(ship => {
+        if (ship.sunk) return;
+        const part = ship.coords.find(co => co.r === r && co.c === c);
+        if (part) part.hit = true;
+
+        if (ship.coords.every(co => co.hit)) {
+          ship.sunk = true;
+          if (owner === 'Enemy') {
+            bsSunkCount++;
+            bsScore += 250;
+            document.getElementById('bs-status').innerText = `BOOM! You sunk the enemy ${ship.name}!`;
+          } else {
+            document.getElementById('bs-status').innerText = `ALERT! Computer destroyed your ${ship.name}!`;
+          }
+        }
+      });
+    }
+
+    function checkBsWin(ships, attacker) {
+      if (ships.every(s => s.sunk)) {
+        bsGameOver = true;
+        document.getElementById('bs-status').innerText = 
+          attacker === 'PLAYER' ? `VICTORY! All enemy ships eliminated! Final Score: ${bsScore}` : `DEFEAT! Your entire fleet was destroyed!`;
+        return true;
+      }
+      return false;
+    }
+
+    function updateBsDashboard() {
+      document.getElementById('bs-shots').innerText = bsShots;
+      document.getElementById('bs-sunk').innerText = `${bsSunkCount} / ${BS_SHIPS.length}`;
+      document.getElementById('bs-score').innerText = bsScore;
+    }
+
+    function resetBsSetup() {
+      document.getElementById('bs-combat').classList.add('hidden');
+      document.getElementById('bs-setup').classList.remove('hidden');
+      BS_SHIPS.forEach(s => s.placed = false);
+      bsPlacedCount = 0;
+      bsSelectedShipIdx = 0;
+      bsPlayerShips = [];
+      bsEnemyShips = [];
+      bsAiHuntStack = [];
+      bsShots = 0;
+      bsHits = 0;
+      bsSunkCount = 0;
+      bsScore = 0;
+      bsGameOver = false;
+      bsTurn = 'player';
+      document.getElementById('bs-start-btn').disabled = true;
+      initBsPlacementGrid();
+      renderBsDock();
+    }
+
+  /* ==========================================================================
+       GAME 2: HANGMAN LOGIC (With Internet Word API)
+       ========================================================================== */
+    // Local backup words in case internet request fails
+    const HM_BACKUP_WORDS = ['COMMANDER', 'SUBMARINE', 'TACTICAL', 'BATTLESHIP', 'RADAR', 'BALLISTIC', 'TORPEDO', 'NAVIGATION'];
+    const HM_STAGES = [
+      `\n  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========`,
+      `\n  +---+\n  |   |\n  O   |\n /|\\  |\n / \\  |\n      |\n=========`
+    ];
+
+    let hmInitialized = false;
+    let hmSecretWord = '', hmLives = 6, hmScore = 0;
+    let hmGuessedLetters = new Set();
+
+    async function initHangman() {
+      hmInitialized = true;
+      hmLives = 6;
+      hmGuessedLetters.clear();
+      
+      document.getElementById('hm-lives').innerText = hmLives;
+      document.getElementById('hm-score').innerText = hmScore;
+      document.getElementById('hm-status').innerText = "Fetching a new random word from the internet...";
+      document.getElementById('hm-gallows').innerText = HM_STAGES[0];
+      document.getElementById('hm-word-display').innerText = "LOADING...";
+
+      // Fetch random word from internet API
+      hmSecretWord = await fetchRandomWordFromInternet();
+
+      document.getElementById('hm-status').innerText = "Guess letters to decrypt the word!";
+      renderHmWord();
+      renderHmKeyboard();
+    }
+
+    async function fetchRandomWordFromInternet() {
+      try {
+        // Fetches 1 random English word between 5 and 10 letters long
+        const response = await fetch('https://random-word-api.herokuapp.com/word?length=7');
+        if (!response.ok) throw new Error('API Request Failed');
+        
+        const data = await response.json();
+        const word = data[0].toUpperCase();
+
+        // Ensure word contains only standard alphabet characters
+        if (/^[A-Z]+$/.test(word)) {
+          return word;
+        } else {
+          throw new Error('Invalid characters in fetched word');
+        }
+      } catch (error) {
+        console.warn('Could not fetch word from API, using offline backup:', error);
+        // Fallback to offline array if internet API is unreachable
+        return HM_BACKUP_WORDS[Math.floor(Math.random() * HM_BACKUP_WORDS.length)];
+      }
+    }
+
+    function renderHmWord() {
+      const display = hmSecretWord.split('').map(letter => hmGuessedLetters.has(letter) ? letter : '_').join(' ');
+      document.getElementById('hm-word-display').innerText = display;
+
+      if (!display.includes('_')) {
+        document.getElementById('hm-status').innerText = `DECRYPTION SUCCESSFUL! Word: ${hmSecretWord}`;
+        hmScore += 100;
+        document.getElementById('hm-score').innerText = hmScore;
+        disableHmKeyboard();
+      }
+    }
+
+    function renderHmKeyboard() {
+      const kb = document.getElementById('hm-keyboard');
+      kb.innerHTML = '';
+      for (let i = 65; i <= 90; i++) {
+        const char = String.fromCharCode(i);
+        const btn = document.createElement('button');
+        btn.classList.add('key-btn');
+        btn.innerText = char;
+        btn.onclick = () => handleHmGuess(char, btn);
+        kb.appendChild(btn);
+      }
+    }
+
+    function handleHmGuess(char, btn) {
+      if (hmGuessedLetters.has(char) || hmLives <= 0 || !hmSecretWord) return;
+
+      hmGuessedLetters.add(char);
+      btn.disabled = true;
+
+      if (hmSecretWord.includes(char)) {
+        btn.classList.add('correct');
+        renderHmWord();
+      } else {
+        btn.classList.add('wrong');
+        hmLives--;
+        document.getElementById('hm-lives').innerText = hmLives;
+        document.getElementById('hm-gallows').innerText = HM_STAGES[6 - hmLives];
+
+        if (hmLives === 0) {
+          document.getElementById('hm-status').innerText = `DECRYPTION FAILED! Word was: ${hmSecretWord}`;
+          disableHmKeyboard();
+        }
+      }
+    }
+
+    function disableHmKeyboard() {
+      document.querySelectorAll('.key-btn').forEach(b => b.disabled = true);
+    }
+
+    /* ==========================================================================
+       GAME 3: BLACKJACK LOGIC
+       ========================================================================== */
+    let bjInitialized = false;
+    let bjDeck = [], bjPlayerHand = [], bjDealerHand = [];
+    let bjCredits = 1000, bjBet = 50, bjInHand = false;
+
+    function initBlackjack() {
+      bjInitialized = true;
+      updateBjUI();
+    }
+
+    function createDeck() {
+      const suits = ['♠', '♥', '♦', '♣'];
+      const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+      const deck = [];
+      suits.forEach(s => values.forEach(v => deck.push({ suit: s, value: v })));
+      return deck.sort(() => Math.random() - 0.5);
+    }
+
+    function adjustBet(amount) {
+      if (bjInHand) return;
+      if (bjBet + amount >= 25 && bjBet + amount <= bjCredits) {
+        bjBet += amount;
+        updateBjUI();
+      }
+    }
+
+    function startBjHand() {
+      if (bjCredits < bjBet) {
+        document.getElementById('bj-status').innerText = "Insufficient credits!";
+        return;
+      }
+
+      bjInHand = true;
+      bjDeck = createDeck();
+      bjPlayerHand = [bjDeck.pop(), bjDeck.pop()];
+      bjDealerHand = [bjDeck.pop(), bjDeck.pop()];
+
+      document.getElementById('bj-bet-controls').classList.add('hidden');
+      document.getElementById('bj-action-controls').classList.remove('hidden');
+      document.getElementById('bj-status').innerText = "Hit or Stand?";
+
+      renderBjHands(false);
+
+      if (getHandScore(bjPlayerHand) === 21) {
+        bjStand();
+      }
+    }
+
+    function getCardValue(card) {
+      if (['J', 'Q', 'K'].includes(card.value)) return 10;
+      if (card.value === 'A') return 11;
+      return parseInt(card.value);
+    }
+
+    function getHandScore(hand) {
+      let score = 0;
+      let aces = 0;
+      hand.forEach(c => {
+        score += getCardValue(c);
+        if (c.value === 'A') aces++;
+      });
+      while (score > 21 && aces > 0) {
+        score -= 10;
+        aces--;
+      }
+      return score;
+    }
+
+    function renderBjHands(revealDealer) {
+      const pContainer = document.getElementById('bj-player-cards');
+      const dContainer = document.getElementById('bj-dealer-cards');
+      pContainer.innerHTML = '';
+      dContainer.innerHTML = '';
+
+      bjPlayerHand.forEach(c => pContainer.appendChild(createCardUI(c)));
+      document.getElementById('bj-player-score').innerText = getHandScore(bjPlayerHand);
+
+      bjDealerHand.forEach((c, idx) => {
+        if (idx === 1 && !revealDealer) {
+          const hiddenCard = document.createElement('div');
+          hiddenCard.classList.add('card', 'card-back');
+          hiddenCard.innerText = '?';
+          dContainer.appendChild(hiddenCard);
+        } else {
+          dContainer.appendChild(createCardUI(c));
+        }
+      });
+
+      document.getElementById('bj-dealer-score').innerText = 
+        revealDealer ? getHandScore(bjDealerHand) : getCardValue(bjDealerHand[0]);
+    }
+
+    function createCardUI(card) {
+      const el = document.createElement('div');
+      el.classList.add('card');
+      if (card.suit === '♥' || card.suit === '♦') el.classList.add('red');
+      el.innerText = `${card.value}${card.suit}`;
+      return el;
+    }
+
+    function bjHit() {
+      if (!bjInHand) return;
+      bjPlayerHand.push(bjDeck.pop());
+      renderBjHands(false);
+
+      if (getHandScore(bjPlayerHand) > 21) {
+        endBjHand(false, "Bust! You lost this round.");
+      }
+    }
+
+    function bjStand() {
+      if (!bjInHand) return;
+      
+      let dScore = getHandScore(bjDealerHand);
+      while (dScore < 17) {
+        bjDealerHand.push(bjDeck.pop());
+        dScore = getHandScore(bjDealerHand);
+      }
+
+      renderBjHands(true);
+
+      const pScore = getHandScore(bjPlayerHand);
+
+      if (dScore > 21) {
+        endBjHand(true, "Dealer busted! You win!");
+      } else if (pScore > dScore) {
+        endBjHand(true, "You win against the dealer!");
+      } else if (pScore < dScore) {
+        endBjHand(false, "Dealer wins!");
+      } else {
+        endBjHand(null, "Push! Bet returned.");
+      }
+    }
+
+    function endBjHand(playerWon, msg) {
+      bjInHand = false;
+      if (playerWon === true) {
+        bjCredits += bjBet;
+      } else if (playerWon === false) {
+        bjCredits -= bjBet;
+      }
+
+      document.getElementById('bj-status').innerText = msg;
+      document.getElementById('bj-bet-controls').classList.remove('hidden');
+      document.getElementById('bj-action-controls').classList.add('hidden');
+      updateBjUI();
+    }
+
+    function updateBjUI() {
+      document.getElementById('bj-credits').innerText = bjCredits;
+      document.getElementById('bj-bet').innerText = bjBet;
+    }
+  </script>
+</body>
+</html>
