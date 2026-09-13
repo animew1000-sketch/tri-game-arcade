@@ -55,6 +55,15 @@
           </select>
         </div>
 
+        <!-- Power-Ups Toggle -->
+        <div class="setup-group">
+          <label><i class="fa-solid fa-bolt"></i> Power-Ups:</label>
+          <select id="bs-powerups-toggle">
+            <option value="enabled" selected>Enabled (Radar, Multi-Shot, Clone)</option>
+            <option value="disabled">Disabled (Standard Classic Game)</option>
+          </select>
+        </div>
+
         <div class="placement-area">
           <h3>Fleet Deployment</h3>
           <p id="bs-instruction">Select axis orientation and click the grid to place your ship.</p>
@@ -102,6 +111,22 @@
           </div>
         </div>
 
+        <!-- Battleship Tactical Power-Ups Bar (Toggled On/Off) -->
+        <div class="powerups-bar" id="bs-powerups-bar">
+          <h3><i class="fa-solid fa-bolt"></i> Tactical Power-Ups</h3>
+          <div class="powerup-buttons">
+            <button class="btn powerup-btn" id="pw-radar" onclick="activatePowerUp('radar')">
+              <i class="fa-solid fa-radar"></i> Radar Scan (300 pts)
+            </button>
+            <button class="btn powerup-btn" id="pw-multishot" onclick="activatePowerUp('multishot')">
+              <i class="fa-solid fa-burst"></i> Multi-Shot x3 (700 pts)
+            </button>
+            <button class="btn powerup-btn" id="pw-clone" onclick="activatePowerUp('clone')">
+              <i class="fa-solid fa-clone"></i> Vessel Clone (1000 pts)
+            </button>
+          </div>
+        </div>
+
         <div class="boards-container">
           <div class="grid-wrapper">
             <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet</div>
@@ -120,12 +145,21 @@
       </div>
     </section>
 
-    <!-- ==================== WORDLE (CUSTOM LENGTH & TRIES) ==================== -->
+    <!-- Modal for Clone Ship Selection -->
+    <div id="clone-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h3><i class="fa-solid fa-clone"></i> Select Vessel to Clone</h3>
+        <p>Choose an active ship to duplicate onto your fleet grid:</p>
+        <div id="clone-ship-options" class="clone-options-container"></div>
+        <button class="btn btn-secondary" onclick="closeCloneModal()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- ==================== WORDLE (WITH POINT SYSTEM & HINTS) ==================== -->
     <section id="game-wordle" class="game-panel hidden">
       <div class="sub-panel">
         <h2><i class="fa-solid fa-sliders"></i> Wordle Cipher Decryption</h2>
         
-        <!-- Wordle Settings Options -->
         <div class="wd-settings">
           <div class="setup-group">
             <label><i class="fa-solid fa-text-width"></i> Word Length:</label>
@@ -163,6 +197,13 @@
               <div class="value" id="wd-score">0</div>
             </div>
           </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-lightbulb"></i>
+            <div class="stat-info">
+              <div class="label">Hints Used</div>
+              <div class="value" id="wd-hints-count">0 / 3</div>
+            </div>
+          </div>
         </div>
 
         <div class="wordle-container">
@@ -173,7 +214,14 @@
 
         <div class="controls">
           <div id="wd-status" class="status-msg">Searching internet for random word...</div>
-          <button class="btn" onclick="initWordle()"><i class="fa-solid fa-rotate-right"></i> Get New Random Word</button>
+          <div class="wordle-action-bar">
+            <button class="btn powerup-btn" id="wd-hint-btn" onclick="useWordleHint()">
+              <i class="fa-solid fa-lightbulb"></i> Use Hint (<span id="wd-hint-cost">20</span> pts)
+            </button>
+            <button class="btn" onclick="initWordle()">
+              <i class="fa-solid fa-rotate-right"></i> Get New Random Word
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -249,7 +297,7 @@
     }
 
     /* ==========================================================================
-       GAME 1: BATTLESHIP LOGIC
+       GAME 1: BATTLESHIP LOGIC (WITH OPTIONAL POWER-UPS)
        ========================================================================== */
     const BS_SIZE = 10;
     const BS_SHIPS = [
@@ -265,7 +313,12 @@
     let bsIsHorizontal = true, bsSelectedShipIdx = 0, bsPlacedCount = 0;
     let bsMode = 'pve', bsDiff = 'medium', bsTurn = 'player', bsGameOver = false;
     let bsShots = 0, bsHits = 0, bsSunkCount = 0, bsScore = 0;
+    let bsPowerUpsEnabled = true;
     let bsAiHuntStack = [];
+
+    let activePowerUp = null;
+    let multiShotRemaining = 0;
+    let shipToClone = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       initBsPlacementGrid();
@@ -451,12 +504,18 @@
     function startBsGame() {
       bsMode = document.getElementById('bs-mode-select').value;
       bsDiff = document.getElementById('bs-diff-select').value;
+      bsPowerUpsEnabled = document.getElementById('bs-powerups-toggle').value === 'enabled';
+      
       generateBsEnemyBoard();
 
       document.getElementById('bs-setup').classList.add('hidden');
       document.getElementById('bs-combat').classList.remove('hidden');
 
+      // Toggle Power-Ups UI
+      document.getElementById('bs-powerups-bar').style.display = bsPowerUpsEnabled ? 'flex' : 'none';
+
       renderBsCombatBoards();
+      updateBsDashboard();
     }
 
     function renderBsCombatBoards() {
@@ -472,6 +531,7 @@
           if (bsPlayerGrid[r][c] === 1) pCell.classList.add('ship');
           pCell.dataset.row = r;
           pCell.dataset.col = c;
+          pCell.addEventListener('click', handlePlayerBoardClick);
           pBoard.appendChild(pCell);
 
           const eCell = document.createElement('div');
@@ -484,6 +544,99 @@
       }
     }
 
+    function activatePowerUp(type) {
+      if (!bsPowerUpsEnabled || bsGameOver || bsTurn !== 'player') return;
+
+      if (type === 'radar') {
+        if (bsScore < 300) {
+          document.getElementById('bs-status').innerText = "Insufficient points for Radar Scan! (300 pts required)";
+          return;
+        }
+        activePowerUp = 'radar';
+        document.getElementById('bs-status').innerText = "RADAR ACTIVE: Click any coordinate on the target grid to scan a 3x3 area.";
+      } 
+      else if (type === 'multishot') {
+        if (bsScore < 700) {
+          document.getElementById('bs-status').innerText = "Insufficient points for Multi-Shot! (700 pts required)";
+          return;
+        }
+        activePowerUp = 'multishot';
+        multiShotRemaining = 3;
+        bsScore -= 700;
+        updateBsDashboard();
+        document.getElementById('bs-status').innerText = "MULTI-SHOT ACTIVATED! Click 3 targets on the enemy grid.";
+      }
+      else if (type === 'clone') {
+        if (bsScore < 1000) {
+          document.getElementById('bs-status').innerText = "Insufficient points for Vessel Clone! (1000 pts required)";
+          return;
+        }
+        openCloneModal();
+      }
+    }
+
+    function openCloneModal() {
+      const container = document.getElementById('clone-ship-options');
+      container.innerHTML = '';
+      const activeShips = bsPlayerShips.filter(s => !s.sunk);
+
+      if (activeShips.length === 0) {
+        document.getElementById('bs-status').innerText = "No active vessels available to clone!";
+        return;
+      }
+
+      activeShips.forEach((ship) => {
+        const btn = document.createElement('button');
+        btn.classList.add('btn');
+        btn.innerText = `${ship.name} (${ship.size} tiles)`;
+        btn.onclick = () => selectShipToClone(ship);
+        container.appendChild(btn);
+      });
+
+      document.getElementById('clone-modal').classList.remove('hidden');
+    }
+
+    function closeCloneModal() {
+      document.getElementById('clone-modal').classList.add('hidden');
+    }
+
+    function selectShipToClone(ship) {
+      shipToClone = ship;
+      closeCloneModal();
+      activePowerUp = 'clone';
+      document.getElementById('bs-status').innerText = `CLONE READY: Click on your fleet grid to place the duplicate ${ship.name}.`;
+    }
+
+    function handlePlayerBoardClick(e) {
+      if (activePowerUp !== 'clone' || !shipToClone || !bsPowerUpsEnabled) return;
+
+      const cell = e.currentTarget;
+      const r = parseInt(cell.dataset.row);
+      const c = parseInt(cell.dataset.col);
+
+      if (checkCanPlaceBs(bsPlayerGrid, r, c, shipToClone.size, bsIsHorizontal)) {
+        bsScore -= 1000;
+        const coords = [];
+
+        for (let i = 0; i < shipToClone.size; i++) {
+          const targetR = bsIsHorizontal ? r : r + i;
+          const targetC = bsIsHorizontal ? c + i : c;
+          bsPlayerGrid[targetR][targetC] = 1;
+          coords.push({ r: targetR, c: targetC, hit: false });
+          const targetCell = document.querySelector(`#bs-player-board .cell[data-row="${targetR}"][data-col="${targetC}"]`);
+          if (targetCell) targetCell.classList.add('ship');
+        }
+
+        bsPlayerShips.push({ name: `${shipToClone.name} (Clone)`, size: shipToClone.size, coords: coords, sunk: false });
+        activePowerUp = null;
+        shipToClone = null;
+        updateBsDashboard();
+        document.getElementById('bs-status').innerText = "CLONE SUCCESSFUL! Duplicate vessel deployed to fleet.";
+      } else {
+        document.getElementById('bs-status').innerText = "Invalid placement for vessel clone! Try another location.";
+      }
+    }
+
     function handleBsAttack(e) {
       if (bsGameOver || bsTurn !== 'player') return;
 
@@ -491,24 +644,56 @@
       const r = parseInt(cell.dataset.row);
       const c = parseInt(cell.dataset.col);
 
-      if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+      // Radar Power-Up Logic
+      if (activePowerUp === 'radar' && bsPowerUpsEnabled) {
+        bsScore -= 300;
+        activePowerUp = null;
+        updateBsDashboard();
 
-      bsShots++;
+        let enemyDetected = false;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const tr = r + dr;
+            const tc = c + dc;
+            if (tr >= 0 && tr < BS_SIZE && tc >= 0 && tc < BS_SIZE) {
+              const targetCell = document.querySelector(`#bs-enemy-board .cell[data-row="${tr}"][data-col="${tc}"]`);
+              if (targetCell && !targetCell.classList.contains('hit') && !targetCell.classList.contains('miss')) {
+                targetCell.classList.add('scanned');
+              }
+              if (bsEnemyGrid[tr][tc] === 1) enemyDetected = true;
+            }
+          }
+        }
 
-      if (bsEnemyGrid[r][c] === 1) {
-        cell.classList.add('hit');
-        cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
-        bsHits++;
-        bsScore += 100;
-        document.getElementById('bs-status').innerText = "DIRECT HIT on enemy vessel!";
-        checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
-      } else {
-        cell.classList.add('miss');
-        cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
-        bsScore = Math.max(0, bsScore - 10);
-        document.getElementById('bs-status').innerText = "Splash! Target missed.";
+        document.getElementById('bs-status').innerText = enemyDetected 
+          ? `RADAR RESULT: Enemy signatures detected in 3x3 sector around (${r},${c})!` 
+          : `RADAR RESULT: Clear sector. No enemy presence around (${r},${c}).`;
+        return;
       }
 
+      if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+
+      // Multi-Shot Power-Up Logic
+      if (activePowerUp === 'multishot' && bsPowerUpsEnabled) {
+        fireSingleShot(cell, r, c);
+        multiShotRemaining--;
+
+        if (multiShotRemaining > 0) {
+          document.getElementById('bs-status').innerText = `MULTI-SHOT: ${multiShotRemaining} shot(s) remaining! Select next tile.`;
+          return;
+        } else {
+          activePowerUp = null;
+          if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
+          if (bsMode === 'pve') {
+            bsTurn = 'computer';
+            setTimeout(bsComputerTurn, 700);
+          }
+          return;
+        }
+      }
+
+      // Standard Single Shot
+      fireSingleShot(cell, r, c);
       updateBsDashboard();
 
       if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
@@ -517,6 +702,26 @@
         bsTurn = 'computer';
         setTimeout(bsComputerTurn, 700);
       }
+    }
+
+    function fireSingleShot(cell, r, c) {
+      bsShots++;
+      if (bsEnemyGrid[r][c] === 1) {
+        cell.classList.remove('scanned');
+        cell.classList.add('hit');
+        cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
+        bsHits++;
+        bsScore += 100;
+        document.getElementById('bs-status').innerText = "DIRECT HIT on enemy vessel!";
+        checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
+      } else {
+        cell.classList.remove('scanned');
+        cell.classList.add('miss');
+        cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
+        bsScore = Math.max(0, bsScore - 10);
+        document.getElementById('bs-status').innerText = "Splash! Target missed.";
+      }
+      updateBsDashboard();
     }
 
     function bsComputerTurn() {
@@ -537,7 +742,7 @@
 
       const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
 
-      if (playerGrid[r][c] === 1) {
+      if (bsPlayerGrid[r][c] === 1) {
         pCell.classList.add('hit');
         pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
         document.getElementById('bs-status').innerText = `Computer hit your ship at (${r},${c})!`;
@@ -601,6 +806,12 @@
       document.getElementById('bs-shots').innerText = bsShots;
       document.getElementById('bs-sunk').innerText = `${bsSunkCount} / ${BS_SHIPS.length}`;
       document.getElementById('bs-score').innerText = bsScore;
+
+      if (bsPowerUpsEnabled) {
+        document.getElementById('pw-radar').disabled = bsScore < 300;
+        document.getElementById('pw-multishot').disabled = bsScore < 700;
+        document.getElementById('pw-clone').disabled = bsScore < 1000;
+      }
     }
 
     function resetBsSetup() {
@@ -618,13 +829,16 @@
       bsScore = 0;
       bsGameOver = false;
       bsTurn = 'player';
+      activePowerUp = null;
+      shipToClone = null;
+
       document.getElementById('bs-start-btn').disabled = true;
       initBsPlacementGrid();
       renderBsDock();
     }
 
     /* ==========================================================================
-       GAME 2: WORDLE LOGIC (CONFIGURABLE WORD LENGTH & TRIES)
+       GAME 2: WORDLE LOGIC (POINT SYSTEM + INCREMENTAL HINT COSTS)
        ========================================================================== */
     const WD_BACKUPS = {
       4: ['SHIP', 'BOAT', 'NAVY', 'PORT', 'DOCK', 'WAVE', 'MIST', 'DECK', 'GALE', 'FLEET'],
@@ -640,27 +854,37 @@
     let wdGameOver = false;
     let wdScore = 0;
     let wdGrid = [];
+    
+    // Wordle Hint Tracking
+    let wdHintsUsed = 0;
+    let wdRevealedGreenLetters = new Set();
+    let wdRevealedYellowLetters = new Set();
 
     async function initWordle() {
       wdInitialized = true;
-      
-      // Read chosen settings
       wdWordLength = parseInt(document.getElementById('wd-len-select').value);
       wdMaxTries = parseInt(document.getElementById('wd-tries-select').value);
 
       wdRow = 0;
       wdCol = 0;
       wdGameOver = false;
+      wdScore = 0;
+      wdHintsUsed = 0;
+      wdRevealedGreenLetters.clear();
+      wdRevealedYellowLetters.clear();
+
       wdGrid = Array(wdMaxTries).fill(null).map(() => Array(wdWordLength).fill(''));
 
       document.getElementById('wd-attempts').innerText = `0 / ${wdMaxTries}`;
       document.getElementById('wd-score').innerText = wdScore;
-      document.getElementById('wd-status').innerText = `Fetching a random ${wdWordLength}-letter word from the internet...`;
+      document.getElementById('wd-hints-count').innerText = `0 / 3`;
+      document.getElementById('wd-hint-cost').innerText = `20`;
+      document.getElementById('wd-hint-btn').disabled = false;
+      document.getElementById('wd-status').innerText = `Fetching a random ${wdWordLength}-letter word...`;
 
       renderWordleBoard();
       renderWordleKeyboard();
 
-      // Fetch dynamic length word online
       wdTarget = await fetchWordleWordDynamic(wdWordLength);
       document.getElementById('wd-status').innerText = `Word ready! Enter your ${wdWordLength}-letter guesses.`;
     }
@@ -674,7 +898,7 @@
         if (word.length === length && /^[A-Z]+$/.test(word)) return word;
         throw new Error('Invalid word format received');
       } catch (err) {
-        console.warn(`Online request failed for length ${length}, using offline backup:`, err);
+        console.warn(`Online request failed, using offline backup:`, err);
         const list = WD_BACKUPS[length] || WD_BACKUPS[5];
         return list[Math.floor(Math.random() * list.length)];
       }
@@ -683,8 +907,6 @@
     function renderWordleBoard() {
       const board = document.getElementById('wordle-board');
       board.innerHTML = '';
-      
-      // Dynamic grid template styling
       board.style.gridTemplateColumns = `repeat(${wdWordLength}, 52px)`;
       board.style.gridTemplateRows = `repeat(${wdMaxTries}, 52px)`;
 
@@ -722,6 +944,54 @@
         });
         kb.appendChild(rowEl);
       });
+    }
+
+    function useWordleHint() {
+      if (wdGameOver || wdHintsUsed >= 3) return;
+
+      const currentCost = 20 + (wdHintsUsed * 10);
+      if (wdScore < currentCost) {
+        document.getElementById('wd-status').innerText = `Not enough points for hint! Required: ${currentCost} pts.`;
+        return;
+      }
+
+      // Find an unrevealed letter in target
+      const targetArr = wdTarget.split('');
+      const unrevealedIndices = [];
+      targetArr.forEach((char, idx) => {
+        if (!wdRevealedGreenLetters.has(`${char}-${idx}`)) {
+          unrevealedIndices.push(idx);
+        }
+      });
+
+      if (unrevealedIndices.length === 0) {
+        document.getElementById('wd-status').innerText = "All letters already identified!";
+        return;
+      }
+
+      wdScore -= currentCost;
+      wdHintsUsed++;
+
+      const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+      const hintChar = targetArr[randomIndex];
+
+      wdRevealedGreenLetters.add(`${hintChar}-${randomIndex}`);
+
+      // Fill current cursor position or tile
+      if (wdCol < wdWordLength) {
+        wdGrid[wdRow][wdCol] = hintChar;
+        updateTileUI(wdRow, wdCol, hintChar);
+        wdCol++;
+      }
+
+      document.getElementById('wd-score').innerText = wdScore;
+      document.getElementById('wd-hints-count').innerText = `${wdHintsUsed} / 3`;
+
+      const nextCost = 20 + (wdHintsUsed * 10);
+      document.getElementById('wd-hint-cost').innerText = wdHintsUsed < 3 ? nextCost : 'MAX';
+      if (wdHintsUsed >= 3) document.getElementById('wd-hint-btn').disabled = true;
+
+      document.getElementById('wd-status').innerText = `HINT USED: Letter '${hintChar}' belongs at position ${randomIndex + 1}!`;
     }
 
     document.addEventListener('keydown', (e) => {
@@ -762,6 +1032,8 @@
       const targetArr = wdTarget.split('');
       const guessArr = guess.split('');
 
+      let roundPointsGained = 0;
+
       for (let c = 0; c < wdWordLength; c++) {
         const tile = document.querySelector(`.wordle-tile[data-row="${wdRow}"][data-col="${c}"]`);
         const char = guessArr[c];
@@ -770,22 +1042,38 @@
         if (char === targetArr[c]) {
           tile.classList.add('correct');
           if (keyBtn) keyBtn.classList.add('correct');
+
+          // +10 points for unique green letter placement
+          const greenKey = `${char}-${c}`;
+          if (!wdRevealedGreenLetters.has(greenKey)) {
+            wdRevealedGreenLetters.add(greenKey);
+            roundPointsGained += 10;
+          }
         } else if (targetArr.includes(char)) {
           tile.classList.add('present');
           if (keyBtn && !keyBtn.classList.contains('correct')) keyBtn.classList.add('present');
+
+          // +5 points for unique yellow letter discovery
+          if (!wdRevealedYellowLetters.has(char)) {
+            wdRevealedYellowLetters.add(char);
+            roundPointsGained += 5;
+          }
         } else {
           tile.classList.add('absent');
           if (keyBtn) keyBtn.classList.add('absent');
         }
       }
 
+      wdScore += roundPointsGained;
+      document.getElementById('wd-score').innerText = wdScore;
       document.getElementById('wd-attempts').innerText = `${wdRow + 1} / ${wdMaxTries}`;
 
       if (guess === wdTarget) {
         wdGameOver = true;
-        wdScore += (wdMaxTries - wdRow) * 100;
+        const completionBonus = (wdMaxTries - wdRow) * 50;
+        wdScore += completionBonus;
         document.getElementById('wd-score').innerText = wdScore;
-        document.getElementById('wd-status').innerText = `SOLVED! Secret word was: ${wdTarget}`;
+        document.getElementById('wd-status').innerText = `SOLVED! Target word was: ${wdTarget} (+${roundPointsGained + completionBonus} pts)`;
         return;
       }
 
@@ -795,6 +1083,8 @@
       if (wdRow === wdMaxTries) {
         wdGameOver = true;
         document.getElementById('wd-status').innerText = `GAME OVER! Secret word was: ${wdTarget}`;
+      } else {
+        document.getElementById('wd-status').innerText = `Gained +${roundPointsGained} pts from guess! Enter next word.`;
       }
     }
 
