@@ -10,6 +10,17 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- ResponsiveVoice Natural Speech Engine CDN & API Initialization -->
+  <script src="https://cdn.responsivevoice.org/sdk/latest/responsivevoice.js"></script>
+  <script>
+    responsiveVoice.init({
+      "apiKey": "UWC9OTNL"
+    });
+  </script>
 </head>
 <body>
 
@@ -39,34 +50,73 @@
         <h2><i class="fa-solid fa-sliders"></i> Battleship Configuration</h2>
         
         <div class="setup-group">
+          <label><i class="fa-solid fa-cubes"></i> View Mode:</label>
+          <select id="bs-view-select" onchange="toggleBsViewMode()">
+            <option value="2d" selected>2D Classic Grid View</option>
+            <option value="3d">3D Blueprint Tactical View</option>
+          </select>
+        </div>
+
+        <div class="setup-group">
           <label><i class="fa-solid fa-users"></i> Mode:</label>
           <select id="bs-mode-select" onchange="toggleBsDifficulty()">
             <option value="pve">Vs Computer</option>
-            <option value="pvp">Local 2-Player Pass & Play</option>
+            <option value="pvp">Local Pass & Play</option>
           </select>
         </div>
 
         <div class="setup-group" id="bs-diff-group">
           <label><i class="fa-solid fa-brain"></i> AI Difficulty:</label>
           <select id="bs-diff-select">
-            <option value="easy">Easy (Random Attacks)</option>
-            <option value="medium" selected>Medium (Hunt Strategy)</option>
-            <option value="hard">Hard (Parity Search Pattern)</option>
+            <option value="easy">Easy (Random Attack)</option>
+            <option value="medium" selected>Medium (Target Hunt)</option>
+            <option value="hard">Hard (Parity Grid)</option>
           </select>
         </div>
 
-        <!-- Power-Ups Toggle -->
         <div class="setup-group">
           <label><i class="fa-solid fa-bolt"></i> Power-Ups:</label>
           <select id="bs-powerups-toggle">
             <option value="enabled" selected>Enabled (Radar, Multi-Shot, Clone)</option>
-            <option value="disabled">Disabled (Standard Classic Game)</option>
+            <option value="disabled">Disabled (Classic Rules)</option>
           </select>
         </div>
 
+        <!-- ResponsiveVoice Announcer Panel -->
+        <div class="announcer-panel">
+          <h3><i class="fa-solid fa-bullhorn"></i> ResponsiveVoice Natural Announcer</h3>
+          
+          <div class="setup-group">
+            <label><i class="fa-solid fa-volume-high"></i> Voice Announcer:</label>
+            <select id="voice-enable-toggle" onchange="updateAnnouncerSettings()">
+              <option value="enabled" selected>Enabled</option>
+              <option value="disabled">Muted / Disabled</option>
+            </select>
+          </div>
+
+          <div class="setup-group">
+            <label><i class="fa-solid fa-sliders"></i> Announcer Volume:</label>
+            <input type="range" id="voice-volume-slider" min="0" max="1" step="0.1" value="0.9" oninput="updateAnnouncerSettings()">
+            <span id="voice-volume-label">90%</span>
+          </div>
+
+          <div class="setup-group">
+            <label><i class="fa-solid fa-microphone-lines"></i> Natural Voice Profile:</label>
+            <select id="voice-select" onchange="updateAnnouncerSettings()">
+              <!-- Populated dynamically with ResponsiveVoice Natural profiles -->
+            </select>
+          </div>
+
+          <div class="setup-group">
+            <button class="btn btn-secondary" onclick="testAnnouncerVoice()">
+              <i class="fa-solid fa-circle-play"></i> Test Voice Sample
+            </button>
+          </div>
+        </div>
+
         <div class="placement-area">
-          <h3>Fleet Deployment</h3>
-          <p id="bs-instruction">Select axis orientation and click the grid to place your ship.</p>
+          <h3>Fleet Deployment (A-J / 1-10)</h3>
+          <p id="bs-instruction">Select axis orientation and click coordinates to place your vessel.</p>
           
           <div class="placement-controls">
             <button class="btn" onclick="toggleBsOrientation()">
@@ -77,7 +127,12 @@
             </button>
           </div>
 
-          <div id="bs-placement-grid" class="grid"></div>
+          <div id="bs-2d-placement-wrapper" class="grid-container-with-labels">
+            <div id="bs-placement-grid" class="grid"></div>
+          </div>
+
+          <div id="bs-3d-placement-canvas" class="canvas-container hidden"></div>
+
           <div class="ship-dock" id="bs-ship-dock"></div>
         </div>
 
@@ -111,7 +166,6 @@
           </div>
         </div>
 
-        <!-- Battleship Tactical Power-Ups Bar (Toggled On/Off) -->
         <div class="powerups-bar" id="bs-powerups-bar">
           <h3><i class="fa-solid fa-bolt"></i> Tactical Power-Ups</h3>
           <div class="powerup-buttons">
@@ -127,39 +181,53 @@
           </div>
         </div>
 
-        <div class="boards-container">
+        <div class="boards-container" id="bs-2d-boards">
           <div class="grid-wrapper">
             <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet</div>
-            <div id="bs-player-board" class="grid"></div>
+            <div id="bs-player-board-wrapper" class="grid-container-with-labels">
+              <div id="bs-player-board" class="grid"></div>
+            </div>
           </div>
           <div class="grid-wrapper">
             <div class="grid-title"><i class="fa-solid fa-radar"></i> Target Grid</div>
-            <div id="bs-enemy-board" class="grid"></div>
+            <div id="bs-enemy-board-wrapper" class="grid-container-with-labels">
+              <div id="bs-enemy-board" class="grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="boards-container hidden" id="bs-3d-boards">
+          <div class="grid-wrapper">
+            <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet (3D)</div>
+            <div id="bs-3d-player-canvas" class="canvas-container"></div>
+          </div>
+          <div class="grid-wrapper">
+            <div class="grid-title"><i class="fa-solid fa-radar"></i> Target Grid (3D)</div>
+            <div id="bs-3d-enemy-canvas" class="canvas-container"></div>
           </div>
         </div>
 
         <div class="controls">
-          <div id="bs-status" class="status-msg">Select coordinates to launch attack.</div>
+          <div id="bs-status" class="status-msg">Select coordinates (A1 to J10) to fire.</div>
           <button class="btn" onclick="resetBsSetup()"><i class="fa-solid fa-rotate-right"></i> Reset Battleship</button>
         </div>
       </div>
     </section>
 
-    <!-- Modal for Clone Ship Selection -->
+    <!-- Modal for Clone Selection -->
     <div id="clone-modal" class="modal-overlay hidden">
       <div class="modal-content">
         <h3><i class="fa-solid fa-clone"></i> Select Vessel to Clone</h3>
-        <p>Choose an active ship to duplicate onto your fleet grid:</p>
+        <p>Choose an active ship to duplicate onto your grid:</p>
         <div id="clone-ship-options" class="clone-options-container"></div>
         <button class="btn btn-secondary" onclick="closeCloneModal()">Cancel</button>
       </div>
     </div>
 
-    <!-- ==================== WORDLE (WITH POINT SYSTEM & HINTS) ==================== -->
+    <!-- ==================== WORDLE ==================== -->
     <section id="game-wordle" class="game-panel hidden">
       <div class="sub-panel">
         <h2><i class="fa-solid fa-sliders"></i> Wordle Cipher Decryption</h2>
-        
         <div class="wd-settings">
           <div class="setup-group">
             <label><i class="fa-solid fa-text-width"></i> Word Length:</label>
@@ -183,44 +251,19 @@
         </div>
 
         <div class="dashboard">
-          <div class="stat-card">
-            <i class="fa-solid fa-signal"></i>
-            <div class="stat-info">
-              <div class="label">Attempts</div>
-              <div class="value" id="wd-attempts">0 / 6</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-trophy"></i>
-            <div class="stat-info">
-              <div class="label">Score</div>
-              <div class="value" id="wd-score">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-lightbulb"></i>
-            <div class="stat-info">
-              <div class="label">Hints Used</div>
-              <div class="value" id="wd-hints-count">0 / 3</div>
-            </div>
-          </div>
+          <div class="stat-card"><i class="fa-solid fa-signal"></i><div class="stat-info"><div class="label">Attempts</div><div class="value" id="wd-attempts">0 / 6</div></div></div>
+          <div class="stat-card"><i class="fa-solid fa-trophy"></i><div class="stat-info"><div class="label">Score</div><div class="value" id="wd-score">0</div></div></div>
+          <div class="stat-card"><i class="fa-solid fa-lightbulb"></i><div class="stat-info"><div class="label">Hints Used</div><div class="value" id="wd-hints-count">0 / 3</div></div></div>
         </div>
 
-        <div class="wordle-container">
-          <div id="wordle-board" class="wordle-grid"></div>
-        </div>
-
+        <div class="wordle-container"><div id="wordle-board" class="wordle-grid"></div></div>
         <div id="wordle-keyboard" class="keyboard"></div>
 
         <div class="controls">
           <div id="wd-status" class="status-msg">Searching internet for random word...</div>
           <div class="wordle-action-bar">
-            <button class="btn powerup-btn" id="wd-hint-btn" onclick="useWordleHint()">
-              <i class="fa-solid fa-lightbulb"></i> Use Hint (<span id="wd-hint-cost">20</span> pts)
-            </button>
-            <button class="btn" onclick="initWordle()">
-              <i class="fa-solid fa-rotate-right"></i> Get New Random Word
-            </button>
+            <button class="btn powerup-btn" id="wd-hint-btn" onclick="useWordleHint()"><i class="fa-solid fa-lightbulb"></i> Use Hint (<span id="wd-hint-cost">20</span> pts)</button>
+            <button class="btn" onclick="initWordle()"><i class="fa-solid fa-rotate-right"></i> Get New Random Word</button>
           </div>
         </div>
       </div>
@@ -230,22 +273,9 @@
     <section id="game-blackjack" class="game-panel hidden">
       <div class="sub-panel">
         <h2><i class="fa-solid fa-layer-group"></i> Command Blackjack</h2>
-        
         <div class="dashboard">
-          <div class="stat-card">
-            <i class="fa-solid fa-coins"></i>
-            <div class="stat-info">
-              <div class="label">Credits</div>
-              <div class="value" id="bj-credits">1000</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-hand-holding-dollar"></i>
-            <div class="stat-info">
-              <div class="label">Current Bet</div>
-              <div class="value" id="bj-bet">50</div>
-            </div>
-          </div>
+          <div class="stat-card"><i class="fa-solid fa-coins"></i><div class="stat-info"><div class="label">Credits</div><div class="value" id="bj-credits">1000</div></div></div>
+          <div class="stat-card"><i class="fa-solid fa-hand-holding-dollar"></i><div class="stat-info"><div class="label">Current Bet</div><div class="value" id="bj-bet">50</div></div></div>
         </div>
 
         <div class="bj-table">
@@ -253,7 +283,6 @@
             <h3>Dealer's Hand (<span id="bj-dealer-score">?</span>)</h3>
             <div id="bj-dealer-cards" class="card-container"></div>
           </div>
-
           <div class="hand-section">
             <h3>Your Hand (<span id="bj-player-score">0</span>)</h3>
             <div id="bj-player-cards" class="card-container"></div>
@@ -266,7 +295,6 @@
             <button class="btn btn-secondary" onclick="adjustBet(25)">+25</button>
             <button class="btn btn-start" onclick="startBjHand()"><i class="fa-solid fa-play"></i> Deal Hand</button>
           </div>
-
           <div class="action-controls hidden" id="bj-action-controls">
             <button class="btn" onclick="bjHit()"><i class="fa-solid fa-plus"></i> Hit</button>
             <button class="btn btn-secondary" onclick="bjStand()"><i class="fa-solid fa-hand"></i> Stand</button>
@@ -282,9 +310,6 @@
   </main>
 
   <script>
-    /* ==========================================================================
-       GLOBAL ARCADE NAVIGATION
-       ========================================================================== */
     function switchGame(gameName) {
       document.querySelectorAll('.game-panel').forEach(p => p.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -297,15 +322,78 @@
     }
 
     /* ==========================================================================
-       GAME 1: BATTLESHIP LOGIC (WITH OPTIONAL POWER-UPS)
+       RESPONSIVEVOICE ANNOUNCER ENGINE
+       ========================================================================== */
+    let announcerEnabled = true;
+    let announcerVolume = 0.9;
+    let activeVoiceProfile = 'US English Female';
+
+    const VOICE_PROFILES = [
+      { id: 'US English Female', label: '⭐ US English Natural - Commander [Female]' },
+      { id: 'US English Male', label: '⭐ US English Natural - Tactical [Male]' },
+      { id: 'UK English Female', label: '⭐ UK English Natural - Officer [Female]' },
+      { id: 'UK English Male', label: '⭐ UK English Natural - Captain [Male]' },
+      { id: 'Spanish Female', label: '⭐ Spanish Natural - Commandante [Female]' },
+      { id: 'Spanish Latin American Male', label: '⭐ Spanish Natural - Almirante [Male]' },
+      { id: 'Japanese Female', label: '⭐ Japanese Natural - Operator [Female]' },
+      { id: 'Japanese Male', label: '⭐ Japanese Natural - Commander [Male]' }
+    ];
+
+    const NATO_PHONETIC = {
+      'A': 'Alpha', 'B': 'Bravo', 'C': 'Charlie', 'D': 'Delta', 'E': 'Echo',
+      'F': 'Foxtrot', 'G': 'Golf', 'H': 'Hotel', 'I': 'India', 'J': 'Juliet'
+    };
+
+    function populateVoiceList() {
+      const voiceSelect = document.getElementById('voice-select');
+      if (!voiceSelect) return;
+      voiceSelect.innerHTML = '';
+
+      VOICE_PROFILES.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.id;
+        option.textContent = profile.label;
+        voiceSelect.appendChild(option);
+      });
+
+      updateAnnouncerSettings();
+    }
+
+    function updateAnnouncerSettings() {
+      announcerEnabled = document.getElementById('voice-enable-toggle').value === 'enabled';
+      announcerVolume = parseFloat(document.getElementById('voice-volume-slider').value);
+      document.getElementById('voice-volume-label').innerText = `${Math.round(announcerVolume * 100)}%`;
+      activeVoiceProfile = document.getElementById('voice-select').value || 'US English Female';
+    }
+
+    function announceText(text, pitchMultiplier = 1.0, rateMultiplier = 0.95) {
+      if (!announcerEnabled) return;
+
+      if (window.responsiveVoice) {
+        window.responsiveVoice.cancel();
+        window.responsiveVoice.speak(text, activeVoiceProfile, {
+          volume: announcerVolume,
+          pitch: pitchMultiplier,
+          rate: rateMultiplier
+        });
+      }
+    }
+
+    function testAnnouncerVoice() {
+      announceText("Tactical voice system online. All fleet systems operational.", 1.0, 0.95);
+    }
+
+    /* ==========================================================================
+       BATTLESHIP LOGIC
        ========================================================================== */
     const BS_SIZE = 10;
+    const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     const BS_SHIPS = [
-      { name: 'Carrier', size: 5 },
-      { name: 'Battleship', size: 4 },
-      { name: 'Destroyer', size: 3 },
-      { name: 'Submarine', size: 3 },
-      { name: 'Patrol Boat', size: 2 }
+      { name: 'Carrier', size: 5, type: 'carrier' },
+      { name: 'Battleship', size: 4, type: 'cruiser' },
+      { name: 'Destroyer', size: 3, type: 'destroyer' },
+      { name: 'Submarine', size: 3, type: 'submarine' },
+      { name: 'Patrol Boat', size: 2, type: 'patrol' }
     ];
 
     let bsPlayerGrid = [], bsEnemyGrid = [];
@@ -314,16 +402,31 @@
     let bsMode = 'pve', bsDiff = 'medium', bsTurn = 'player', bsGameOver = false;
     let bsShots = 0, bsHits = 0, bsSunkCount = 0, bsScore = 0;
     let bsPowerUpsEnabled = true;
+    let bsViewMode = '2d';
     let bsAiHuntStack = [];
 
     let activePowerUp = null;
     let multiShotRemaining = 0;
     let shipToClone = null;
 
+    let placement3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
+    let player3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
+    let enemy3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
+
     document.addEventListener('DOMContentLoaded', () => {
+      populateVoiceList();
       initBsPlacementGrid();
       renderBsDock();
     });
+
+    function getCoordString(r, c) {
+      return `${ROW_LABELS[r]}-${c + 1}`;
+    }
+
+    function getSpokenCoordString(r, c) {
+      const rowName = NATO_PHONETIC[ROW_LABELS[r]] || ROW_LABELS[r];
+      return `${rowName}, ${c + 1}`;
+    }
 
     function toggleBsDifficulty() {
       const mode = document.getElementById('bs-mode-select').value;
@@ -335,10 +438,53 @@
       document.getElementById('bs-orientation-label').innerText = bsIsHorizontal ? 'Horizontal' : 'Vertical';
     }
 
-    function initBsPlacementGrid() {
-      bsPlayerGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
-      const gridEl = document.getElementById('bs-placement-grid');
-      gridEl.innerHTML = '';
+    function toggleBsViewMode() {
+      bsViewMode = document.getElementById('bs-view-select').value;
+      const grid2D = document.getElementById('bs-2d-placement-wrapper');
+      const grid3D = document.getElementById('bs-3d-placement-canvas');
+
+      if (bsViewMode === '3d') {
+        grid2D.classList.add('hidden');
+        grid3D.classList.remove('hidden');
+        if (!placement3D.renderer) init3DPlacementView();
+      } else {
+        grid2D.classList.remove('hidden');
+        grid3D.classList.add('hidden');
+      }
+    }
+
+    /* ------------------- 2D GRID FUNCTIONS ------------------- */
+    function buildGridWithLabels(wrapperId, gridId, cellClickCallback, cellHoverCallback, cellOutCallback) {
+      const wrapper = document.getElementById(wrapperId);
+      wrapper.innerHTML = '';
+
+      const topHeader = document.createElement('div');
+      topHeader.classList.add('grid-header-row');
+      topHeader.appendChild(document.createElement('div'));
+      for (let c = 1; c <= 10; c++) {
+        const lbl = document.createElement('div');
+        lbl.classList.add('header-label');
+        lbl.innerText = c;
+        topHeader.appendChild(lbl);
+      }
+      wrapper.appendChild(topHeader);
+
+      const bodyRow = document.createElement('div');
+      bodyRow.classList.add('grid-body-row');
+
+      const leftHeader = document.createElement('div');
+      leftHeader.classList.add('grid-header-col');
+      for (let r = 0; r < 10; r++) {
+        const lbl = document.createElement('div');
+        lbl.classList.add('header-label');
+        lbl.innerText = ROW_LABELS[r];
+        leftHeader.appendChild(lbl);
+      }
+      bodyRow.appendChild(leftHeader);
+
+      const gridEl = document.createElement('div');
+      gridEl.id = gridId;
+      gridEl.classList.add('grid');
 
       for (let r = 0; r < BS_SIZE; r++) {
         for (let c = 0; c < BS_SIZE; c++) {
@@ -346,12 +492,20 @@
           cell.classList.add('cell');
           cell.dataset.row = r;
           cell.dataset.col = c;
-          cell.addEventListener('mouseover', handleBsHover);
-          cell.addEventListener('mouseout', clearBsHover);
-          cell.addEventListener('click', handleBsClick);
+          if (cellHoverCallback) cell.addEventListener('mouseover', cellHoverCallback);
+          if (cellOutCallback) cell.addEventListener('mouseout', cellOutCallback);
+          if (cellClickCallback) cell.addEventListener('click', cellClickCallback);
           gridEl.appendChild(cell);
         }
       }
+
+      bodyRow.appendChild(gridEl);
+      wrapper.appendChild(bodyRow);
+    }
+
+    function initBsPlacementGrid() {
+      bsPlayerGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
+      buildGridWithLabels('bs-2d-placement-wrapper', 'bs-placement-grid', handleBs2DClick, handleBs2DHover, clearBs2DHover);
     }
 
     function renderBsDock() {
@@ -373,7 +527,7 @@
       });
     }
 
-    function handleBsHover(e) {
+    function handleBs2DHover(e) {
       if (bsPlacedCount >= BS_SHIPS.length) return;
       const ship = BS_SHIPS[bsSelectedShipIdx];
       if (!ship || ship.placed) return;
@@ -392,11 +546,11 @@
       }
     }
 
-    function clearBsHover() {
+    function clearBs2DHover() {
       document.querySelectorAll('#bs-placement-grid .cell').forEach(c => c.classList.remove('preview-valid', 'preview-invalid'));
     }
 
-    function handleBsClick(e) {
+    function handleBs2DClick(e) {
       if (bsPlacedCount >= BS_SHIPS.length) return;
       const ship = BS_SHIPS[bsSelectedShipIdx];
       if (!ship || ship.placed) return;
@@ -416,8 +570,10 @@
         }
 
         ship.placed = true;
-        bsPlayerShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+        bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false });
         bsPlacedCount++;
+
+        announceText(`${ship.name} deployed.`, 1.0, 1.1);
 
         const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
         if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
@@ -426,6 +582,7 @@
         if (bsPlacedCount === BS_SHIPS.length) {
           document.getElementById('bs-start-btn').disabled = false;
           document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
+          announceText("All fleet vessels positioned. Ready for battle.", 1.0, 1.0);
         }
       }
     }
@@ -445,6 +602,8 @@
       BS_SHIPS.forEach(s => s.placed = false);
       bsPlacedCount = 0;
 
+      if (bsViewMode === '3d') init3DPlacementView();
+
       BS_SHIPS.forEach(ship => {
         let placed = false;
         while (!placed) {
@@ -461,9 +620,26 @@
               coords.push({ r: tr, c: tc, hit: false });
               const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${tr}"][data-col="${tc}"]`);
               if (cell) cell.classList.add('ship');
+
+              if (bsViewMode === '3d' && placement3D.gridTiles[tr]) {
+                placement3D.gridTiles[tr][tc].material.color.setHex(0x5bc0be);
+              }
             }
+
+            let shipMesh = null;
+            if (bsViewMode === '3d' && placement3D.scene) {
+              shipMesh = createBlueprintShipMesh(ship);
+              if (horiz) {
+                shipMesh.position.set(c + (ship.size / 2), 0.05, r + 0.5);
+                shipMesh.rotation.y = Math.PI / 2;
+              } else {
+                shipMesh.position.set(c + 0.5, 0.05, r + (ship.size / 2));
+              }
+              placement3D.scene.add(shipMesh);
+            }
+
             ship.placed = true;
-            bsPlayerShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+            bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, mesh: shipMesh });
             placed = true;
           }
         }
@@ -473,6 +649,242 @@
       renderBsDock();
       document.getElementById('bs-start-btn').disabled = false;
       document.getElementById('bs-instruction').innerText = "Fleet automated successfully! Ready to engage.";
+      announceText("Fleet automated successfully. Tactical grid locked.", 1.0, 1.0);
+    }
+
+    /* ------------------- 3D ORTHOGRAPHIC ENGINE ------------------- */
+    function createBlueprintShipMesh(shipInfo, isEnemy = false) {
+      const shipGroup = new THREE.Group();
+      const size = shipInfo.size;
+      const type = shipInfo.type;
+
+      const deckMat = new THREE.MeshStandardMaterial({ 
+        color: isEnemy ? 0x2b1318 : 0x1c2541, 
+        roughness: 0.4, 
+        metalness: 0.8 
+      });
+
+      const glowMat = new THREE.MeshBasicMaterial({ color: isEnemy ? 0xe63946 : 0x5bc0be });
+
+      if (type === 'carrier') {
+        const hullGeo = new THREE.BoxGeometry(0.85, 0.25, size * 0.95);
+        const hull = new THREE.Mesh(hullGeo, deckMat);
+        hull.position.y = 0.12;
+        shipGroup.add(hull);
+
+        const islandGeo = new THREE.BoxGeometry(0.2, 0.35, 0.8);
+        const island = new THREE.Mesh(islandGeo, deckMat);
+        island.position.set(0.28, 0.3, 0);
+        shipGroup.add(island);
+
+        for (let i = -1; i <= 1; i++) {
+          const jetGeo = new THREE.ConeGeometry(0.08, 0.2, 3);
+          const jet = new THREE.Mesh(jetGeo, glowMat);
+          jet.rotation.x = Math.PI / 2;
+          jet.position.set(-0.2, 0.26, i * 0.8);
+          shipGroup.add(jet);
+        }
+      } else if (type === 'submarine') {
+        const subGeo = new THREE.CylinderGeometry(0.3, 0.3, size * 0.9, 16);
+        subGeo.rotateX(Math.PI / 2);
+        const sub = new THREE.Mesh(subGeo, deckMat);
+        sub.position.y = 0.15;
+        shipGroup.add(sub);
+
+        const sailGeo = new THREE.BoxGeometry(0.18, 0.3, 0.4);
+        const sail = new THREE.Mesh(sailGeo, deckMat);
+        sail.position.set(0, 0.35, 0);
+        shipGroup.add(sail);
+      } else {
+        const hullGeo = new THREE.BoxGeometry(0.7, 0.25, size * 0.9);
+        const hull = new THREE.Mesh(hullGeo, deckMat);
+        hull.position.y = 0.12;
+        shipGroup.add(hull);
+
+        const bowGeo = new THREE.ConeGeometry(0.35, 0.5, 4);
+        const bow = new THREE.Mesh(bowGeo, deckMat);
+        bow.rotation.x = Math.PI / 2;
+        bow.position.set(0, 0.12, (size * 0.9) / 2 + 0.2);
+        shipGroup.add(bow);
+
+        const turretGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.15, 8);
+        const t1 = new THREE.Mesh(turretGeo, deckMat);
+        t1.position.set(0, 0.28, (size * 0.8) / 3);
+        shipGroup.add(t1);
+
+        const t2 = new THREE.Mesh(turretGeo, deckMat);
+        t2.position.set(0, 0.28, -(size * 0.8) / 3);
+        shipGroup.add(t2);
+      }
+
+      const outlineGeo = new THREE.BoxGeometry(0.9, 0.3, size * 0.98);
+      const edges = new THREE.EdgesGeometry(outlineGeo);
+      const lineMat = new THREE.LineBasicMaterial({ color: isEnemy ? 0xe63946 : 0x5bc0be, linewidth: 2 });
+      const wireframe = new THREE.LineSegments(edges, lineMat);
+      wireframe.position.y = 0.15;
+      shipGroup.add(wireframe);
+
+      return shipGroup;
+    }
+
+    function create3DTextSprite(text) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#48cae4';
+      ctx.font = 'Bold 32px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 32, 32);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(0.8, 0.8, 1);
+      return sprite;
+    }
+
+    function setupOrthographic3DViewport(containerId, isInteractive, clickCallback) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b132b);
+
+      const aspect = container.clientWidth / container.clientHeight;
+      const d = 7.2;
+      const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
+      camera.position.set(5, 14, 5);
+      camera.lookAt(5, 0, 5);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.2);
+      light.position.set(5, 15, 5);
+      scene.add(light);
+
+      const ambient = new THREE.AmbientLight(0x5bc0be, 0.3);
+      scene.add(ambient);
+
+      for (let c = 0; c < BS_SIZE; c++) {
+        const sprite = create3DTextSprite(`${c + 1}`);
+        sprite.position.set(c + 0.5, 0.1, -0.4);
+        scene.add(sprite);
+      }
+
+      for (let r = 0; r < BS_SIZE; r++) {
+        const sprite = create3DTextSprite(ROW_LABELS[r]);
+        sprite.position.set(-0.4, 0.1, r + 0.5);
+        scene.add(sprite);
+      }
+
+      const gridTiles = [];
+      for (let r = 0; r < BS_SIZE; r++) {
+        gridTiles[r] = [];
+        for (let c = 0; c < BS_SIZE; c++) {
+          const tileGeo = new THREE.PlaneGeometry(0.92, 0.92);
+          tileGeo.rotateX(-Math.PI / 2);
+          
+          const tileMat = new THREE.MeshBasicMaterial({ 
+            color: 0x111e38, 
+            side: THREE.DoubleSide
+          });
+          const tile = new THREE.Mesh(tileGeo, tileMat);
+          tile.position.set(c + 0.5, 0, r + 0.5);
+          tile.userData = { row: r, col: c };
+
+          const tileEdges = new THREE.EdgesGeometry(tileGeo);
+          const lineMat = new THREE.LineBasicMaterial({ color: 0x3a506b });
+          const wire = new THREE.LineSegments(tileEdges, lineMat);
+          tile.add(wire);
+
+          scene.add(tile);
+          gridTiles[r][c] = tile;
+        }
+      }
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      if (isInteractive) {
+        renderer.domElement.addEventListener('click', (e) => {
+          const rect = renderer.domElement.getBoundingClientRect();
+          mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+          raycaster.setFromCamera(mouse, camera);
+          const intersects = raycaster.intersectObjects(scene.children, true);
+
+          if (intersects.length > 0) {
+            let hitTile = intersects.find(i => i.object.userData && i.object.userData.row !== undefined);
+            if (!hitTile && intersects[0].object.parent) {
+              hitTile = intersects.find(i => i.object.parent.userData && i.object.parent.userData.row !== undefined);
+            }
+            if (hitTile) {
+              const { row, col } = hitTile.object.userData || hitTile.object.parent.userData;
+              clickCallback(row, col);
+            }
+          }
+        });
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      return { scene, camera, renderer, gridTiles };
+    }
+
+    function init3DPlacementView() {
+      placement3D = setupOrthographic3DViewport('bs-3d-placement-canvas', true, handle3DPlacementClick);
+    }
+
+    function handle3DPlacementClick(r, c) {
+      if (bsPlacedCount >= BS_SHIPS.length) return;
+      const ship = BS_SHIPS[bsSelectedShipIdx];
+      if (!ship || ship.placed) return;
+
+      if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal)) {
+        const coords = [];
+        for (let i = 0; i < ship.size; i++) {
+          const tr = bsIsHorizontal ? r : r + i;
+          const tc = bsIsHorizontal ? c + i : c;
+          bsPlayerGrid[tr][tc] = 1;
+          coords.push({ r: tr, c: tc, hit: false });
+
+          placement3D.gridTiles[tr][tc].material.color.setHex(0x5bc0be);
+        }
+
+        const shipMesh = createBlueprintShipMesh(ship);
+        if (bsIsHorizontal) {
+          shipMesh.position.set(c + (ship.size / 2), 0.05, r + 0.5);
+          shipMesh.rotation.y = Math.PI / 2;
+        } else {
+          shipMesh.position.set(c + 0.5, 0.05, r + (ship.size / 2));
+        }
+        placement3D.scene.add(shipMesh);
+
+        ship.placed = true;
+        bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, mesh: shipMesh });
+        bsPlacedCount++;
+
+        announceText(`${ship.name} deployed.`, 1.0, 1.1);
+
+        const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
+        if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
+
+        renderBsDock();
+        if (bsPlacedCount === BS_SHIPS.length) {
+          document.getElementById('bs-start-btn').disabled = false;
+          document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
+          announceText("All fleet vessels positioned. Ready for battle.", 1.0, 1.0);
+        }
+      }
     }
 
     function generateBsEnemyBoard() {
@@ -494,7 +906,7 @@
               bsEnemyGrid[tr][tc] = 1;
               coords.push({ r: tr, c: tc, hit: false });
             }
-            bsEnemyShips.push({ name: ship.name, size: ship.size, coords: coords, sunk: false });
+            bsEnemyShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, horiz: horiz, r: r, c: c });
             placed = true;
           }
         }
@@ -505,42 +917,264 @@
       bsMode = document.getElementById('bs-mode-select').value;
       bsDiff = document.getElementById('bs-diff-select').value;
       bsPowerUpsEnabled = document.getElementById('bs-powerups-toggle').value === 'enabled';
-      
+      bsViewMode = document.getElementById('bs-view-select').value;
+
       generateBsEnemyBoard();
 
       document.getElementById('bs-setup').classList.add('hidden');
       document.getElementById('bs-combat').classList.remove('hidden');
 
-      // Toggle Power-Ups UI
       document.getElementById('bs-powerups-bar').style.display = bsPowerUpsEnabled ? 'flex' : 'none';
 
-      renderBsCombatBoards();
+      announceText("Battle initialized. Select target coordinates.", 1.05, 1.0);
+
+      if (bsViewMode === '3d') {
+        document.getElementById('bs-2d-boards').classList.add('hidden');
+        document.getElementById('bs-3d-boards').classList.remove('hidden');
+
+        player3D = setupOrthographic3DViewport('bs-3d-player-canvas', true, handlePlayerBoardClick);
+        enemy3D = setupOrthographic3DViewport('bs-3d-enemy-canvas', true, handleBsAttack);
+
+        bsPlayerShips.forEach(ship => {
+          ship.coords.forEach(co => {
+            player3D.gridTiles[co.r][co.c].material.color.setHex(0x5bc0be);
+          });
+          const cloneMesh = createBlueprintShipMesh(ship);
+          if (ship.mesh) {
+            cloneMesh.position.copy(ship.mesh.position);
+            cloneMesh.rotation.copy(ship.mesh.rotation);
+          }
+          player3D.scene.add(cloneMesh);
+        });
+      } else {
+        document.getElementById('bs-2d-boards').classList.remove('hidden');
+        document.getElementById('bs-3d-boards').classList.add('hidden');
+        renderBsCombatBoards2D();
+      }
+
       updateBsDashboard();
     }
 
-    function renderBsCombatBoards() {
-      const pBoard = document.getElementById('bs-player-board');
-      const eBoard = document.getElementById('bs-enemy-board');
-      pBoard.innerHTML = '';
-      eBoard.innerHTML = '';
+    function renderBsCombatBoards2D() {
+      buildGridWithLabels('bs-player-board-wrapper', 'bs-player-board', handlePlayerBoardClick);
+      buildGridWithLabels('bs-enemy-board-wrapper', 'bs-enemy-board', handleBsAttack);
 
-      for (let r = 0; r < BS_SIZE; r++) {
-        for (let c = 0; c < BS_SIZE; c++) {
-          const pCell = document.createElement('div');
-          pCell.classList.add('cell');
-          if (bsPlayerGrid[r][c] === 1) pCell.classList.add('ship');
-          pCell.dataset.row = r;
-          pCell.dataset.col = c;
-          pCell.addEventListener('click', handlePlayerBoardClick);
-          pBoard.appendChild(pCell);
+      bsPlayerShips.forEach(ship => {
+        ship.coords.forEach(co => {
+          const cell = document.querySelector(`#bs-player-board .cell[data-row="${co.r}"][data-col="${co.c}"]`);
+          if (cell) cell.classList.add('ship');
+        });
+      });
+    }
 
-          const eCell = document.createElement('div');
-          eCell.classList.add('cell');
-          eCell.dataset.row = r;
-          eCell.dataset.col = c;
-          eCell.addEventListener('click', handleBsAttack);
-          eBoard.appendChild(eCell);
+    function handleBsAttack(eOrR, colVal) {
+      if (bsGameOver || bsTurn !== 'player') return;
+
+      let r, c;
+      if (typeof eOrR === 'number') {
+        r = eOrR;
+        c = colVal;
+      } else {
+        const cell = eOrR.currentTarget;
+        r = parseInt(cell.dataset.row);
+        c = parseInt(cell.dataset.col);
+      }
+
+      const coordStr = getCoordString(r, c);
+      const spokenCoord = getSpokenCoordString(r, c);
+
+      if (bsViewMode === '3d') {
+        if (enemy3D.gridTiles[r][c].userData.attacked) return;
+      } else {
+        const cell = document.querySelector(`#bs-enemy-board .cell[data-row="${r}"][data-col="${c}"]`);
+        if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+      }
+
+      // Radar Power-Up Logic
+      if (activePowerUp === 'radar' && bsPowerUpsEnabled) {
+        bsScore -= 300;
+        activePowerUp = null;
+        updateBsDashboard();
+
+        let enemyDetected = false;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const tr = r + dr;
+            const tc = c + dc;
+            if (tr >= 0 && tr < BS_SIZE && tc >= 0 && tc < BS_SIZE) {
+              if (bsViewMode === '3d') {
+                if (!enemy3D.gridTiles[tr][tc].userData.attacked) {
+                  enemy3D.gridTiles[tr][tc].material.color.setHex(0xe9c46a);
+                }
+              } else {
+                const targetCell = document.querySelector(`#bs-enemy-board .cell[data-row="${tr}"][data-col="${tc}"]`);
+                if (targetCell && !targetCell.classList.contains('hit') && !targetCell.classList.contains('miss')) {
+                  targetCell.classList.add('scanned');
+                }
+              }
+              if (bsEnemyGrid[tr][tc] === 1) enemyDetected = true;
+            }
+          }
         }
+
+        document.getElementById('bs-status').innerText = enemyDetected 
+          ? `RADAR SCAN: Enemy contacts detected in sector around ${coordStr}!` 
+          : `RADAR SCAN: Sector around ${coordStr} is clear.`;
+
+        announceText(enemyDetected ? `Radar scan detected contacts near ${spokenCoord}!` : `Radar scan clear near ${spokenCoord}.`, 1.0, 1.05);
+        return;
+      }
+
+      // Multi-Shot Power-Up Logic
+      if (activePowerUp === 'multishot' && bsPowerUpsEnabled) {
+        fireSingleShot(r, c);
+        multiShotRemaining--;
+
+        if (multiShotRemaining > 0) {
+          document.getElementById('bs-status').innerText = `MULTI-SHOT: ${multiShotRemaining} shot(s) remaining! Select next target.`;
+          return;
+        } else {
+          activePowerUp = null;
+          if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
+          if (bsMode === 'pve') {
+            bsTurn = 'computer';
+            setTimeout(bsComputerTurn, 800);
+          }
+          return;
+        }
+      }
+
+      fireSingleShot(r, c);
+      updateBsDashboard();
+
+      if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
+
+      if (bsMode === 'pve') {
+        bsTurn = 'computer';
+        setTimeout(bsComputerTurn, 800);
+      }
+    }
+
+    function fireSingleShot(r, c) {
+      bsShots++;
+      const coordStr = getCoordString(r, c);
+      const spokenCoord = getSpokenCoordString(r, c);
+
+      if (bsViewMode === '3d') {
+        const tile = enemy3D.gridTiles[r][c];
+        tile.userData.attacked = true;
+
+        if (bsEnemyGrid[r][c] === 1) {
+          tile.material.color.setHex(0xe63946);
+          bsHits++;
+          bsScore += 100;
+          document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
+          announceText(`Direct hit at ${spokenCoord}!`, 1.15, 1.05);
+          checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
+        } else {
+          tile.material.color.setHex(0x6c757d);
+          bsScore = Math.max(0, bsScore - 10);
+          document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
+          announceText(`Miss at ${spokenCoord}.`, 0.95, 1.1);
+        }
+      } else {
+        const cell = document.querySelector(`#bs-enemy-board .cell[data-row="${r}"][data-col="${c}"]`);
+        if (bsEnemyGrid[r][c] === 1) {
+          cell.classList.remove('scanned');
+          cell.classList.add('hit');
+          cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
+          bsHits++;
+          bsScore += 100;
+          document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
+          announceText(`Direct hit at ${spokenCoord}!`, 1.15, 1.05);
+          checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
+        } else {
+          cell.classList.remove('scanned');
+          cell.classList.add('miss');
+          cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
+          bsScore = Math.max(0, bsScore - 10);
+          document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
+          announceText(`Miss at ${spokenCoord}.`, 0.95, 1.1);
+        }
+      }
+      updateBsDashboard();
+    }
+
+    function bsComputerTurn() {
+      if (bsGameOver) return;
+
+      let r, c;
+      if (bsDiff === 'easy' || bsAiHuntStack.length === 0) {
+        do {
+          r = Math.floor(Math.random() * BS_SIZE);
+          c = Math.floor(Math.random() * BS_SIZE);
+          if (bsDiff === 'hard' && (r + c) % 2 !== 0) continue;
+        } while (isBsTargeted(r, c));
+      } else {
+        const target = bsAiHuntStack.pop();
+        r = target.r;
+        c = target.c;
+      }
+
+      const coordStr = getCoordString(r, c);
+      const spokenCoord = getSpokenCoordString(r, c);
+
+      if (bsViewMode === '3d') {
+        const tile = player3D.gridTiles[r][c];
+        tile.userData.attacked = true;
+
+        if (bsPlayerGrid[r][c] === 1) {
+          tile.material.color.setHex(0xe63946);
+          document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
+          announceText(`Warning! Enemy hit your ship at ${spokenCoord}!`, 0.9, 1.0);
+
+          const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
+          adjs.forEach(a => {
+            if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !player3D.gridTiles[a.r][a.c].userData.attacked) {
+              bsAiHuntStack.push(a);
+            }
+          });
+
+          checkBsShipSunk(bsPlayerShips, r, c, 'Player');
+        } else {
+          tile.material.color.setHex(0x6c757d);
+          document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
+          announceText(`Enemy missed at ${spokenCoord}.`, 1.0, 1.1);
+        }
+      } else {
+        const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
+        if (bsPlayerGrid[r][c] === 1) {
+          pCell.classList.add('hit');
+          pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
+          document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
+          announceText(`Warning! Enemy hit your ship at ${spokenCoord}!`, 0.9, 1.0);
+
+          const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
+          adjs.forEach(a => {
+            if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !isBsTargeted(a.r, a.c)) {
+              bsAiHuntStack.push(a);
+            }
+          });
+
+          checkBsShipSunk(bsPlayerShips, r, c, 'Player');
+        } else {
+          pCell.classList.add('miss');
+          pCell.innerHTML = '<i class="fa-solid fa-circle"></i>';
+          document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
+          announceText(`Enemy missed at ${spokenCoord}.`, 1.0, 1.1);
+        }
+      }
+
+      if (checkBsWin(bsPlayerShips, 'COMPUTER')) return;
+      bsTurn = 'player';
+    }
+
+    function isBsTargeted(r, c) {
+      if (bsViewMode === '3d') {
+        return player3D.gridTiles[r][c] && player3D.gridTiles[r][c].userData.attacked;
+      } else {
+        const cell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
+        return cell && (cell.classList.contains('hit') || cell.classList.contains('miss'));
       }
     }
 
@@ -553,7 +1187,8 @@
           return;
         }
         activePowerUp = 'radar';
-        document.getElementById('bs-status').innerText = "RADAR ACTIVE: Click any coordinate on the target grid to scan a 3x3 area.";
+        document.getElementById('bs-status').innerText = "RADAR ACTIVE: Click grid coordinate (A1–J10) to scan 3x3 sector.";
+        announceText("Radar Scan activated.", 1.1, 1.0);
       } 
       else if (type === 'multishot') {
         if (bsScore < 700) {
@@ -564,7 +1199,8 @@
         multiShotRemaining = 3;
         bsScore -= 700;
         updateBsDashboard();
-        document.getElementById('bs-status').innerText = "MULTI-SHOT ACTIVATED! Click 3 targets on the enemy grid.";
+        document.getElementById('bs-status').innerText = "MULTI-SHOT ACTIVATED! Click 3 targets on grid.";
+        announceText("Multi shot authorized! Three strikes ready.", 1.2, 1.05);
       }
       else if (type === 'clone') {
         if (bsScore < 1000) {
@@ -604,15 +1240,22 @@
       shipToClone = ship;
       closeCloneModal();
       activePowerUp = 'clone';
-      document.getElementById('bs-status').innerText = `CLONE READY: Click on your fleet grid to place the duplicate ${ship.name}.`;
+      document.getElementById('bs-status').innerText = `CLONE READY: Click on fleet grid to deploy duplicate ${ship.name}.`;
+      announceText(`Select position to duplicate ${ship.name}.`, 1.0, 1.0);
     }
 
-    function handlePlayerBoardClick(e) {
+    function handlePlayerBoardClick(eOrR, colVal) {
       if (activePowerUp !== 'clone' || !shipToClone || !bsPowerUpsEnabled) return;
 
-      const cell = e.currentTarget;
-      const r = parseInt(cell.dataset.row);
-      const c = parseInt(cell.dataset.col);
+      let r, c;
+      if (typeof eOrR === 'number') {
+        r = eOrR;
+        c = colVal;
+      } else {
+        const cell = eOrR.currentTarget;
+        r = parseInt(cell.dataset.row);
+        c = parseInt(cell.dataset.col);
+      }
 
       if (checkCanPlaceBs(bsPlayerGrid, r, c, shipToClone.size, bsIsHorizontal)) {
         bsScore -= 1000;
@@ -623,154 +1266,36 @@
           const targetC = bsIsHorizontal ? c + i : c;
           bsPlayerGrid[targetR][targetC] = 1;
           coords.push({ r: targetR, c: targetC, hit: false });
-          const targetCell = document.querySelector(`#bs-player-board .cell[data-row="${targetR}"][data-col="${targetC}"]`);
-          if (targetCell) targetCell.classList.add('ship');
+
+          if (bsViewMode === '3d') {
+            player3D.gridTiles[targetR][targetC].material.color.setHex(0x5bc0be);
+          } else {
+            const targetCell = document.querySelector(`#bs-player-board .cell[data-row="${targetR}"][data-col="${targetC}"]`);
+            if (targetCell) targetCell.classList.add('ship');
+          }
         }
 
-        bsPlayerShips.push({ name: `${shipToClone.name} (Clone)`, size: shipToClone.size, coords: coords, sunk: false });
+        let cloneMesh = null;
+        if (bsViewMode === '3d' && player3D.scene) {
+          cloneMesh = createBlueprintShipMesh(shipToClone);
+          if (bsIsHorizontal) {
+            cloneMesh.position.set(c + (shipToClone.size / 2), 0.05, r + 0.5);
+            cloneMesh.rotation.y = Math.PI / 2;
+          } else {
+            cloneMesh.position.set(c + 0.5, 0.05, r + (shipToClone.size / 2));
+          }
+          player3D.scene.add(cloneMesh);
+        }
+
+        bsPlayerShips.push({ name: `${shipToClone.name} (Clone)`, size: shipToClone.size, type: shipToClone.type, coords: coords, sunk: false, mesh: cloneMesh });
         activePowerUp = null;
         shipToClone = null;
         updateBsDashboard();
-        document.getElementById('bs-status').innerText = "CLONE SUCCESSFUL! Duplicate vessel deployed to fleet.";
+        document.getElementById('bs-status').innerText = "CLONE SUCCESSFUL! Duplicate warship deployed to grid.";
+        announceText("Vessel successfully cloned.", 1.1, 1.05);
       } else {
-        document.getElementById('bs-status').innerText = "Invalid placement for vessel clone! Try another location.";
+        document.getElementById('bs-status').innerText = "Invalid placement location for vessel clone!";
       }
-    }
-
-    function handleBsAttack(e) {
-      if (bsGameOver || bsTurn !== 'player') return;
-
-      const cell = e.currentTarget;
-      const r = parseInt(cell.dataset.row);
-      const c = parseInt(cell.dataset.col);
-
-      // Radar Power-Up Logic
-      if (activePowerUp === 'radar' && bsPowerUpsEnabled) {
-        bsScore -= 300;
-        activePowerUp = null;
-        updateBsDashboard();
-
-        let enemyDetected = false;
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            const tr = r + dr;
-            const tc = c + dc;
-            if (tr >= 0 && tr < BS_SIZE && tc >= 0 && tc < BS_SIZE) {
-              const targetCell = document.querySelector(`#bs-enemy-board .cell[data-row="${tr}"][data-col="${tc}"]`);
-              if (targetCell && !targetCell.classList.contains('hit') && !targetCell.classList.contains('miss')) {
-                targetCell.classList.add('scanned');
-              }
-              if (bsEnemyGrid[tr][tc] === 1) enemyDetected = true;
-            }
-          }
-        }
-
-        document.getElementById('bs-status').innerText = enemyDetected 
-          ? `RADAR RESULT: Enemy signatures detected in 3x3 sector around (${r},${c})!` 
-          : `RADAR RESULT: Clear sector. No enemy presence around (${r},${c}).`;
-        return;
-      }
-
-      if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
-
-      // Multi-Shot Power-Up Logic
-      if (activePowerUp === 'multishot' && bsPowerUpsEnabled) {
-        fireSingleShot(cell, r, c);
-        multiShotRemaining--;
-
-        if (multiShotRemaining > 0) {
-          document.getElementById('bs-status').innerText = `MULTI-SHOT: ${multiShotRemaining} shot(s) remaining! Select next tile.`;
-          return;
-        } else {
-          activePowerUp = null;
-          if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
-          if (bsMode === 'pve') {
-            bsTurn = 'computer';
-            setTimeout(bsComputerTurn, 700);
-          }
-          return;
-        }
-      }
-
-      // Standard Single Shot
-      fireSingleShot(cell, r, c);
-      updateBsDashboard();
-
-      if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
-
-      if (bsMode === 'pve') {
-        bsTurn = 'computer';
-        setTimeout(bsComputerTurn, 700);
-      }
-    }
-
-    function fireSingleShot(cell, r, c) {
-      bsShots++;
-      if (bsEnemyGrid[r][c] === 1) {
-        cell.classList.remove('scanned');
-        cell.classList.add('hit');
-        cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
-        bsHits++;
-        bsScore += 100;
-        document.getElementById('bs-status').innerText = "DIRECT HIT on enemy vessel!";
-        checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
-      } else {
-        cell.classList.remove('scanned');
-        cell.classList.add('miss');
-        cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
-        bsScore = Math.max(0, bsScore - 10);
-        document.getElementById('bs-status').innerText = "Splash! Target missed.";
-      }
-      updateBsDashboard();
-    }
-
-    function bsComputerTurn() {
-      if (bsGameOver) return;
-
-      let r, c;
-      if (bsDiff === 'easy' || bsAiHuntStack.length === 0) {
-        do {
-          r = Math.floor(Math.random() * BS_SIZE);
-          c = Math.floor(Math.random() * BS_SIZE);
-          if (bsDiff === 'hard' && (r + c) % 2 !== 0) continue;
-        } while (isBsTargeted(r, c));
-      } else {
-        const target = bsAiHuntStack.pop();
-        r = target.r;
-        c = target.c;
-      }
-
-      const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
-
-      if (bsPlayerGrid[r][c] === 1) {
-        pCell.classList.add('hit');
-        pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
-        document.getElementById('bs-status').innerText = `Computer hit your ship at (${r},${c})!`;
-
-        const adjs = [
-          { r: r - 1, c: c }, { r: r + 1, c: c },
-          { r: r, c: c - 1 }, { r: r, c: c + 1 }
-        ];
-        adjs.forEach(a => {
-          if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !isBsTargeted(a.r, a.c)) {
-            bsAiHuntStack.push(a);
-          }
-        });
-
-        checkBsShipSunk(bsPlayerShips, r, c, 'Player');
-      } else {
-        pCell.classList.add('miss');
-        pCell.innerHTML = '<i class="fa-solid fa-circle"></i>';
-        document.getElementById('bs-status').innerText = `Computer missed at (${r},${c}).`;
-      }
-
-      if (checkBsWin(bsPlayerShips, 'COMPUTER')) return;
-      bsTurn = 'player';
-    }
-
-    function isBsTargeted(r, c) {
-      const cell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
-      return cell && (cell.classList.contains('hit') || cell.classList.contains('miss'));
     }
 
     function checkBsShipSunk(ships, r, c, owner) {
@@ -784,9 +1309,23 @@
           if (owner === 'Enemy') {
             bsSunkCount++;
             bsScore += 250;
+
+            if (bsViewMode === '3d' && enemy3D.scene) {
+              const enemyMesh = createBlueprintShipMesh(ship, true);
+              if (ship.horiz) {
+                enemyMesh.position.set(ship.c + (ship.size / 2), 0.05, ship.r + 0.5);
+                enemyMesh.rotation.y = Math.PI / 2;
+              } else {
+                enemyMesh.position.set(ship.c + 0.5, 0.05, ship.r + (ship.size / 2));
+              }
+              enemy3D.scene.add(enemyMesh);
+            }
+
             document.getElementById('bs-status').innerText = `BOOM! You sunk the enemy ${ship.name}!`;
+            announceText(`Boom! You destroyed the enemy ${ship.name}!`, 1.2, 1.0);
           } else {
             document.getElementById('bs-status').innerText = `ALERT! Computer destroyed your ${ship.name}!`;
+            announceText(`Alert! Your ${ship.name} has been destroyed!`, 0.85, 1.0);
           }
         }
       });
@@ -795,8 +1334,14 @@
     function checkBsWin(ships, attacker) {
       if (ships.every(s => s.sunk)) {
         bsGameOver = true;
-        document.getElementById('bs-status').innerText = 
-          attacker === 'PLAYER' ? `VICTORY! All enemy ships eliminated! Final Score: ${bsScore}` : `DEFEAT! Your entire fleet was destroyed!`;
+        const statusMsg = attacker === 'PLAYER' ? `VICTORY! All enemy ships eliminated! Score: ${bsScore}` : `DEFEAT! Your fleet was wiped out!`;
+        document.getElementById('bs-status').innerText = statusMsg;
+
+        if (attacker === 'PLAYER') {
+          announceText(`Victory! All enemy naval forces eliminated! Final score: ${bsScore}`, 1.2, 1.0);
+        } else {
+          announceText("Defeat! Your fleet has been destroyed.", 0.8, 0.95);
+        }
         return true;
       }
       return false;
@@ -835,44 +1380,28 @@
       document.getElementById('bs-start-btn').disabled = true;
       initBsPlacementGrid();
       renderBsDock();
+
+      if (bsViewMode === '3d') init3DPlacementView();
     }
 
-    /* ==========================================================================
-       GAME 2: WORDLE LOGIC (POINT SYSTEM + INCREMENTAL HINT COSTS)
-       ========================================================================== */
+    /* WORDLE LOGIC */
     const WD_BACKUPS = {
       4: ['SHIP', 'BOAT', 'NAVY', 'PORT', 'DOCK', 'WAVE', 'MIST', 'DECK', 'GALE', 'FLEET'],
       5: ['OCEAN', 'RADAR', 'SONAR', 'NAVAL', 'ANCHOR', 'GUARD', 'SCOUT', 'FLEET', 'DEPOT'],
       6: ['FRIGATE', 'MARINE', 'PATROL', 'ANCHOR', 'BRIDGE', 'CRUISE', 'BEACON', 'RUDDER']
     };
 
-    let wdInitialized = false;
-    let wdTarget = '';
-    let wdWordLength = 5;
-    let wdMaxTries = 6;
-    let wdRow = 0, wdCol = 0;
-    let wdGameOver = false;
-    let wdScore = 0;
-    let wdGrid = [];
-    
-    // Wordle Hint Tracking
-    let wdHintsUsed = 0;
-    let wdRevealedGreenLetters = new Set();
-    let wdRevealedYellowLetters = new Set();
+    let wdInitialized = false, wdTarget = '', wdWordLength = 5, wdMaxTries = 6;
+    let wdRow = 0, wdCol = 0, wdGameOver = false, wdScore = 0, wdGrid = [];
+    let wdHintsUsed = 0, wdRevealedGreenLetters = new Set(), wdRevealedYellowLetters = new Set();
 
     async function initWordle() {
       wdInitialized = true;
       wdWordLength = parseInt(document.getElementById('wd-len-select').value);
       wdMaxTries = parseInt(document.getElementById('wd-tries-select').value);
 
-      wdRow = 0;
-      wdCol = 0;
-      wdGameOver = false;
-      wdScore = 0;
-      wdHintsUsed = 0;
-      wdRevealedGreenLetters.clear();
-      wdRevealedYellowLetters.clear();
-
+      wdRow = 0; wdCol = 0; wdGameOver = false; wdScore = 0; wdHintsUsed = 0;
+      wdRevealedGreenLetters.clear(); wdRevealedYellowLetters.clear();
       wdGrid = Array(wdMaxTries).fill(null).map(() => Array(wdWordLength).fill(''));
 
       document.getElementById('wd-attempts').innerText = `0 / ${wdMaxTries}`;
@@ -880,13 +1409,13 @@
       document.getElementById('wd-hints-count').innerText = `0 / 3`;
       document.getElementById('wd-hint-cost').innerText = `20`;
       document.getElementById('wd-hint-btn').disabled = false;
-      document.getElementById('wd-status').innerText = `Fetching a random ${wdWordLength}-letter word...`;
+      document.getElementById('wd-status').innerText = `Fetching ${wdWordLength}-letter word...`;
 
       renderWordleBoard();
       renderWordleKeyboard();
 
       wdTarget = await fetchWordleWordDynamic(wdWordLength);
-      document.getElementById('wd-status').innerText = `Word ready! Enter your ${wdWordLength}-letter guesses.`;
+      document.getElementById('wd-status').innerText = `Word ready! Enter ${wdWordLength}-letter guesses.`;
     }
 
     async function fetchWordleWordDynamic(length) {
@@ -896,9 +1425,8 @@
         const data = await response.json();
         const word = data[0].toUpperCase();
         if (word.length === length && /^[A-Z]+$/.test(word)) return word;
-        throw new Error('Invalid word format received');
+        throw new Error('Invalid format');
       } catch (err) {
-        console.warn(`Online request failed, using offline backup:`, err);
         const list = WD_BACKUPS[length] || WD_BACKUPS[5];
         return list[Math.floor(Math.random() * list.length)];
       }
@@ -951,33 +1479,25 @@
 
       const currentCost = 20 + (wdHintsUsed * 10);
       if (wdScore < currentCost) {
-        document.getElementById('wd-status').innerText = `Not enough points for hint! Required: ${currentCost} pts.`;
+        document.getElementById('wd-status').innerText = `Not enough points! Required: ${currentCost} pts.`;
         return;
       }
 
-      // Find an unrevealed letter in target
       const targetArr = wdTarget.split('');
       const unrevealedIndices = [];
       targetArr.forEach((char, idx) => {
-        if (!wdRevealedGreenLetters.has(`${char}-${idx}`)) {
-          unrevealedIndices.push(idx);
-        }
+        if (!wdRevealedGreenLetters.has(`${char}-${idx}`)) unrevealedIndices.push(idx);
       });
 
-      if (unrevealedIndices.length === 0) {
-        document.getElementById('wd-status').innerText = "All letters already identified!";
-        return;
-      }
+      if (unrevealedIndices.length === 0) return;
 
       wdScore -= currentCost;
       wdHintsUsed++;
 
       const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
       const hintChar = targetArr[randomIndex];
-
       wdRevealedGreenLetters.add(`${hintChar}-${randomIndex}`);
 
-      // Fill current cursor position or tile
       if (wdCol < wdWordLength) {
         wdGrid[wdRow][wdCol] = hintChar;
         updateTileUI(wdRow, wdCol, hintChar);
@@ -1014,7 +1534,6 @@
         }
       } else if (key === 'ENTER') {
         if (wdCol === wdWordLength) submitWordleGuess();
-        else document.getElementById('wd-status').innerText = `Word must be ${wdWordLength} letters long!`;
       } else if (wdCol < wdWordLength) {
         wdGrid[wdRow][wdCol] = key;
         updateTileUI(wdRow, wdCol, key);
@@ -1031,7 +1550,6 @@
       const guess = wdGrid[wdRow].join('');
       const targetArr = wdTarget.split('');
       const guessArr = guess.split('');
-
       let roundPointsGained = 0;
 
       for (let c = 0; c < wdWordLength; c++) {
@@ -1043,7 +1561,6 @@
           tile.classList.add('correct');
           if (keyBtn) keyBtn.classList.add('correct');
 
-          // +10 points for unique green letter placement
           const greenKey = `${char}-${c}`;
           if (!wdRevealedGreenLetters.has(greenKey)) {
             wdRevealedGreenLetters.add(greenKey);
@@ -1053,7 +1570,6 @@
           tile.classList.add('present');
           if (keyBtn && !keyBtn.classList.contains('correct')) keyBtn.classList.add('present');
 
-          // +5 points for unique yellow letter discovery
           if (!wdRevealedYellowLetters.has(char)) {
             wdRevealedYellowLetters.add(char);
             roundPointsGained += 5;
@@ -1070,10 +1586,10 @@
 
       if (guess === wdTarget) {
         wdGameOver = true;
-        const completionBonus = (wdMaxTries - wdRow) * 50;
-        wdScore += completionBonus;
+        const bonus = (wdMaxTries - wdRow) * 50;
+        wdScore += bonus;
         document.getElementById('wd-score').innerText = wdScore;
-        document.getElementById('wd-status').innerText = `SOLVED! Target word was: ${wdTarget} (+${roundPointsGained + completionBonus} pts)`;
+        document.getElementById('wd-status').innerText = `SOLVED! Target: ${wdTarget} (+${roundPointsGained + bonus} pts)`;
         return;
       }
 
@@ -1082,17 +1598,14 @@
 
       if (wdRow === wdMaxTries) {
         wdGameOver = true;
-        document.getElementById('wd-status').innerText = `GAME OVER! Secret word was: ${wdTarget}`;
+        document.getElementById('wd-status').innerText = `GAME OVER! Word was: ${wdTarget}`;
       } else {
-        document.getElementById('wd-status').innerText = `Gained +${roundPointsGained} pts from guess! Enter next word.`;
+        document.getElementById('wd-status').innerText = `+${roundPointsGained} pts! Enter next word.`;
       }
     }
 
-    /* ==========================================================================
-       GAME 3: BLACKJACK LOGIC
-       ========================================================================== */
-    let bjInitialized = false;
-    let bjDeck = [], bjPlayerHand = [], bjDealerHand = [];
+    /* BLACKJACK LOGIC */
+    let bjInitialized = false, bjDeck = [], bjPlayerHand = [], bjDealerHand = [];
     let bjCredits = 1000, bjBet = 50, bjInHand = false;
 
     function initBlackjack() {
@@ -1117,10 +1630,7 @@
     }
 
     function startBjHand() {
-      if (bjCredits < bjBet) {
-        document.getElementById('bj-status').innerText = "Insufficient credits!";
-        return;
-      }
+      if (bjCredits < bjBet) return;
 
       bjInHand = true;
       bjDeck = createDeck();
@@ -1133,9 +1643,7 @@
 
       renderBjHands(false);
 
-      if (getHandScore(bjPlayerHand) === 21) {
-        bjStand();
-      }
+      if (getHandScore(bjPlayerHand) === 21) bjStand();
     }
 
     function getCardValue(card) {
@@ -1145,8 +1653,7 @@
     }
 
     function getHandScore(hand) {
-      let score = 0;
-      let aces = 0;
+      let score = 0, aces = 0;
       hand.forEach(c => {
         score += getCardValue(c);
         if (c.value === 'A') aces++;
@@ -1196,13 +1703,12 @@
       renderBjHands(false);
 
       if (getHandScore(bjPlayerHand) > 21) {
-        endBjHand(false, "Bust! You lost this round.");
+        endBjHand(false, "Bust! You lost.");
       }
     }
 
     function bjStand() {
       if (!bjInHand) return;
-      
       let dScore = getHandScore(bjDealerHand);
       while (dScore < 17) {
         bjDealerHand.push(bjDeck.pop());
@@ -1210,27 +1716,18 @@
       }
 
       renderBjHands(true);
-
       const pScore = getHandScore(bjPlayerHand);
 
-      if (dScore > 21) {
-        endBjHand(true, "Dealer busted! You win!");
-      } else if (pScore > dScore) {
-        endBjHand(true, "You win against the dealer!");
-      } else if (pScore < dScore) {
-        endBjHand(false, "Dealer wins!");
-      } else {
-        endBjHand(null, "Push! Bet returned.");
-      }
+      if (dScore > 21) endBjHand(true, "Dealer busted! You win!");
+      else if (pScore > dScore) endBjHand(true, "You win!");
+      else if (pScore < dScore) endBjHand(false, "Dealer wins!");
+      else endBjHand(null, "Push! Bet returned.");
     }
 
     function endBjHand(playerWon, msg) {
       bjInHand = false;
-      if (playerWon === true) {
-        bjCredits += bjBet;
-      } else if (playerWon === false) {
-        bjCredits -= bjBet;
-      }
+      if (playerWon === true) bjCredits += bjBet;
+      else if (playerWon === false) bjCredits -= bjBet;
 
       document.getElementById('bj-status').innerText = msg;
       document.getElementById('bj-bet-controls').classList.remove('hidden');
