@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naval Command - Battleship Tactical Arcade</title>
+  <title>Naval Command - Tactical Battleship</title>
   
   <!-- Navy Anchor SVG Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M256 0c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64zm0 96c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zM288 160h-64c-17.7 0-32 14.3-32 32v32H96c-17.7 0-32 14.3-32 32s14.3 32 32 32h96v76.8C108.9 374.9 32 411.3 32 448c0 35.3 86 64 224 64s224-28.7 224-64c0-36.7-76.9-73.1-160-83.2V256h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H320v-32c0-17.7-14.3-32-32-32zm-32 288c-106 0-160-19.8-160-32 0-8.8 30.6-22.1 96-28.5V416c0 17.7 14.3 32 32 32s32-14.3 32-32v-28.5c65.4 6.4 96 19.7 96 28.5 0 12.2-54 32-160 32z'/></svg>">
@@ -13,20 +13,12 @@
 
   <!-- Three.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <!-- ResponsiveVoice Natural Speech Engine CDN & API Initialization -->
-  <script src="https://cdn.responsivevoice.org/sdk/latest/responsivevoice.js"></script>
-  <script>
-    responsiveVoice.init({
-      "apiKey": "UWC9OTNL"
-    });
-  </script>
 </head>
 <body>
 
   <header>
     <h1><i class="fa-solid fa-anchor"></i> Naval Command</h1>
-    <p>Tactical Battleship & Fleet Operations</p>
+    <p>Tactical Fleet Operations</p>
   </header>
 
   <main class="main-container">
@@ -67,38 +59,6 @@
             <option value="enabled" selected>Enabled (Radar, Multi-Shot, Clone)</option>
             <option value="disabled">Disabled (Classic Rules)</option>
           </select>
-        </div>
-
-        <!-- Voice Announcer Panel -->
-        <div class="announcer-panel">
-          <h3><i class="fa-solid fa-bullhorn"></i> Tactical Voice Announcer</h3>
-          
-          <div class="setup-group">
-            <label><i class="fa-solid fa-volume-high"></i> Voice Announcer:</label>
-            <select id="voice-enable-toggle" onchange="updateAnnouncerSettings()">
-              <option value="enabled" selected>Enabled</option>
-              <option value="disabled">Muted / Disabled</option>
-            </select>
-          </div>
-
-          <div class="setup-group">
-            <label><i class="fa-solid fa-sliders"></i> Announcer Volume:</label>
-            <input type="range" id="voice-volume-slider" min="0" max="1" step="0.1" value="0.9" oninput="updateAnnouncerSettings()">
-            <span id="voice-volume-label">90%</span>
-          </div>
-
-          <div class="setup-group">
-            <label><i class="fa-solid fa-microphone-lines"></i> Natural Voice Profile:</label>
-            <select id="voice-select" onchange="updateAnnouncerSettings()">
-              <!-- Populated dynamically -->
-            </select>
-          </div>
-
-          <div class="setup-group">
-            <button class="btn btn-secondary" onclick="testAnnouncerVoice()">
-              <i class="fa-solid fa-circle-play"></i> Test Voice Sample
-            </button>
-          </div>
         </div>
 
         <div class="placement-area">
@@ -215,78 +175,6 @@
 
   <script>
     /* ==========================================================================
-       RESPONSIVEVOICE & FALLBACK SPEECH ENGINE
-       ========================================================================== */
-    let announcerEnabled = true;
-    let announcerVolume = 0.9;
-    let activeVoiceProfile = 'US English Female';
-
-    const VOICE_PROFILES = [
-      { id: 'US English Female', label: '⭐ US English Natural - Commander [Female]' },
-      { id: 'US English Male', label: '⭐ US English Natural - Tactical [Male]' },
-      { id: 'UK English Female', label: '⭐ UK English Natural - Officer [Female]' },
-      { id: 'UK English Male', label: '⭐ UK English Natural - Captain [Male]' },
-      { id: 'Spanish Female', label: '⭐ Spanish Natural - Commandante [Female]' },
-      { id: 'Spanish Latin American Male', label: '⭐ Spanish Natural - Almirante [Male]' },
-      { id: 'Japanese Female', label: '⭐ Japanese Natural - Operator [Female]' },
-      { id: 'Japanese Male', label: '⭐ Japanese Natural - Commander [Male]' }
-    ];
-
-    const NATO_PHONETIC = {
-      'A': 'Alpha', 'B': 'Bravo', 'C': 'Charlie', 'D': 'Delta', 'E': 'Echo',
-      'F': 'Foxtrot', 'G': 'Golf', 'H': 'Hotel', 'I': 'India', 'J': 'Juliet'
-    };
-
-    function populateVoiceList() {
-      const voiceSelect = document.getElementById('voice-select');
-      if (!voiceSelect) return;
-      voiceSelect.innerHTML = '';
-
-      VOICE_PROFILES.forEach(profile => {
-        const option = document.createElement('option');
-        option.value = profile.id;
-        option.textContent = profile.label;
-        voiceSelect.appendChild(option);
-      });
-
-      updateAnnouncerSettings();
-    }
-
-    function updateAnnouncerSettings() {
-      announcerEnabled = document.getElementById('voice-enable-toggle').value === 'enabled';
-      announcerVolume = parseFloat(document.getElementById('voice-volume-slider').value);
-      document.getElementById('voice-volume-label').innerText = `${Math.round(announcerVolume * 100)}%`;
-      activeVoiceProfile = document.getElementById('voice-select').value || 'US English Female';
-    }
-
-    function announceText(text, pitchMultiplier = 1.0, rateMultiplier = 0.95) {
-      if (!announcerEnabled) return;
-
-      // Primary: ResponsiveVoice SDK
-      if (window.responsiveVoice && typeof window.responsiveVoice.speak === 'function') {
-        window.responsiveVoice.cancel();
-        window.responsiveVoice.speak(text, activeVoiceProfile, {
-          volume: announcerVolume,
-          pitch: pitchMultiplier,
-          rate: rateMultiplier
-        });
-      } 
-      // Fallback: Browser Native Web Speech API
-      else if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.volume = announcerVolume;
-        utterance.pitch = pitchMultiplier;
-        utterance.rate = rateMultiplier;
-        window.speechSynthesis.speak(utterance);
-      }
-    }
-
-    function testAnnouncerVoice() {
-      announceText("Tactical voice system online. All fleet systems operational.", 1.0, 0.95);
-    }
-
-    /* ==========================================================================
        BATTLESHIP LOGIC
        ========================================================================== */
     const BS_SIZE = 10;
@@ -317,18 +205,12 @@
     let enemy3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
 
     document.addEventListener('DOMContentLoaded', () => {
-      populateVoiceList();
       initBsPlacementGrid();
       renderBsDock();
     });
 
     function getCoordString(r, c) {
       return `${ROW_LABELS[r]}-${c + 1}`;
-    }
-
-    function getSpokenCoordString(r, c) {
-      const rowName = NATO_PHONETIC[ROW_LABELS[r]] || ROW_LABELS[r];
-      return `${rowName}, ${c + 1}`;
     }
 
     function toggleBsDifficulty() {
@@ -476,8 +358,6 @@
         bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false });
         bsPlacedCount++;
 
-        announceText(`${ship.name} deployed.`, 1.0, 1.1);
-
         const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
         if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
 
@@ -485,7 +365,6 @@
         if (bsPlacedCount === BS_SHIPS.length) {
           document.getElementById('bs-start-btn').disabled = false;
           document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
-          announceText("All fleet vessels positioned. Ready for battle.", 1.0, 1.0);
         }
       }
     }
@@ -552,7 +431,6 @@
       renderBsDock();
       document.getElementById('bs-start-btn').disabled = false;
       document.getElementById('bs-instruction').innerText = "Fleet automated successfully! Ready to engage.";
-      announceText("Fleet automated successfully. Tactical grid locked.", 1.0, 1.0);
     }
 
     /* ------------------- 3D ORTHOGRAPHIC ENGINE ------------------- */
@@ -776,8 +654,6 @@
         bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, mesh: shipMesh });
         bsPlacedCount++;
 
-        announceText(`${ship.name} deployed.`, 1.0, 1.1);
-
         const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
         if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
 
@@ -785,7 +661,6 @@
         if (bsPlacedCount === BS_SHIPS.length) {
           document.getElementById('bs-start-btn').disabled = false;
           document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
-          announceText("All fleet vessels positioned. Ready for battle.", 1.0, 1.0);
         }
       }
     }
@@ -828,8 +703,6 @@
       document.getElementById('bs-combat').classList.remove('hidden');
 
       document.getElementById('bs-powerups-bar').style.display = bsPowerUpsEnabled ? 'flex' : 'none';
-
-      announceText("Battle initialized. Select target coordinates.", 1.05, 1.0);
 
       if (bsViewMode === '3d') {
         document.getElementById('bs-2d-boards').classList.add('hidden');
@@ -884,7 +757,6 @@
       }
 
       const coordStr = getCoordString(r, c);
-      const spokenCoord = getSpokenCoordString(r, c);
 
       if (bsViewMode === '3d') {
         if (enemy3D.gridTiles[r][c].userData.attacked) return;
@@ -923,8 +795,6 @@
         document.getElementById('bs-status').innerText = enemyDetected 
           ? `RADAR SCAN: Enemy contacts detected in sector around ${coordStr}!` 
           : `RADAR SCAN: Sector around ${coordStr} is clear.`;
-
-        announceText(enemyDetected ? `Radar scan detected contacts near ${spokenCoord}!` : `Radar scan clear near ${spokenCoord}.`, 1.0, 1.05);
         return;
       }
 
@@ -961,7 +831,6 @@
     function fireSingleShot(r, c) {
       bsShots++;
       const coordStr = getCoordString(r, c);
-      const spokenCoord = getSpokenCoordString(r, c);
 
       if (bsViewMode === '3d') {
         const tile = enemy3D.gridTiles[r][c];
@@ -972,13 +841,11 @@
           bsHits++;
           bsScore += 100;
           document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
-          announceText(`Direct hit at ${spokenCoord}!`, 1.15, 1.05);
           checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
         } else {
           tile.material.color.setHex(0x6c757d);
           bsScore = Math.max(0, bsScore - 10);
           document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
-          announceText(`Miss at ${spokenCoord}.`, 0.95, 1.1);
         }
       } else {
         const cell = document.querySelector(`#bs-enemy-board .cell[data-row="${r}"][data-col="${c}"]`);
@@ -989,7 +856,6 @@
           bsHits++;
           bsScore += 100;
           document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
-          announceText(`Direct hit at ${spokenCoord}!`, 1.15, 1.05);
           checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
         } else {
           cell.classList.remove('scanned');
@@ -997,7 +863,6 @@
           cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
           bsScore = Math.max(0, bsScore - 10);
           document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
-          announceText(`Miss at ${spokenCoord}.`, 0.95, 1.1);
         }
       }
       updateBsDashboard();
@@ -1020,7 +885,6 @@
       }
 
       const coordStr = getCoordString(r, c);
-      const spokenCoord = getSpokenCoordString(r, c);
 
       if (bsViewMode === '3d') {
         const tile = player3D.gridTiles[r][c];
@@ -1029,7 +893,6 @@
         if (bsPlayerGrid[r][c] === 1) {
           tile.material.color.setHex(0xe63946);
           document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
-          announceText(`Warning! Enemy hit your ship at ${spokenCoord}!`, 0.9, 1.0);
 
           const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
           adjs.forEach(a => {
@@ -1042,7 +905,6 @@
         } else {
           tile.material.color.setHex(0x6c757d);
           document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
-          announceText(`Enemy missed at ${spokenCoord}.`, 1.0, 1.1);
         }
       } else {
         const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
@@ -1050,7 +912,6 @@
           pCell.classList.add('hit');
           pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
           document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
-          announceText(`Warning! Enemy hit your ship at ${spokenCoord}!`, 0.9, 1.0);
 
           const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
           adjs.forEach(a => {
@@ -1064,7 +925,6 @@
           pCell.classList.add('miss');
           pCell.innerHTML = '<i class="fa-solid fa-circle"></i>';
           document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
-          announceText(`Enemy missed at ${spokenCoord}.`, 1.0, 1.1);
         }
       }
 
@@ -1091,7 +951,6 @@
         }
         activePowerUp = 'radar';
         document.getElementById('bs-status').innerText = "RADAR ACTIVE: Click grid coordinate (A1–J10) to scan 3x3 sector.";
-        announceText("Radar Scan activated.", 1.1, 1.0);
       } 
       else if (type === 'multishot') {
         if (bsScore < 700) {
@@ -1103,7 +962,6 @@
         bsScore -= 700;
         updateBsDashboard();
         document.getElementById('bs-status').innerText = "MULTI-SHOT ACTIVATED! Click 3 targets on grid.";
-        announceText("Multi shot authorized! Three strikes ready.", 1.2, 1.05);
       }
       else if (type === 'clone') {
         if (bsScore < 1000) {
@@ -1144,7 +1002,6 @@
       closeCloneModal();
       activePowerUp = 'clone';
       document.getElementById('bs-status').innerText = `CLONE READY: Click on fleet grid to deploy duplicate ${ship.name}.`;
-      announceText(`Select position to duplicate ${ship.name}.`, 1.0, 1.0);
     }
 
     function handlePlayerBoardClick(eOrR, colVal) {
@@ -1195,7 +1052,6 @@
         shipToClone = null;
         updateBsDashboard();
         document.getElementById('bs-status').innerText = "CLONE SUCCESSFUL! Duplicate warship deployed to grid.";
-        announceText("Vessel successfully cloned.", 1.1, 1.05);
       } else {
         document.getElementById('bs-status').innerText = "Invalid placement location for vessel clone!";
       }
@@ -1225,10 +1081,8 @@
             }
 
             document.getElementById('bs-status').innerText = `BOOM! You sunk the enemy ${ship.name}!`;
-            announceText(`Boom! You destroyed the enemy ${ship.name}!`, 1.2, 1.0);
           } else {
             document.getElementById('bs-status').innerText = `ALERT! Computer destroyed your ${ship.name}!`;
-            announceText(`Alert! Your ${ship.name} has been destroyed!`, 0.85, 1.0);
           }
         }
       });
@@ -1239,12 +1093,6 @@
         bsGameOver = true;
         const statusMsg = attacker === 'PLAYER' ? `VICTORY! All enemy ships eliminated! Score: ${bsScore}` : `DEFEAT! Your fleet was wiped out!`;
         document.getElementById('bs-status').innerText = statusMsg;
-
-        if (attacker === 'PLAYER') {
-          announceText(`Victory! All enemy naval forces eliminated! Final score: ${bsScore}`, 1.2, 1.0);
-        } else {
-          announceText("Defeat! Your fleet has been destroyed.", 0.8, 0.95);
-        }
         return true;
       }
       return false;

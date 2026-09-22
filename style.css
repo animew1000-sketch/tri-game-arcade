@@ -148,30 +148,6 @@ header p {
   font-size: 1.1rem;
 }
 
-/* Announcer Panel */
-.announcer-panel {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 15px;
-  margin: 15px 0 20px 0;
-}
-
-.announcer-panel h3 {
-  font-size: 1rem;
-  color: var(--accent-blue);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.announcer-panel input[type="range"] {
-  flex: 1;
-  accent-color: var(--border-color);
-  cursor: pointer;
-}
-
 /* Battleship Layout */
 .setup-group {
   display: flex;
@@ -290,7 +266,6 @@ header p {
   color: var(--accent-blue);
 }
 
-/* 2D Board with A-J & 1-10 Labels */
 .grid-container-with-labels {
   display: flex;
   flex-direction: column;
@@ -351,7 +326,6 @@ header p {
 .cell.miss { background-color: rgba(108, 117, 125, 0.3); color: var(--miss-color); }
 .cell.scanned { background-color: rgba(233, 196, 106, 0.3); border: 1px dashed #e9c46a; }
 
-/* 3D Viewport Frame */
 .canvas-container {
   width: 400px;
   height: 380px;
