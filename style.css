@@ -632,6 +632,13 @@ header p {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
+.menu-game-switcher {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
 /* Vertical Side HUD Pinned to Right Margin */
 .rhythm-side-hud {
   position: fixed;
@@ -771,13 +778,14 @@ header p {
   z-index: 1;
 }
 
+/* 4-Lane Rhythm Container */
 .rhythm-track-container-full {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 700px;
+  max-width: 600px;
   height: 100%;
   display: flex;
   z-index: 2;
@@ -814,10 +822,11 @@ header p {
   z-index: 2;
 }
 
+/* 4-Lane Notes */
 .rhythm-note {
   position: absolute;
-  width: 140px;
-  height: 26px;
+  width: 100px;
+  height: 24px;
   background: var(--accent-blue);
   border-radius: 6px;
   box-shadow: 0 0 15px var(--accent-blue);
@@ -856,10 +865,10 @@ header p {
   width: 100%;
 }
 
-.keybind-mapper-grid-2lane {
+.keybind-mapper-grid-4lane {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px;
   width: 100%;
   margin-top: 10px;
 }
@@ -868,7 +877,7 @@ header p {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-color);
-  padding: 14px;
+  padding: 12px;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;

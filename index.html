@@ -251,6 +251,16 @@
 
       <div class="sub-panel rhythm-panel-overlay" id="rhythm-hud">
         <h2><i class="fa-solid fa-gamepad"></i> Rhythm Command: Full Window Arcade</h2>
+
+        <!-- Direct Game Switcher Inside Menu Bar -->
+        <div class="menu-game-switcher">
+          <button class="btn btn-secondary" onclick="switchGame('battleship')">
+            <i class="fa-solid fa-ship"></i> Battleship
+          </button>
+          <button class="btn btn-secondary" onclick="switchGame('clicker')">
+            <i class="fa-solid fa-burst"></i> Ammo Depot
+          </button>
+        </div>
         
         <div class="rhythm-config-bar">
           <input type="text" id="player-name-input" placeholder="Pilot Name" value="Player 1">
@@ -265,7 +275,7 @@
           </select>
 
           <select id="control-mode-select" onchange="switchControlMode()">
-            <option value="keyboard" selected>🎮 Mode: Keyboard</option>
+            <option value="keyboard" selected>🎮 Mode: Keyboard (4-Lanes: A-S-K-L)</option>
             <option value="controller">🕹️ Mode: Controller (LT/RT)</option>
           </select>
 
@@ -328,18 +338,24 @@
         </div>
       </div>
 
-      <!-- Full Window Full-Screen Stage Backdrop & Lanes -->
+      <!-- Full Window Full-Screen Stage Backdrop & 4 Lanes -->
       <div id="full-viewport-rhythm-stage" class="viewport-stage auto-res">
         <div class="yt-background-player-full">
           <div id="yt-player"></div>
         </div>
 
-        <div class="rhythm-track-container-full">
+        <div class="rhythm-track-container-full" id="rhythm-track-container">
           <div class="rhythm-lane-full" id="lane-0">
             <span class="lane-key" id="key-label-0">A</span>
           </div>
           <div class="rhythm-lane-full" id="lane-1">
-            <span class="lane-key" id="key-label-1">D</span>
+            <span class="lane-key" id="key-label-1">S</span>
+          </div>
+          <div class="rhythm-lane-full" id="lane-2">
+            <span class="lane-key" id="key-label-2">K</span>
+          </div>
+          <div class="rhythm-lane-full" id="lane-3">
+            <span class="lane-key" id="key-label-3">L</span>
           </div>
           <div class="rhythm-hit-line-full"></div>
         </div>
@@ -358,22 +374,24 @@
 
         <div id="mapper-sec-keyboard" class="mapper-section">
           <p>Click slot and press key on keyboard:</p>
-          <div class="keybind-mapper-grid-2lane">
-            <button class="keybind-slot" id="kb-bind-0" onclick="startRebindingKey(0)">Left Lane: <span id="kb-val-0">A</span></button>
-            <button class="keybind-slot" id="kb-bind-1" onclick="startRebindingKey(1)">Right Lane: <span id="kb-val-1">D</span></button>
+          <div class="keybind-mapper-grid-4lane">
+            <button class="keybind-slot" id="kb-bind-0" onclick="startRebindingKey(0)">Lane 1: <span id="kb-val-0">A</span></button>
+            <button class="keybind-slot" id="kb-bind-1" onclick="startRebindingKey(1)">Lane 2: <span id="kb-val-1">S</span></button>
+            <button class="keybind-slot" id="kb-bind-2" onclick="startRebindingKey(2)">Lane 3: <span id="kb-val-2">K</span></button>
+            <button class="keybind-slot" id="kb-bind-3" onclick="startRebindingKey(3)">Lane 4: <span id="kb-val-3">L</span></button>
           </div>
           
           <p style="margin-top: 15px;">Menu Toggle Keybind:</p>
-          <div class="keybind-mapper-grid-2lane" style="grid-template-columns: 1fr;">
+          <div class="keybind-mapper-grid-4lane" style="grid-template-columns: 1fr;">
             <button class="keybind-slot" id="kb-bind-menu" onclick="startRebindingMenuKey()">Toggle Menu Key: <span id="kb-val-menu">TAB</span></button>
           </div>
         </div>
 
         <div id="mapper-sec-controller" class="mapper-section hidden">
           <p>Triggers set for Xbox, PlayStation, Switch Pro:</p>
-          <div class="keybind-mapper-grid-2lane">
-            <div class="controller-info-box">Left Lane: <strong>Left Trigger (LT / L2)</strong></div>
-            <div class="controller-info-box">Right Lane: <strong>Right Trigger (RT / R2)</strong></div>
+          <div class="keybind-mapper-grid-4lane">
+            <div class="controller-info-box">Lane 1 & 2: <strong>Left Trigger (LT / L2)</strong></div>
+            <div class="controller-info-box">Lane 3 & 4: <strong>Right Trigger (RT / R2)</strong></div>
           </div>
         </div>
 
@@ -1577,7 +1595,7 @@
     }
 
     /* ==========================================================================
-       UNBEATABLE RHYTHM LOGIC (SIDE HUD STATS ON MENU HIDE)
+       4-LANE RHYTHM LOGIC (PERFECT HIT TIMING & INSTANT HIT FEEDBACK)
        ========================================================================== */
     let ytPlayer = null;
     let currentVideoId = 'dQw4w9WgXcQ';
@@ -1595,8 +1613,9 @@
 
     let currentInputMode = 'keyboard';
 
-    let kbMap = { 'a': 0, 'd': 1 };
-    let kbLabels = ['A', 'D'];
+    // 4 Lanes Default: A, S, K, L
+    let kbMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
+    let kbLabels = ['A', 'S', 'K', 'L'];
     let menuToggleKey = 'tab';
     let menuToggleLabel = 'TAB';
     let currentlyRebindingLane = null;
@@ -1656,13 +1675,16 @@
 
     function updateControlLabels() {
       if (currentInputMode === 'keyboard') {
-        document.getElementById('key-label-0').innerText = kbLabels[0];
-        document.getElementById('key-label-1').innerText = kbLabels[1];
-        document.getElementById('rhythm-status').innerText = `Keyboard Active: Lane [${kbLabels[0]}], Lane [${kbLabels[1]}], Menu [${menuToggleLabel}].`;
+        for (let i = 0; i < 4; i++) {
+          document.getElementById(`key-label-${i}`).innerText = kbLabels[i];
+        }
+        document.getElementById('rhythm-status').innerText = `4-Lane Active: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}]. Menu: [${menuToggleLabel}].`;
       } else {
         document.getElementById('key-label-0').innerText = 'LT';
-        document.getElementById('key-label-1').innerText = 'RT';
-        document.getElementById('rhythm-status').innerText = `Controller Active: LT / RT Triggers, Menu [${menuToggleLabel}].`;
+        document.getElementById('key-label-1').innerText = 'LT';
+        document.getElementById('key-label-2').innerText = 'RT';
+        document.getElementById('key-label-3').innerText = 'RT';
+        document.getElementById('rhythm-status').innerText = `Controller Mode: LT / RT Triggers. Menu: [${menuToggleLabel}].`;
       }
       document.getElementById('menu-key-label').innerText = menuToggleLabel;
     }
@@ -1676,8 +1698,14 @@
             const ltPressed = gp.buttons[6] && gp.buttons[6].pressed;
             const rtPressed = gp.buttons[7] && gp.buttons[7].pressed;
 
-            if (ltPressed && !prevGamepadState[0]) triggerLaneInput(0);
-            if (rtPressed && !prevGamepadState[1]) triggerLaneInput(1);
+            if (ltPressed && !prevGamepadState[0]) {
+              triggerLaneInput(0);
+              triggerLaneInput(1);
+            }
+            if (rtPressed && !prevGamepadState[1]) {
+              triggerLaneInput(2);
+              triggerLaneInput(3);
+            }
 
             prevGamepadState[0] = ltPressed;
             prevGamepadState[1] = rtPressed;
@@ -1813,18 +1841,19 @@
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
     }
 
-    function check2LaneBeatPeak(currentTime) {
-      let minInterval = 0.4;
-      if (activeDifficulty === 'easy') minInterval = 0.6;
-      if (activeDifficulty === 'hard') minInterval = 0.25;
+    function check4LaneBeatPeak(currentTime) {
+      let minInterval = 0.35;
+      if (activeDifficulty === 'easy') minInterval = 0.55;
+      if (activeDifficulty === 'hard') minInterval = 0.20;
 
       if (currentTime - lastBeatTime >= minInterval) {
-        const lane = Math.floor(Math.random() * 2);
+        const lane = Math.floor(Math.random() * 4); // 4 Random Lanes
         lastBeatTime = currentTime;
 
+        // Lead time of 1.25 seconds for snappy, zero-lag scrolling
         rhythmNotes.push({
           id: Math.random().toString(36).substr(2, 9),
-          time: currentTime + 1.8,
+          time: currentTime + 1.25,
           lane: lane,
           hit: false,
           element: null
@@ -1839,17 +1868,17 @@
 
       function loop() {
         if (!rhythmPlaying) return;
-        
+
         const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
         const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'hard' ? 320 : 250;
+        const scrollSpeed = activeDifficulty === 'hard' ? 480 : 400; // Calibrated speed
 
-        check2LaneBeatPeak(currentTime);
+        check4LaneBeatPeak(currentTime);
 
         rhythmNotes.forEach(note => {
           const timeDiff = note.time - currentTime;
 
-          if (timeDiff <= 1.8 && timeDiff >= -0.3 && !note.hit) {
+          if (timeDiff <= 1.25 && timeDiff >= -0.25 && !note.hit) {
             if (!note.element) {
               const el = document.createElement('div');
               el.className = `rhythm-note lane-${note.lane}`;
@@ -1857,14 +1886,16 @@
               note.element = el;
             }
 
-            const topPos = (stageHeight - 120) - (timeDiff * scrollSpeed);
+            // High-precision positional alignment relative to 80px hit line
+            const topPos = (stageHeight - 105) - (timeDiff * scrollSpeed);
             note.element.style.top = `${topPos}px`;
 
-            if (timeDiff < -0.18 && !note.hit) {
+            // Auto Miss Window
+            if (timeDiff < -0.15 && !note.hit) {
               note.hit = true;
               if (note.element) {
                 note.element.classList.add('missed');
-                setTimeout(() => note.element && note.element.remove(), 150);
+                setTimeout(() => note.element && note.element.remove(), 100);
               }
               registerJudgement('MISS');
             }
@@ -1919,10 +1950,11 @@
 
       const laneEl = document.getElementById(`lane-${laneIdx}`);
       laneEl.classList.add('pressed');
-      setTimeout(() => laneEl.classList.remove('pressed'), 100);
+      setTimeout(() => laneEl.classList.remove('pressed'), 80);
 
+      // Tightened 0.22s hit window for zero delay on keypress
       const candidates = rhythmNotes
-        .filter(n => n.lane === laneIdx && !n.hit && Math.abs(n.time - currentTime) <= 0.35)
+        .filter(n => n.lane === laneIdx && !n.hit && Math.abs(n.time - currentTime) <= 0.22)
         .sort((a, b) => Math.abs(a.time - currentTime) - Math.abs(b.time - currentTime));
 
       if (candidates.length > 0) {
@@ -1935,7 +1967,7 @@
           targetNote.element = null;
         }
 
-        if (diff <= 0.12) {
+        if (diff <= 0.08) {
           registerJudgement('PERFECT');
         } else {
           registerJudgement('GREAT');
