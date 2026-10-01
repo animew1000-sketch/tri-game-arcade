@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naval Command - Tactical Battleship</title>
+  <title>Naval Command - Tactical Arcade & Rhythm Station</title>
   
   <!-- Navy Anchor SVG Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M256 0c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64zm0 96c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zM288 160h-64c-17.7 0-32 14.3-32 32v32H96c-17.7 0-32 14.3-32 32s14.3 32 32 32h96v76.8C108.9 374.9 32 411.3 32 448c0 35.3 86 64 224 64s224-28.7 224-64c0-36.7-76.9-73.1-160-83.2V256h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H320v-32c0-17.7-14.3-32-32-32zm-32 288c-106 0-160-19.8-160-32 0-8.8 30.6-22.1 96-28.5V416c0 17.7 14.3 32 32 32s32-14.3 32-32v-28.5c65.4 6.4 96 19.7 96 28.5 0 12.2-54 32-160 32z'/></svg>">
@@ -16,10 +16,26 @@
 </head>
 <body>
 
-  <header>
+  <!-- Missile Rain Canvas Background -->
+  <canvas id="missile-bg-canvas"></canvas>
+
+  <header id="main-header">
     <h1><i class="fa-solid fa-anchor"></i> Naval Command</h1>
-    <p>Tactical Fleet Operations</p>
+    <p>Tactical Operations & Audio-Visual Command Center</p>
   </header>
+
+  <!-- Navigation -->
+  <nav class="game-nav" id="main-nav">
+    <button class="nav-btn active" id="nav-battleship" onclick="switchGame('battleship')">
+      <i class="fa-solid fa-ship"></i> Battleship
+    </button>
+    <button class="nav-btn" id="nav-clicker" onclick="switchGame('clicker')">
+      <i class="fa-solid fa-burst"></i> Ammo Depot
+    </button>
+    <button class="nav-btn" id="nav-rhythm" onclick="switchGame('rhythm')">
+      <i class="fa-solid fa-music"></i> Rhythm Command
+    </button>
+  </nav>
 
   <main class="main-container">
 
@@ -171,9 +187,300 @@
       </div>
     </div>
 
+    <!-- ==================== AMMO DEPOT CLICKER ==================== -->
+    <section id="game-clicker" class="game-panel hidden">
+      <div class="sub-panel clicker-layout">
+        
+        <div class="clicker-left">
+          <h2><i class="fa-solid fa-cubes-stacked"></i> Naval Ammo Depot</h2>
+          <div class="clicker-score-display">
+            <div class="ammo-count" id="clicker-count">0 Shells</div>
+            <div class="ammo-rate" id="clicker-rate">0 per sec</div>
+            <div class="rebirth-stat" id="rebirth-multiplier">Production Multiplier: 1x</div>
+          </div>
+
+          <div class="main-click-container">
+            <button class="main-click-btn" id="main-click-btn" onclick="handleAmmoClick(event)">
+              <i class="fa-solid fa-burst"></i>
+            </button>
+          </div>
+
+          <div class="rebirth-card">
+            <h3><i class="fa-solid fa-arrows-spin"></i> Naval Rebirth</h3>
+            <p>Reset facility upgrades to gain permanent +100% shell production per Rebirth tier!</p>
+            <button class="btn btn-rebirth" id="rebirth-btn" onclick="triggerRebirth()" disabled>
+              Rebirth (1,000,000 Shells Required)
+            </button>
+          </div>
+        </div>
+
+        <div class="clicker-right">
+          <h3><i class="fa-solid fa-store"></i> Facility Upgrades</h3>
+          <div class="upgrades-list" id="clicker-upgrades"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== YOUTUBE RHYTHM GAME ==================== -->
+    <section id="game-rhythm" class="game-panel hidden">
+      
+      <!-- Overlay Menu Toggle Hint -->
+      <div class="menu-hint-banner" id="menu-hint">
+        <i class="fa-solid fa-eye"></i> Press [<span id="menu-key-label">TAB</span>] to show/hide menu
+      </div>
+
+      <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
+      <div class="rhythm-side-hud hidden" id="side-hud">
+        <div class="side-stat-card">
+          <i class="fa-solid fa-trophy"></i>
+          <div class="label">Score</div>
+          <div class="value" id="side-rhythm-score">0</div>
+        </div>
+        <div class="side-stat-card">
+          <i class="fa-solid fa-fire"></i>
+          <div class="label">Streak</div>
+          <div class="value" id="side-rhythm-combo">0x</div>
+        </div>
+        <div class="side-stat-card">
+          <i class="fa-solid fa-bullseye"></i>
+          <div class="label">Hit</div>
+          <div class="value" id="side-rhythm-judgement">-</div>
+        </div>
+      </div>
+
+      <div class="sub-panel rhythm-panel-overlay" id="rhythm-hud">
+        <h2><i class="fa-solid fa-gamepad"></i> Rhythm Command: Full Window Arcade</h2>
+        
+        <div class="rhythm-config-bar">
+          <input type="text" id="player-name-input" placeholder="Pilot Name" value="Player 1">
+          <input type="text" id="yt-url-input" placeholder="YouTube Video URL or ID" value="dQw4w9WgXcQ">
+          
+          <select id="res-selector" onchange="changeScreenResolution()">
+            <option value="auto" selected>🖥️ Res: Full Window (Auto)</option>
+            <option value="1920x1080">📺 Res: 1080p (1920x1080)</option>
+            <option value="1280x720">💻 Res: 720p (1280x720)</option>
+            <option value="2560x1440">🖥️ Res: 2K (2560x1440)</option>
+            <option value="3840x2160">📺 Res: 4K UHD (3840x2160)</option>
+          </select>
+
+          <select id="control-mode-select" onchange="switchControlMode()">
+            <option value="keyboard" selected>🎮 Mode: Keyboard</option>
+            <option value="controller">🕹️ Mode: Controller (LT/RT)</option>
+          </select>
+
+          <select id="rhythm-diff-select">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+
+          <button class="btn" onclick="loadYouTubeRhythmSong()">
+            <i class="fa-solid fa-play"></i> Convert & Play
+          </button>
+          
+          <button class="btn btn-secondary" onclick="openKeybindModal()">
+            <i class="fa-solid fa-sliders"></i> Controls
+          </button>
+
+          <button class="btn btn-secondary" onclick="openLeaderboardModal()">
+            <i class="fa-solid fa-list-ol"></i> Scoreboard
+          </button>
+        </div>
+
+        <!-- Playback Control Toolbar -->
+        <div class="rhythm-playback-toolbar">
+          <button class="btn btn-playback" id="rhythm-play-btn" onclick="togglePlayPauseRhythm()">
+            <i class="fa-solid fa-play"></i> Start Track
+          </button>
+          <button class="btn btn-playback btn-stop" id="rhythm-stop-btn" onclick="stopRhythmGameAndSaveScore()">
+            <i class="fa-solid fa-stop"></i> Stop & Record Score
+          </button>
+        </div>
+
+        <!-- Rhythm Stats Dashboard -->
+        <div class="dashboard rhythm-stats">
+          <div class="stat-card">
+            <i class="fa-solid fa-trophy"></i>
+            <div class="stat-info">
+              <div class="label">Score</div>
+              <div class="value" id="rhythm-score">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-fire"></i>
+            <div class="stat-info">
+              <div class="label">Streak Combo</div>
+              <div class="value" id="rhythm-combo">0x</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-bullseye"></i>
+            <div class="stat-info">
+              <div class="label">Judgement</div>
+              <div class="value" id="rhythm-judgement">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="status-msg" id="rhythm-status">Ready to load track.</div>
+        </div>
+      </div>
+
+      <!-- Full Window Full-Screen Stage Backdrop & Lanes -->
+      <div id="full-viewport-rhythm-stage" class="viewport-stage auto-res">
+        <div class="yt-background-player-full">
+          <div id="yt-player"></div>
+        </div>
+
+        <div class="rhythm-track-container-full">
+          <div class="rhythm-lane-full" id="lane-0">
+            <span class="lane-key" id="key-label-0">A</span>
+          </div>
+          <div class="rhythm-lane-full" id="lane-1">
+            <span class="lane-key" id="key-label-1">D</span>
+          </div>
+          <div class="rhythm-hit-line-full"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal for Custom Controls -->
+    <div id="keybind-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h3><i class="fa-solid fa-gamepad"></i> Control Scheme Mapper</h3>
+        
+        <div class="mapper-tabs">
+          <button class="tab-btn active" id="tab-keyboard" onclick="switchMapperTab('keyboard')">Keyboard Mapping</button>
+          <button class="tab-btn" id="tab-controller" onclick="switchMapperTab('controller')">Controller Triggers</button>
+        </div>
+
+        <div id="mapper-sec-keyboard" class="mapper-section">
+          <p>Click slot and press key on keyboard:</p>
+          <div class="keybind-mapper-grid-2lane">
+            <button class="keybind-slot" id="kb-bind-0" onclick="startRebindingKey(0)">Left Lane: <span id="kb-val-0">A</span></button>
+            <button class="keybind-slot" id="kb-bind-1" onclick="startRebindingKey(1)">Right Lane: <span id="kb-val-1">D</span></button>
+          </div>
+          
+          <p style="margin-top: 15px;">Menu Toggle Keybind:</p>
+          <div class="keybind-mapper-grid-2lane" style="grid-template-columns: 1fr;">
+            <button class="keybind-slot" id="kb-bind-menu" onclick="startRebindingMenuKey()">Toggle Menu Key: <span id="kb-val-menu">TAB</span></button>
+          </div>
+        </div>
+
+        <div id="mapper-sec-controller" class="mapper-section hidden">
+          <p>Triggers set for Xbox, PlayStation, Switch Pro:</p>
+          <div class="keybind-mapper-grid-2lane">
+            <div class="controller-info-box">Left Lane: <strong>Left Trigger (LT / L2)</strong></div>
+            <div class="controller-info-box">Right Lane: <strong>Right Trigger (RT / R2)</strong></div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="closeKeybindModal()">Save & Close</button>
+      </div>
+    </div>
+
+    <!-- Modal for Track Scoreboard -->
+    <div id="leaderboard-modal" class="modal-overlay hidden">
+      <div class="modal-content leaderboard-modal-content">
+        <h3><i class="fa-solid fa-trophy"></i> Track Scoreboard & History</h3>
+        <p>High scores tracked per YouTube Video ID:</p>
+        
+        <div class="leaderboard-container" id="leaderboard-list">
+          <div class="empty-msg">No score history recorded for this track yet! Play a round to populate.</div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="closeLeaderboardModal()">Close Scoreboard</button>
+      </div>
+    </div>
+
   </main>
 
   <script>
+    function switchGame(gameName) {
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(`game-${gameName}`).classList.remove('hidden');
+      document.getElementById(`nav-${gameName}`).classList.add('active');
+
+      if (gameName === 'rhythm') {
+        document.getElementById('full-viewport-rhythm-stage').classList.add('active');
+        document.getElementById('main-header').classList.add('header-overlay');
+      } else {
+        document.getElementById('full-viewport-rhythm-stage').classList.remove('active');
+        document.getElementById('main-header').classList.remove('header-overlay');
+        document.getElementById('main-header').classList.remove('menu-hidden');
+        document.getElementById('main-nav').classList.remove('menu-hidden');
+        document.getElementById('rhythm-hud').classList.remove('menu-hidden');
+        document.getElementById('side-hud').classList.add('hidden');
+        if (rhythmPlaying) pauseRhythmGame();
+      }
+    }
+
+    /* ==========================================================================
+       BACKGROUND MISSILE CANVAS ANIMATION
+       ========================================================================== */
+    let bgCanvas, bgCtx;
+    let bgMissiles = [];
+
+    function initMissileBackground() {
+      bgCanvas = document.getElementById('missile-bg-canvas');
+      bgCtx = bgCanvas.getContext('2d');
+      resizeBgCanvas();
+
+      window.addEventListener('resize', resizeBgCanvas);
+
+      for (let i = 0; i < 20; i++) {
+        bgMissiles.push(createMissile(true));
+      }
+
+      requestAnimationFrame(animateBackgroundMissiles);
+    }
+
+    function resizeBgCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+
+    function createMissile(randomY = false) {
+      return {
+        x: Math.random() * bgCanvas.width,
+        y: randomY ? Math.random() * bgCanvas.height : -30,
+        speed: 2 + Math.random() * 3,
+        length: 15 + Math.random() * 15,
+        opacity: 0.15 + Math.random() * 0.35
+      };
+    }
+
+    function animateBackgroundMissiles() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+      bgMissiles.forEach((m, idx) => {
+        m.y += m.speed;
+        m.x += 0.5;
+
+        bgCtx.strokeStyle = `rgba(91, 192, 190, ${m.opacity})`;
+        bgCtx.lineWidth = 2;
+        bgCtx.beginPath();
+        bgCtx.moveTo(m.x, m.y);
+        bgCtx.lineTo(m.x - m.length * 0.3, m.y - m.length);
+        bgCtx.stroke();
+
+        bgCtx.fillStyle = `rgba(230, 57, 70, ${m.opacity + 0.2})`;
+        bgCtx.beginPath();
+        bgCtx.arc(m.x, m.y, 2.5, 0, Math.PI * 2);
+        bgCtx.fill();
+
+        if (m.y > bgCanvas.height + 40) {
+          bgMissiles[idx] = createMissile(false);
+        }
+      });
+
+      requestAnimationFrame(animateBackgroundMissiles);
+    }
+
     /* ==========================================================================
        BATTLESHIP LOGIC
        ========================================================================== */
@@ -205,8 +512,12 @@
     let enemy3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
 
     document.addEventListener('DOMContentLoaded', () => {
+      initMissileBackground();
       initBsPlacementGrid();
       renderBsDock();
+      initClickerGame();
+      initYouTubeAPI();
+      initGamepadSupport();
     });
 
     function getCoordString(r, c) {
@@ -765,7 +1076,6 @@
         if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
       }
 
-      // Radar Power-Up Logic
       if (activePowerUp === 'radar' && bsPowerUpsEnabled) {
         bsScore -= 300;
         activePowerUp = null;
@@ -798,7 +1108,6 @@
         return;
       }
 
-      // Multi-Shot Power-Up Logic
       if (activePowerUp === 'multishot' && bsPowerUpsEnabled) {
         fireSingleShot(r, c);
         multiShotRemaining--;
@@ -1133,6 +1442,673 @@
       renderBsDock();
 
       if (bsViewMode === '3d') init3DPlacementView();
+    }
+
+    /* ==========================================================================
+       AMMO DEPOT CLICKER LOGIC + REBIRTH
+       ========================================================================== */
+    let ammoShells = 0;
+    let baseAmmoPerClick = 1;
+    let baseAmmoPerSec = 0;
+    let rebirthCount = 0;
+    let rebirthMultiplier = 1;
+
+    const REBIRTH_COST = 1000000;
+
+    const INITIAL_UPGRADES = [
+      { id: 'manual_press', name: 'Manual Shell Press', baseCost: 15, cost: 15, cpc: 1, cps: 0, count: 0, icon: 'fa-hand-pointer' },
+      { id: 'armory_loader', name: 'Armory Auto-Loader', baseCost: 100, cost: 100, cpc: 0, cps: 5, count: 0, icon: 'fa-robot' },
+      { id: 'munition_factory', name: 'Munitions Foundry', baseCost: 1100, cost: 1100, cpc: 0, cps: 32, count: 0, icon: 'fa-industry' },
+      { id: 'naval_foundry', name: 'Heavy Artillery Line', baseCost: 12000, cost: 12000, cpc: 0, cps: 260, count: 0, icon: 'fa-gears' },
+      { id: 'quantum_press', name: 'Automated Missile Rig', baseCost: 130000, cost: 130000, cpc: 0, cps: 1400, count: 0, icon: 'fa-rocket' }
+    ];
+
+    let clickerUpgrades = JSON.parse(JSON.stringify(INITIAL_UPGRADES));
+
+    function initClickerGame() {
+      renderClickerUpgrades();
+      setInterval(() => {
+        const totalCps = baseAmmoPerSec * rebirthMultiplier;
+        if (totalCps > 0) {
+          ammoShells += totalCps / 10;
+          updateClickerDisplay();
+        }
+      }, 100);
+    }
+
+    function handleAmmoClick(e) {
+      const added = baseAmmoPerClick * rebirthMultiplier;
+      ammoShells += added;
+      updateClickerDisplay();
+
+      const btn = document.getElementById('main-click-btn');
+      const rect = btn.getBoundingClientRect();
+      const pop = document.createElement('div');
+      pop.className = 'click-particle';
+      pop.innerText = `+${added}`;
+      pop.style.left = `${e.clientX - rect.left}px`;
+      pop.style.top = `${e.clientY - rect.top}px`;
+      btn.appendChild(pop);
+
+      setTimeout(() => pop.remove(), 800);
+    }
+
+    function updateClickerDisplay() {
+      const totalCps = baseAmmoPerSec * rebirthMultiplier;
+      document.getElementById('clicker-count').innerText = `${Math.floor(ammoShells).toLocaleString()} Shells`;
+      document.getElementById('clicker-rate').innerText = `${totalCps.toLocaleString()} per sec`;
+      document.getElementById('rebirth-multiplier').innerText = `Production Multiplier: ${rebirthMultiplier}x (${rebirthCount} Rebirths)`;
+
+      const rebirthBtn = document.getElementById('rebirth-btn');
+      if (ammoShells >= REBIRTH_COST) {
+        rebirthBtn.disabled = false;
+        rebirthBtn.classList.add('ready');
+      } else {
+        rebirthBtn.disabled = true;
+        rebirthBtn.classList.remove('ready');
+      }
+
+      updateUpgradeButtonsState();
+    }
+
+    function renderClickerUpgrades() {
+      const list = document.getElementById('clicker-upgrades');
+      list.innerHTML = '';
+
+      clickerUpgrades.forEach(upg => {
+        const item = document.createElement('div');
+        item.className = 'upgrade-card';
+        item.id = `upg-card-${upg.id}`;
+        item.onclick = () => buyUpgrade(upg.id);
+
+        item.innerHTML = `
+          <div class="upg-icon"><i class="fa-solid ${upg.icon}"></i></div>
+          <div class="upg-info">
+            <div class="upg-name">${upg.name}</div>
+            <div class="upg-cost"><i class="fa-solid fa-cubes-stacked"></i> ${upg.cost.toLocaleString()} Shells</div>
+          </div>
+          <div class="upg-badge" id="upg-badge-${upg.id}">${upg.count}</div>
+        `;
+        list.appendChild(item);
+      });
+
+      updateUpgradeButtonsState();
+    }
+
+    function updateUpgradeButtonsState() {
+      clickerUpgrades.forEach(upg => {
+        const card = document.getElementById(`upg-card-${upg.id}`);
+        if (card) {
+          if (ammoShells >= upg.cost) card.classList.remove('disabled');
+          else card.classList.add('disabled');
+        }
+      });
+    }
+
+    function buyUpgrade(id) {
+      const upg = clickerUpgrades.find(u => u.id === id);
+      if (!upg || ammoShells < upg.cost) return;
+
+      ammoShells -= upg.cost;
+      upg.count++;
+      upg.cost = Math.floor(upg.cost * 1.15);
+
+      baseAmmoPerClick += upg.cpc;
+      baseAmmoPerSec += upg.cps;
+
+      document.getElementById(`upg-badge-${upg.id}`).innerText = upg.count;
+      renderClickerUpgrades();
+      updateClickerDisplay();
+    }
+
+    function triggerRebirth() {
+      if (ammoShells < REBIRTH_COST) return;
+
+      rebirthCount++;
+      rebirthMultiplier = 1 + rebirthCount;
+
+      ammoShells = 0;
+      baseAmmoPerClick = 1;
+      baseAmmoPerSec = 0;
+
+      clickerUpgrades = JSON.parse(JSON.stringify(INITIAL_UPGRADES));
+      renderClickerUpgrades();
+      updateClickerDisplay();
+    }
+
+    /* ==========================================================================
+       UNBEATABLE RHYTHM LOGIC (SIDE HUD STATS ON MENU HIDE)
+       ========================================================================== */
+    let ytPlayer = null;
+    let currentVideoId = 'dQw4w9WgXcQ';
+    let rhythmScore = 0;
+    let rhythmCombo = 0;
+    let maxRhythmCombo = 0;
+    let totalHitsPerfect = 0;
+    let totalHitsGreat = 0;
+    let rhythmNotes = [];
+    let rhythmLoopId = null;
+    let rhythmPlaying = false;
+    let rhythmPaused = false;
+    let isMenuHidden = false;
+    let activeDifficulty = 'medium';
+
+    let currentInputMode = 'keyboard';
+
+    let kbMap = { 'a': 0, 'd': 1 };
+    let kbLabels = ['A', 'D'];
+    let menuToggleKey = 'tab';
+    let menuToggleLabel = 'TAB';
+    let currentlyRebindingLane = null;
+    let isRebindingMenuKey = false;
+
+    let lastBeatTime = 0;
+    let prevGamepadState = [false, false];
+
+    function changeScreenResolution() {
+      const stage = document.getElementById('full-viewport-rhythm-stage');
+      const val = document.getElementById('res-selector').value;
+
+      stage.style.width = '';
+      stage.style.height = '';
+      stage.className = 'viewport-stage active';
+
+      if (val === 'auto') {
+        stage.classList.add('auto-res');
+      } else {
+        const [w, h] = val.split('x');
+        stage.style.width = `${w}px`;
+        stage.style.height = `${h}px`;
+      }
+    }
+
+    function initYouTubeAPI() {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        ytPlayer = new YT.Player('yt-player', {
+          height: '100%',
+          width: '100%',
+          videoId: currentVideoId,
+          host: 'https://www.youtube-nocookie.com',
+          playerVars: { 
+            'playsinline': 1, 
+            'controls': 0,
+            'origin': window.location.origin || 'http://localhost'
+          },
+          events: {
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+          }
+        });
+      };
+
+      window.addEventListener('keydown', handleGlobalKeyPress);
+    }
+
+    function switchControlMode() {
+      currentInputMode = document.getElementById('control-mode-select').value;
+      updateControlLabels();
+    }
+
+    function updateControlLabels() {
+      if (currentInputMode === 'keyboard') {
+        document.getElementById('key-label-0').innerText = kbLabels[0];
+        document.getElementById('key-label-1').innerText = kbLabels[1];
+        document.getElementById('rhythm-status').innerText = `Keyboard Active: Lane [${kbLabels[0]}], Lane [${kbLabels[1]}], Menu [${menuToggleLabel}].`;
+      } else {
+        document.getElementById('key-label-0').innerText = 'LT';
+        document.getElementById('key-label-1').innerText = 'RT';
+        document.getElementById('rhythm-status').innerText = `Controller Active: LT / RT Triggers, Menu [${menuToggleLabel}].`;
+      }
+      document.getElementById('menu-key-label').innerText = menuToggleLabel;
+    }
+
+    function initGamepadSupport() {
+      function pollGamepad() {
+        if (currentInputMode === 'controller') {
+          const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+          if (gamepads[0]) {
+            const gp = gamepads[0];
+            const ltPressed = gp.buttons[6] && gp.buttons[6].pressed;
+            const rtPressed = gp.buttons[7] && gp.buttons[7].pressed;
+
+            if (ltPressed && !prevGamepadState[0]) triggerLaneInput(0);
+            if (rtPressed && !prevGamepadState[1]) triggerLaneInput(1);
+
+            prevGamepadState[0] = ltPressed;
+            prevGamepadState[1] = rtPressed;
+          }
+        }
+        requestAnimationFrame(pollGamepad);
+      }
+      pollGamepad();
+    }
+
+    function parseYouTubeVideoId(urlOrId) {
+      if (!urlOrId) return '';
+      const cleaned = urlOrId.trim();
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = cleaned.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : cleaned;
+    }
+
+    function loadYouTubeRhythmSong() {
+      const rawInput = document.getElementById('yt-url-input').value;
+      const videoId = parseYouTubeVideoId(rawInput);
+      activeDifficulty = document.getElementById('rhythm-diff-select').value;
+
+      if (!videoId || videoId.length !== 11) {
+        document.getElementById('rhythm-status').innerText = "Invalid YouTube URL or Video ID!";
+        return;
+      }
+
+      currentVideoId = videoId;
+
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+        resetRhythmGameState();
+        document.getElementById('rhythm-status').innerText = "Stage initialized. Press Start Track to play!";
+      }
+    }
+
+    function toggleHUDMenu() {
+      isMenuHidden = !isMenuHidden;
+      if (isMenuHidden) {
+        hideHUDMenu();
+      } else {
+        showHUDMenu();
+      }
+    }
+
+    function hideHUDMenu() {
+      isMenuHidden = true;
+      document.getElementById('main-header').classList.add('menu-hidden');
+      document.getElementById('main-nav').classList.add('menu-hidden');
+      document.getElementById('rhythm-hud').classList.add('menu-hidden');
+      document.getElementById('side-hud').classList.remove('hidden');
+    }
+
+    function showHUDMenu() {
+      isMenuHidden = false;
+      document.getElementById('main-header').classList.remove('menu-hidden');
+      document.getElementById('main-nav').classList.remove('menu-hidden');
+      document.getElementById('rhythm-hud').classList.remove('menu-hidden');
+      document.getElementById('side-hud').classList.add('hidden');
+    }
+
+    function togglePlayPauseRhythm() {
+      if (!ytPlayer) return;
+
+      if (!rhythmPlaying) {
+        ytPlayer.playVideo();
+        startRhythmGameLoop();
+        hideHUDMenu();
+        document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i> Pause Track';
+      } else {
+        pauseRhythmGame();
+        ytPlayer.pauseVideo();
+        showHUDMenu();
+        document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Resume Track';
+      }
+    }
+
+    function stopRhythmGameAndSaveScore() {
+      if (ytPlayer && ytPlayer.stopVideo) {
+        ytPlayer.stopVideo();
+      }
+
+      pauseRhythmGame();
+      showHUDMenu();
+
+      if (rhythmScore > 0) {
+        saveScoreToLeaderboard();
+      }
+
+      resetRhythmGameState();
+      document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Start Track';
+      document.getElementById('rhythm-status').innerText = "Track stopped. Score recorded to scoreboard!";
+    }
+
+    function onPlayerError(e) {
+      document.getElementById('rhythm-status').innerText = "Playback Error! YouTube blocked embeds for this video.";
+      showHUDMenu();
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        if (!rhythmPlaying) {
+          startRhythmGameLoop();
+          hideHUDMenu();
+        }
+      } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+        pauseRhythmGame();
+        showHUDMenu();
+        if (event.data === YT.PlayerState.ENDED) {
+          stopRhythmGameAndSaveScore();
+        }
+      }
+    }
+
+    function resetRhythmGameState() {
+      rhythmScore = 0;
+      rhythmCombo = 0;
+      maxRhythmCombo = 0;
+      totalHitsPerfect = 0;
+      totalHitsGreat = 0;
+      rhythmNotes = [];
+      lastBeatTime = 0;
+      
+      document.getElementById('rhythm-score').innerText = '0';
+      document.getElementById('rhythm-combo').innerText = '0x';
+      document.getElementById('rhythm-judgement').innerText = '-';
+
+      document.getElementById('side-rhythm-score').innerText = '0';
+      document.getElementById('side-rhythm-combo').innerText = '0x';
+      document.getElementById('side-rhythm-judgement').innerText = '-';
+
+      document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
+    }
+
+    function check2LaneBeatPeak(currentTime) {
+      let minInterval = 0.4;
+      if (activeDifficulty === 'easy') minInterval = 0.6;
+      if (activeDifficulty === 'hard') minInterval = 0.25;
+
+      if (currentTime - lastBeatTime >= minInterval) {
+        const lane = Math.floor(Math.random() * 2);
+        lastBeatTime = currentTime;
+
+        rhythmNotes.push({
+          id: Math.random().toString(36).substr(2, 9),
+          time: currentTime + 1.8,
+          lane: lane,
+          hit: false,
+          element: null
+        });
+      }
+    }
+
+    function startRhythmGameLoop() {
+      rhythmPlaying = true;
+      rhythmPaused = false;
+      updateControlLabels();
+
+      function loop() {
+        if (!rhythmPlaying) return;
+        
+        const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+        const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
+        const scrollSpeed = activeDifficulty === 'hard' ? 320 : 250;
+
+        check2LaneBeatPeak(currentTime);
+
+        rhythmNotes.forEach(note => {
+          const timeDiff = note.time - currentTime;
+
+          if (timeDiff <= 1.8 && timeDiff >= -0.3 && !note.hit) {
+            if (!note.element) {
+              const el = document.createElement('div');
+              el.className = `rhythm-note lane-${note.lane}`;
+              document.getElementById(`lane-${note.lane}`).appendChild(el);
+              note.element = el;
+            }
+
+            const topPos = (stageHeight - 120) - (timeDiff * scrollSpeed);
+            note.element.style.top = `${topPos}px`;
+
+            if (timeDiff < -0.18 && !note.hit) {
+              note.hit = true;
+              if (note.element) {
+                note.element.classList.add('missed');
+                setTimeout(() => note.element && note.element.remove(), 150);
+              }
+              registerJudgement('MISS');
+            }
+          }
+        });
+
+        rhythmNotes = rhythmNotes.filter(n => !(n.hit && (!n.element || !n.element.parentNode)));
+
+        rhythmLoopId = requestAnimationFrame(loop);
+      }
+
+      rhythmLoopId = requestAnimationFrame(loop);
+    }
+
+    function pauseRhythmGame() {
+      rhythmPlaying = false;
+      rhythmPaused = true;
+      if (rhythmLoopId) cancelAnimationFrame(rhythmLoopId);
+    }
+
+    function handleGlobalKeyPress(e) {
+      if (e.repeat) return;
+
+      const pressedKey = e.key.toLowerCase();
+
+      if (isRebindingMenuKey) {
+        e.preventDefault();
+        bindMenuToggleKey(e.key);
+        return;
+      }
+
+      if (currentlyRebindingLane !== null) {
+        bindLaneKey(currentlyRebindingLane, e.key);
+        return;
+      }
+
+      if (pressedKey === menuToggleKey) {
+        e.preventDefault();
+        toggleHUDMenu();
+        return;
+      }
+
+      if (!rhythmPlaying || currentInputMode !== 'keyboard') return;
+
+      if (kbMap[pressedKey] === undefined) return;
+
+      triggerLaneInput(kbMap[pressedKey]);
+    }
+
+    function triggerLaneInput(laneIdx) {
+      const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+
+      const laneEl = document.getElementById(`lane-${laneIdx}`);
+      laneEl.classList.add('pressed');
+      setTimeout(() => laneEl.classList.remove('pressed'), 100);
+
+      const candidates = rhythmNotes
+        .filter(n => n.lane === laneIdx && !n.hit && Math.abs(n.time - currentTime) <= 0.35)
+        .sort((a, b) => Math.abs(a.time - currentTime) - Math.abs(b.time - currentTime));
+
+      if (candidates.length > 0) {
+        const targetNote = candidates[0];
+        targetNote.hit = true;
+        const diff = Math.abs(targetNote.time - currentTime);
+
+        if (targetNote.element) {
+          targetNote.element.remove();
+          targetNote.element = null;
+        }
+
+        if (diff <= 0.12) {
+          registerJudgement('PERFECT');
+        } else {
+          registerJudgement('GREAT');
+        }
+      }
+    }
+
+    function registerJudgement(type) {
+      const judgeEl = document.getElementById('rhythm-judgement');
+      const sideJudgeEl = document.getElementById('side-rhythm-judgement');
+      
+      judgeEl.innerText = type;
+      sideJudgeEl.innerText = type;
+
+      const colorMap = { 'PERFECT': '#5bc0be', 'GREAT': '#e9c46a', 'MISS': '#e63946' };
+      const color = colorMap[type] || '#fff';
+
+      judgeEl.style.color = color;
+      sideJudgeEl.style.color = color;
+
+      if (type === 'PERFECT') {
+        rhythmCombo++;
+        totalHitsPerfect++;
+        rhythmScore += 300 * (1 + rhythmCombo * 0.1);
+        ammoShells += 50;
+      } else if (type === 'GREAT') {
+        rhythmCombo++;
+        totalHitsGreat++;
+        rhythmScore += 150;
+        ammoShells += 20;
+      } else if (type === 'MISS') {
+        rhythmCombo = 0;
+      }
+
+      if (rhythmCombo > maxRhythmCombo) {
+        maxRhythmCombo = rhythmCombo;
+      }
+
+      const scoreFormatted = Math.floor(rhythmScore);
+      const comboFormatted = `${rhythmCombo}x`;
+
+      document.getElementById('rhythm-score').innerText = scoreFormatted;
+      document.getElementById('rhythm-combo').innerText = comboFormatted;
+
+      document.getElementById('side-rhythm-score').innerText = scoreFormatted;
+      document.getElementById('side-rhythm-combo').innerText = comboFormatted;
+
+      updateClickerDisplay();
+    }
+
+    /* ------------------- SCOREBOARD SYSTEM ------------------- */
+    function saveScoreToLeaderboard() {
+      const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous Pilot';
+      const allLeaderboards = JSON.parse(localStorage.getItem('naval_rhythm_scoreboards') || '{}');
+
+      if (!allLeaderboards[currentVideoId]) {
+        allLeaderboards[currentVideoId] = [];
+      }
+
+      const scoreEntry = {
+        player: playerName,
+        score: Math.floor(rhythmScore),
+        maxCombo: maxRhythmCombo,
+        difficulty: activeDifficulty.toUpperCase(),
+        perfects: totalHitsPerfect,
+        greats: totalHitsGreat,
+        date: new Date().toLocaleDateString()
+      };
+
+      allLeaderboards[currentVideoId].push(scoreEntry);
+      allLeaderboards[currentVideoId].sort((a, b) => b.score - a.score);
+
+      localStorage.setItem('naval_rhythm_scoreboards', JSON.stringify(allLeaderboards));
+    }
+
+    function openLeaderboardModal() {
+      renderLeaderboard();
+      document.getElementById('leaderboard-modal').classList.remove('hidden');
+    }
+
+    function closeLeaderboardModal() {
+      document.getElementById('leaderboard-modal').classList.add('hidden');
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = '';
+
+      const allLeaderboards = JSON.parse(localStorage.getItem('naval_rhythm_scoreboards') || '{}');
+      const trackScores = allLeaderboards[currentVideoId] || [];
+
+      if (trackScores.length === 0) {
+        container.innerHTML = `<div class="empty-msg">No score history recorded for Video ID: <strong>${currentVideoId}</strong>! Play a round to establish high score.</div>`;
+        return;
+      }
+
+      trackScores.forEach((entry, idx) => {
+        const item = document.createElement('div');
+        item.className = 'leaderboard-row';
+        item.innerHTML = `
+          <div class="lb-rank">#${idx + 1}</div>
+          <div class="lb-player">
+            <div class="lb-name">${entry.player}</div>
+            <div class="lb-meta">${entry.difficulty} • ${entry.date}</div>
+          </div>
+          <div class="lb-stats">
+            <div class="lb-score">${entry.score.toLocaleString()} pts</div>
+            <div class="lb-combo">Max Combo: ${entry.maxCombo}x</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /* ------------------- CONTROL MAPPER MODAL ------------------- */
+    function openKeybindModal() {
+      document.getElementById('keybind-modal').classList.remove('hidden');
+    }
+
+    function closeKeybindModal() {
+      currentlyRebindingLane = null;
+      isRebindingMenuKey = false;
+      document.getElementById('keybind-modal').classList.add('hidden');
+      updateControlLabels();
+    }
+
+    function switchMapperTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.mapper-section').forEach(s => s.classList.add('hidden'));
+
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      document.getElementById(`mapper-sec-${tabName}`).classList.remove('hidden');
+    }
+
+    function startRebindingKey(laneIdx) {
+      currentlyRebindingLane = laneIdx;
+      isRebindingMenuKey = false;
+      document.querySelectorAll('#mapper-sec-keyboard .keybind-slot').forEach(b => b.classList.remove('listening'));
+      document.getElementById(`kb-bind-${laneIdx}`).classList.add('listening');
+      document.getElementById(`kb-val-${laneIdx}`).innerText = "Press Key...";
+    }
+
+    function startRebindingMenuKey() {
+      isRebindingMenuKey = true;
+      currentlyRebindingLane = null;
+      document.querySelectorAll('#mapper-sec-keyboard .keybind-slot').forEach(b => b.classList.remove('listening'));
+      document.getElementById('kb-bind-menu').classList.add('listening');
+      document.getElementById('kb-val-menu').innerText = "Press Key...";
+    }
+
+    function bindMenuToggleKey(key) {
+      menuToggleKey = key.toLowerCase();
+      menuToggleLabel = key.toUpperCase();
+
+      document.getElementById('kb-val-menu').innerText = menuToggleLabel;
+      document.getElementById('kb-bind-menu').classList.remove('listening');
+
+      isRebindingMenuKey = false;
+      updateControlLabels();
+    }
+
+    function bindLaneKey(laneIdx, key) {
+      const lowerKey = key.toLowerCase();
+      
+      delete kbMap[kbLabels[laneIdx].toLowerCase()];
+      kbLabels[laneIdx] = key.toUpperCase();
+      kbMap[lowerKey] = laneIdx;
+
+      document.getElementById(`kb-val-${laneIdx}`).innerText = key.toUpperCase();
+      document.getElementById(`kb-bind-${laneIdx}`).classList.remove('listening');
+
+      currentlyRebindingLane = null;
+      updateControlLabels();
     }
   </script>
 </body>
