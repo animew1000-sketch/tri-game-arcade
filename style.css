@@ -191,6 +191,10 @@ header p {
   border: 1px solid var(--border-color);
 }
 
+.btn-icon-only {
+  padding: 10px;
+}
+
 .btn-start {
   width: 100%;
   justify-content: center;
@@ -421,7 +425,7 @@ header p {
   width: 100%;
 }
 
-/* ================= AMMO DEPOT CLICKER STYLES ================= */
+/* Ammo Depot Clicker Styles */
 .clicker-layout {
   display: flex;
   gap: 25px;
@@ -615,7 +619,7 @@ header p {
   color: var(--accent-blue);
 }
 
-/* ================= AUTO-HIDING MENU & SIDE HUD STYLES ================= */
+/* Overlay & Dynamic Stage Styles */
 .menu-hint-banner {
   position: fixed;
   top: 15px;
@@ -639,7 +643,42 @@ header p {
   margin-bottom: 15px;
 }
 
-/* Vertical Side HUD Pinned to Right Margin */
+.sound-select-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.latency-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.latency-slider-wrapper label {
+  color: var(--accent-blue);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.latency-slider-wrapper input[type="range"] {
+  width: 90px;
+  accent-color: var(--border-color);
+  cursor: pointer;
+}
+
+.latency-slider-wrapper span {
+  font-weight: bold;
+  min-width: 42px;
+  text-align: right;
+  color: #e9c46a;
+}
+
 .rhythm-side-hud {
   position: fixed;
   right: 25px;
@@ -648,14 +687,14 @@ header p {
   z-index: 90;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
   pointer-events: none;
 }
 
 .side-stat-card {
   background: rgba(28, 37, 65, 0.85);
   border: 1px solid var(--border-color);
-  padding: 12px 18px;
+  padding: 10px 14px;
   border-radius: 10px;
   text-align: center;
   backdrop-filter: blur(6px);
@@ -664,20 +703,20 @@ header p {
 }
 
 .side-stat-card i {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: var(--accent-blue);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .side-stat-card .label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   color: #a0aab2;
   letter-spacing: 1px;
 }
 
 .side-stat-card .value {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: bold;
   color: var(--text-color);
 }
@@ -707,9 +746,10 @@ header p {
   gap: 10px;
   margin-bottom: 15px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.rhythm-config-bar input, .rhythm-config-bar select {
+.rhythm-config-bar input[type="text"], .rhythm-config-bar select {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-color);
@@ -778,7 +818,6 @@ header p {
   z-index: 1;
 }
 
-/* 4-Lane Rhythm Container */
 .rhythm-track-container-full {
   position: absolute;
   top: 0;
@@ -822,10 +861,10 @@ header p {
   z-index: 2;
 }
 
-/* 4-Lane Notes */
 .rhythm-note {
   position: absolute;
-  width: 100px;
+  width: 80%;
+  left: 10%;
   height: 24px;
   background: var(--accent-blue);
   border-radius: 6px;
@@ -833,12 +872,78 @@ header p {
   z-index: 3;
 }
 
+.rhythm-note.hold-head {
+  border-radius: 6px 6px 0 0;
+  background: #e9c46a;
+  box-shadow: 0 0 15px #e9c46a;
+}
+
+.hold-tail {
+  position: absolute;
+  bottom: 24px;
+  left: 35%;
+  width: 30%;
+  background: linear-gradient(to top, rgba(233, 196, 106, 0.8), rgba(91, 192, 190, 0.4));
+  border-radius: 4px 4px 0 0;
+  pointer-events: none;
+}
+
+.rhythm-note.active-hold {
+  background: #5bc0be;
+  box-shadow: 0 0 25px #5bc0be;
+}
+
 .rhythm-note.missed {
   background: var(--miss-color);
   opacity: 0.4;
 }
 
-/* Mapper Modal Tabs */
+/* End Summary Screen Modal */
+.results-modal-content {
+  max-width: 500px;
+}
+
+.rank-display {
+  font-size: 4.8rem;
+  font-weight: 900;
+  margin: 10px 0;
+  letter-spacing: 2px;
+}
+
+.results-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.span-two-cols {
+  grid-column: span 2;
+}
+
+.res-card {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.res-label {
+  font-size: 0.72rem;
+  color: #a0aab2;
+  text-transform: uppercase;
+}
+
+.res-value {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--accent-blue);
+}
+
 .mapper-tabs {
   display: flex;
   gap: 10px;
@@ -898,7 +1003,6 @@ header p {
   font-size: 0.85rem;
 }
 
-/* Leaderboard Modal */
 .leaderboard-modal-content {
   max-width: 520px;
 }

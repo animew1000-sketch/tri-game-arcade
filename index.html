@@ -233,6 +233,11 @@
       <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
       <div class="rhythm-side-hud hidden" id="side-hud">
         <div class="side-stat-card">
+          <i class="fa-solid fa-clock"></i>
+          <div class="label">Time</div>
+          <div class="value" id="side-rhythm-timer">00:00 / 00:00</div>
+        </div>
+        <div class="side-stat-card">
           <i class="fa-solid fa-trophy"></i>
           <div class="label">Score</div>
           <div class="value" id="side-rhythm-score">0</div>
@@ -243,8 +248,18 @@
           <div class="value" id="side-rhythm-combo">0x</div>
         </div>
         <div class="side-stat-card">
+          <i class="fa-solid fa-check"></i>
+          <div class="label">Hits</div>
+          <div class="value" id="side-rhythm-hits">0</div>
+        </div>
+        <div class="side-stat-card">
+          <i class="fa-solid fa-xmark"></i>
+          <div class="label">Misses</div>
+          <div class="value" id="side-rhythm-misses">0</div>
+        </div>
+        <div class="side-stat-card">
           <i class="fa-solid fa-bullseye"></i>
-          <div class="label">Hit</div>
+          <div class="label">Judgement</div>
           <div class="value" id="side-rhythm-judgement">-</div>
         </div>
       </div>
@@ -270,20 +285,46 @@
             <option value="auto" selected>🖥️ Res: Full Window (Auto)</option>
             <option value="1920x1080">📺 Res: 1080p (1920x1080)</option>
             <option value="1280x720">💻 Res: 720p (1280x720)</option>
-            <option value="2560x1440">🖥️ Res: 2K (2560x1440)</option>
+            <option value="2560x1440">🖥 Res: 2K (2560x1440)</option>
             <option value="3840x2160">📺 Res: 4K UHD (3840x2160)</option>
           </select>
 
           <select id="control-mode-select" onchange="switchControlMode()">
             <option value="keyboard" selected>🎮 Mode: Keyboard (4-Lanes: A-S-K-L)</option>
-            <option value="controller">🕹️ Mode: Controller (LT/RT)</option>
+            <option value="controller">🕹 Mode: Controller (2-Lanes: LT / RT)</option>
           </select>
 
           <select id="rhythm-diff-select">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Hard</option>
+            <option value="easy">Easy (Single Notes)</option>
+            <option value="medium" selected>Medium (Single Notes)</option>
+            <option value="hard">Hard (Hold Notes Enabled)</option>
           </select>
+
+          <!-- Sound Preset Selector -->
+          <div class="sound-select-wrapper">
+            <select id="hit-sound-select" onchange="changeHitSoundPreset(this.value)">
+              <option value="arcade" selected>🔊 Sound: Arcade Chime</option>
+              <option value="synth">🔊 Sound: Electric Synth</option>
+              <option value="click">🔊 Sound: Percussive Click</option>
+              <option value="laser">🔊 Sound: Laser Blast</option>
+              <option value="pop">🔊 Sound: Cyber Pop</option>
+              <option value="woodblock">🔊 Sound: Acoustic Woodblock</option>
+              <option value="bass">🔊 Sound: Sub Bass Thump</option>
+              <option value="bell">🔊 Sound: High Pitch Bell</option>
+              <option value="jump">🔊 Sound: 8-Bit Jump</option>
+              <option value="snap">🔊 Sound: Metallic Snap</option>
+            </select>
+            <button class="btn btn-secondary btn-icon-only" title="Preview Selected Hit Sound" onclick="previewHitSound()">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </div>
+
+          <!-- Latency Delay Calibration Slider -->
+          <div class="latency-slider-wrapper">
+            <label for="latency-offset-slider"><i class="fa-solid fa-stopwatch"></i> Latency Offset:</label>
+            <input type="range" id="latency-offset-slider" min="-200" max="200" value="0" step="5" oninput="updateLatencyOffset(this.value)">
+            <span id="latency-offset-val">0ms</span>
+          </div>
 
           <button class="btn" onclick="loadYouTubeRhythmSong()">
             <i class="fa-solid fa-play"></i> Convert & Play
@@ -311,6 +352,13 @@
         <!-- Rhythm Stats Dashboard -->
         <div class="dashboard rhythm-stats">
           <div class="stat-card">
+            <i class="fa-solid fa-clock"></i>
+            <div class="stat-info">
+              <div class="label">Current Time</div>
+              <div class="value" id="rhythm-timer">00:00 / 00:00</div>
+            </div>
+          </div>
+          <div class="stat-card">
             <i class="fa-solid fa-trophy"></i>
             <div class="stat-info">
               <div class="label">Score</div>
@@ -322,6 +370,20 @@
             <div class="stat-info">
               <div class="label">Streak Combo</div>
               <div class="value" id="rhythm-combo">0x</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-check"></i>
+            <div class="stat-info">
+              <div class="label">Notes Hit</div>
+              <div class="value" id="rhythm-hits">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-xmark"></i>
+            <div class="stat-info">
+              <div class="label">Notes Missed</div>
+              <div class="value" id="rhythm-misses">0</div>
             </div>
           </div>
           <div class="stat-card">
@@ -338,7 +400,7 @@
         </div>
       </div>
 
-      <!-- Full Window Full-Screen Stage Backdrop & 4 Lanes -->
+      <!-- Full Window Dynamic Stage Backdrop & Dynamic Lanes -->
       <div id="full-viewport-rhythm-stage" class="viewport-stage auto-res">
         <div class="yt-background-player-full">
           <div id="yt-player"></div>
@@ -361,6 +423,48 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal for End-of-Song Summary & Rank -->
+    <div id="results-modal" class="modal-overlay hidden">
+      <div class="modal-content results-modal-content">
+        <h2><i class="fa-solid fa-award"></i> Performance Summary</h2>
+        
+        <div class="rank-display" id="res-rank">S</div>
+
+        <div class="results-stats-grid">
+          <div class="res-card">
+            <span class="res-label">Final Score</span>
+            <span class="res-value" id="res-score">0</span>
+          </div>
+          <div class="res-card">
+            <span class="res-label">Max Combo</span>
+            <span class="res-value" id="res-max-combo">0x</span>
+          </div>
+          <div class="res-card">
+            <span class="res-label">Perfect Hits</span>
+            <span class="res-value" id="res-perfects">0</span>
+          </div>
+          <div class="res-card">
+            <span class="res-label">Great Hits</span>
+            <span class="res-value" id="res-greats">0</span>
+          </div>
+          <div class="res-card">
+            <span class="res-label">Good Hits</span>
+            <span class="res-value" id="res-goods">0</span>
+          </div>
+          <div class="res-card">
+            <span class="res-label">Missed Notes</span>
+            <span class="res-value" id="res-misses">0</span>
+          </div>
+          <div class="res-card span-two-cols">
+            <span class="res-label">Hit Accuracy</span>
+            <span class="res-value" id="res-accuracy">100%</span>
+          </div>
+        </div>
+
+        <button class="btn btn-start" onclick="closeResultsModal()">Continue to Dashboard</button>
+      </div>
+    </div>
 
     <!-- Modal for Custom Controls -->
     <div id="keybind-modal" class="modal-overlay hidden">
@@ -388,10 +492,10 @@
         </div>
 
         <div id="mapper-sec-controller" class="mapper-section hidden">
-          <p>Triggers set for Xbox, PlayStation, Switch Pro:</p>
+          <p>2-Lane Trigger Mapping for Xbox, PlayStation, Switch Pro:</p>
           <div class="keybind-mapper-grid-4lane">
-            <div class="controller-info-box">Lane 1 & 2: <strong>Left Trigger (LT / L2)</strong></div>
-            <div class="controller-info-box">Lane 3 & 4: <strong>Right Trigger (RT / R2)</strong></div>
+            <div class="controller-info-box">Lane 1: <strong>Left Trigger (LT / L2)</strong></div>
+            <div class="controller-info-box">Lane 2: <strong>Right Trigger (RT / R2)</strong></div>
           </div>
         </div>
 
@@ -426,6 +530,7 @@
       if (gameName === 'rhythm') {
         document.getElementById('full-viewport-rhythm-stage').classList.add('active');
         document.getElementById('main-header').classList.add('header-overlay');
+        initAudioContext();
       } else {
         document.getElementById('full-viewport-rhythm-stage').classList.remove('active');
         document.getElementById('main-header').classList.remove('header-overlay');
@@ -437,9 +542,7 @@
       }
     }
 
-    /* ==========================================================================
-       BACKGROUND MISSILE CANVAS ANIMATION
-       ========================================================================== */
+    /* Background Missile Canvas Animation */
     let bgCanvas, bgCtx;
     let bgMissiles = [];
 
@@ -499,9 +602,7 @@
       requestAnimationFrame(animateBackgroundMissiles);
     }
 
-    /* ==========================================================================
-       BATTLESHIP LOGIC
-       ========================================================================== */
+    /* Battleship Game Logic */
     const BS_SIZE = 10;
     const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     const BS_SHIPS = [
@@ -567,7 +668,6 @@
       }
     }
 
-    /* ------------------- 2D GRID FUNCTIONS ------------------- */
     function buildGridWithLabels(wrapperId, gridId, cellClickCallback, cellHoverCallback, cellOutCallback) {
       const wrapper = document.getElementById(wrapperId);
       wrapper.innerHTML = '';
@@ -762,7 +862,6 @@
       document.getElementById('bs-instruction').innerText = "Fleet automated successfully! Ready to engage.";
     }
 
-    /* ------------------- 3D ORTHOGRAPHIC ENGINE ------------------- */
     function createBlueprintShipMesh(shipInfo, isEnemy = false) {
       const shipGroup = new THREE.Group();
       const size = shipInfo.size;
@@ -1462,9 +1561,7 @@
       if (bsViewMode === '3d') init3DPlacementView();
     }
 
-    /* ==========================================================================
-       AMMO DEPOT CLICKER LOGIC + REBIRTH
-       ========================================================================== */
+    /* Ammo Depot Clicker Logic */
     let ammoShells = 0;
     let baseAmmoPerClick = 1;
     let baseAmmoPerSec = 0;
@@ -1594,9 +1691,166 @@
       updateClickerDisplay();
     }
 
-    /* ==========================================================================
-       4-LANE RHYTHM LOGIC (PERFECT HIT TIMING & INSTANT HIT FEEDBACK)
-       ========================================================================== */
+    /* Sound Synthesizer Engine */
+    let audioCtx = null;
+    let selectedHitSoundPreset = 'arcade';
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function changeHitSoundPreset(presetKey) {
+      selectedHitSoundPreset = presetKey;
+    }
+
+    function previewHitSound() {
+      playHitSound('PERFECT');
+    }
+
+    function playHitSound(type) {
+      if (!audioCtx) initAudioContext();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+      const isPerfect = (type === 'PERFECT');
+      const isGreat = (type === 'GREAT');
+
+      if (selectedHitSoundPreset === 'arcade') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = isPerfect ? 'sine' : (isGreat ? 'triangle' : 'square');
+        osc.frequency.setValueAtTime(isPerfect ? 880 : (isGreat ? 660 : 440), now);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } 
+      else if (selectedHitSoundPreset === 'synth') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(isPerfect ? 523.25 : (isGreat ? 440 : 349.23), now);
+        osc.frequency.exponentialRampToValueAtTime(isPerfect ? 1046.50 : 783.99, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+      else if (selectedHitSoundPreset === 'click') {
+        const bufferSize = audioCtx.sampleRate * 0.03;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(isPerfect ? 0.3 : (isGreat ? 0.2 : 0.1), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+        noise.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(now);
+      }
+      else if (selectedHitSoundPreset === 'laser') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(isPerfect ? 1200 : (isGreat ? 900 : 600), now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+      else if (selectedHitSoundPreset === 'pop') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 400 : (isGreat ? 320 : 250), now);
+        osc.frequency.exponentialRampToValueAtTime(isPerfect ? 1200 : 800, now + 0.06);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      }
+      else if (selectedHitSoundPreset === 'woodblock') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isPerfect ? 1000 : (isGreat ? 800 : 600), now);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+      else if (selectedHitSoundPreset === 'bass') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 160 : (isGreat ? 130 : 100), now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+      else if (selectedHitSoundPreset === 'bell') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 1760 : (isGreat ? 1400 : 1050), now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+      else if (selectedHitSoundPreset === 'jump') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(isPerfect ? 300 : (isGreat ? 240 : 180), now);
+        osc.frequency.linearRampToValueAtTime(isPerfect ? 900 : 600, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+      else if (selectedHitSoundPreset === 'snap') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isPerfect ? 2400 : (isGreat ? 1800 : 1200), now);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
+    }
+
     let ytPlayer = null;
     let currentVideoId = 'dQw4w9WgXcQ';
     let rhythmScore = 0;
@@ -1604,6 +1858,8 @@
     let maxRhythmCombo = 0;
     let totalHitsPerfect = 0;
     let totalHitsGreat = 0;
+    let totalHitsGood = 0;
+    let totalMisses = 0;
     let rhythmNotes = [];
     let rhythmLoopId = null;
     let rhythmPlaying = false;
@@ -1611,9 +1867,13 @@
     let isMenuHidden = false;
     let activeDifficulty = 'medium';
 
-    let currentInputMode = 'keyboard';
+    let audioOffset = 0;
 
-    // 4 Lanes Default: A, S, K, L
+    let currentInputMode = 'keyboard';
+    let activeLaneCount = 4;
+
+    let laneHeld = [false, false, false, false];
+
     let kbMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
     let kbLabels = ['A', 'S', 'K', 'L'];
     let menuToggleKey = 'tab';
@@ -1623,6 +1883,19 @@
 
     let lastBeatTime = 0;
     let prevGamepadState = [false, false];
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return '00:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function updateLatencyOffset(msVal) {
+      audioOffset = parseFloat(msVal) / 1000;
+      const displayVal = parseInt(msVal);
+      document.getElementById('latency-offset-val').innerText = `${displayVal >= 0 ? '+' : ''}${displayVal}ms`;
+    }
 
     function changeScreenResolution() {
       const stage = document.getElementById('full-viewport-rhythm-stage');
@@ -1666,10 +1939,21 @@
       };
 
       window.addEventListener('keydown', handleGlobalKeyPress);
+      window.addEventListener('keyup', handleGlobalKeyRelease);
     }
 
     function switchControlMode() {
       currentInputMode = document.getElementById('control-mode-select').value;
+      if (currentInputMode === 'controller') {
+        activeLaneCount = 2;
+        document.getElementById('lane-2').style.display = 'none';
+        document.getElementById('lane-3').style.display = 'none';
+      } else {
+        activeLaneCount = 4;
+        document.getElementById('lane-2').style.display = 'flex';
+        document.getElementById('lane-3').style.display = 'flex';
+      }
+      resetRhythmGameState();
       updateControlLabels();
     }
 
@@ -1681,10 +1965,8 @@
         document.getElementById('rhythm-status').innerText = `4-Lane Active: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}]. Menu: [${menuToggleLabel}].`;
       } else {
         document.getElementById('key-label-0').innerText = 'LT';
-        document.getElementById('key-label-1').innerText = 'LT';
-        document.getElementById('key-label-2').innerText = 'RT';
-        document.getElementById('key-label-3').innerText = 'RT';
-        document.getElementById('rhythm-status').innerText = `Controller Mode: LT / RT Triggers. Menu: [${menuToggleLabel}].`;
+        document.getElementById('key-label-1').innerText = 'RT';
+        document.getElementById('rhythm-status').innerText = `2-Lane Controller Active: LT (Lane 1) / RT (Lane 2). Menu: [${menuToggleLabel}].`;
       }
       document.getElementById('menu-key-label').innerText = menuToggleLabel;
     }
@@ -1698,14 +1980,11 @@
             const ltPressed = gp.buttons[6] && gp.buttons[6].pressed;
             const rtPressed = gp.buttons[7] && gp.buttons[7].pressed;
 
-            if (ltPressed && !prevGamepadState[0]) {
-              triggerLaneInput(0);
-              triggerLaneInput(1);
-            }
-            if (rtPressed && !prevGamepadState[1]) {
-              triggerLaneInput(2);
-              triggerLaneInput(3);
-            }
+            if (ltPressed && !prevGamepadState[0]) triggerLaneInput(0);
+            if (!ltPressed && prevGamepadState[0]) releaseLaneInput(0);
+
+            if (rtPressed && !prevGamepadState[1]) triggerLaneInput(1);
+            if (!rtPressed && prevGamepadState[1]) releaseLaneInput(1);
 
             prevGamepadState[0] = ltPressed;
             prevGamepadState[1] = rtPressed;
@@ -1792,13 +2071,14 @@
       pauseRhythmGame();
       showHUDMenu();
 
-      if (rhythmScore > 0) {
+      if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalHitsGood > 0 || totalMisses > 0) {
         saveScoreToLeaderboard();
+        showResultsSummaryModal();
       }
 
       resetRhythmGameState();
       document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Start Track';
-      document.getElementById('rhythm-status').innerText = "Track stopped. Score recorded to scoreboard!";
+      document.getElementById('rhythm-status').innerText = "Track stopped. Performance summary generated!";
     }
 
     function onPlayerError(e) {
@@ -1827,36 +2107,51 @@
       maxRhythmCombo = 0;
       totalHitsPerfect = 0;
       totalHitsGreat = 0;
+      totalHitsGood = 0;
+      totalMisses = 0;
       rhythmNotes = [];
       lastBeatTime = 0;
+      laneHeld = [false, false, false, false];
       
       document.getElementById('rhythm-score').innerText = '0';
       document.getElementById('rhythm-combo').innerText = '0x';
+      document.getElementById('rhythm-hits').innerText = '0';
+      document.getElementById('rhythm-misses').innerText = '0';
+      document.getElementById('rhythm-timer').innerText = '00:00 / 00:00';
       document.getElementById('rhythm-judgement').innerText = '-';
 
       document.getElementById('side-rhythm-score').innerText = '0';
       document.getElementById('side-rhythm-combo').innerText = '0x';
+      document.getElementById('side-rhythm-hits').innerText = '0';
+      document.getElementById('side-rhythm-misses').innerText = '0';
+      document.getElementById('side-rhythm-timer').innerText = '00:00 / 00:00';
       document.getElementById('side-rhythm-judgement').innerText = '-';
 
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
     }
 
-    function check4LaneBeatPeak(currentTime) {
+    function checkDynamicBeatPeak(currentTime) {
       let minInterval = 0.35;
       if (activeDifficulty === 'easy') minInterval = 0.55;
       if (activeDifficulty === 'hard') minInterval = 0.20;
 
       if (currentTime - lastBeatTime >= minInterval) {
-        const lane = Math.floor(Math.random() * 4); // 4 Random Lanes
+        const lane = Math.floor(Math.random() * activeLaneCount);
         lastBeatTime = currentTime;
 
-        // Lead time of 1.25 seconds for snappy, zero-lag scrolling
+        const isHold = (activeDifficulty === 'hard') && (Math.random() < 0.35);
+        const duration = isHold ? (0.4 + Math.random() * 0.6) : 0;
+
         rhythmNotes.push({
           id: Math.random().toString(36).substr(2, 9),
           time: currentTime + 1.25,
+          duration: duration,
           lane: lane,
           hit: false,
-          element: null
+          holding: false,
+          completed: false,
+          element: null,
+          tailElement: null
         });
       }
     }
@@ -1869,30 +2164,71 @@
       function loop() {
         if (!rhythmPlaying) return;
 
-        const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
-        const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'hard' ? 480 : 400; // Calibrated speed
+        const rawCurrentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+        const totalDuration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
+        const currentTime = rawCurrentTime + audioOffset;
 
-        check4LaneBeatPeak(currentTime);
+        const formattedClock = `${formatTime(rawCurrentTime)} / ${formatTime(totalDuration)}`;
+        document.getElementById('rhythm-timer').innerText = formattedClock;
+        document.getElementById('side-rhythm-timer').innerText = formattedClock;
+
+        const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
+        const scrollSpeed = activeDifficulty === 'hard' ? 480 : 400;
+        const hitBarY = stageHeight - 105;
+
+        checkDynamicBeatPeak(currentTime);
 
         rhythmNotes.forEach(note => {
           const timeDiff = note.time - currentTime;
 
-          if (timeDiff <= 1.25 && timeDiff >= -0.25 && !note.hit) {
+          if (timeDiff <= 1.25 && timeDiff >= -0.35 - note.duration && !note.completed) {
             if (!note.element) {
               const el = document.createElement('div');
               el.className = `rhythm-note lane-${note.lane}`;
+              
+              if (note.duration > 0) {
+                el.classList.add('hold-head');
+                const tail = document.createElement('div');
+                tail.className = 'hold-tail';
+                tail.style.height = `${note.duration * scrollSpeed}px`;
+                el.appendChild(tail);
+                note.tailElement = tail;
+              }
+
               document.getElementById(`lane-${note.lane}`).appendChild(el);
               note.element = el;
             }
 
-            // High-precision positional alignment relative to 80px hit line
-            const topPos = (stageHeight - 105) - (timeDiff * scrollSpeed);
+            const topPos = hitBarY - (timeDiff * scrollSpeed);
             note.element.style.top = `${topPos}px`;
 
-            // Auto Miss Window
-            if (timeDiff < -0.15 && !note.hit) {
-              note.hit = true;
+            if (note.duration > 0 && note.hit && !note.completed) {
+              if (laneHeld[note.lane]) {
+                note.holding = true;
+                note.element.classList.add('active-hold');
+
+                if (Math.random() < 0.15) {
+                  rhythmCombo++;
+                  rhythmScore += 20;
+                  document.getElementById('rhythm-score').innerText = Math.floor(rhythmScore);
+                  document.getElementById('rhythm-combo').innerText = `${rhythmCombo}x`;
+                }
+
+                if (currentTime >= note.time + note.duration) {
+                  note.completed = true;
+                  registerJudgement('PERFECT');
+                  if (note.element) note.element.remove();
+                }
+              } else {
+                note.completed = true;
+                registerJudgement('MISS');
+                if (note.element) note.element.remove();
+              }
+            }
+
+            // Expanded Auto-Miss Threshold beyond early/late window (dist > 100px past hit bar)
+            if (note.duration === 0 && topPos > hitBarY + 100 && !note.hit) {
+              note.completed = true;
               if (note.element) {
                 note.element.classList.add('missed');
                 setTimeout(() => note.element && note.element.remove(), 100);
@@ -1902,7 +2238,7 @@
           }
         });
 
-        rhythmNotes = rhythmNotes.filter(n => !(n.hit && (!n.element || !n.element.parentNode)));
+        rhythmNotes = rhythmNotes.filter(n => !(n.completed && (!n.element || !n.element.parentNode)));
 
         rhythmLoopId = requestAnimationFrame(loop);
       }
@@ -1945,44 +2281,87 @@
       triggerLaneInput(kbMap[pressedKey]);
     }
 
+    function handleGlobalKeyRelease(e) {
+      const releasedKey = e.key.toLowerCase();
+      if (currentInputMode === 'keyboard' && kbMap[releasedKey] !== undefined) {
+        releaseLaneInput(kbMap[releasedKey]);
+      }
+    }
+
+    /* Trigger Lane Input with Early & Late Timing Windows */
     function triggerLaneInput(laneIdx) {
-      const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+      if (laneIdx >= activeLaneCount) return;
+      laneHeld[laneIdx] = true;
 
       const laneEl = document.getElementById(`lane-${laneIdx}`);
       laneEl.classList.add('pressed');
-      setTimeout(() => laneEl.classList.remove('pressed'), 80);
 
-      // Tightened 0.22s hit window for zero delay on keypress
-      const candidates = rhythmNotes
-        .filter(n => n.lane === laneIdx && !n.hit && Math.abs(n.time - currentTime) <= 0.22)
-        .sort((a, b) => Math.abs(a.time - currentTime) - Math.abs(b.time - currentTime));
+      const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
+      const hitBarY = stageHeight - 105;
 
-      if (candidates.length > 0) {
-        const targetNote = candidates[0];
+      // Expanded Timing Window: Accepts hit if within +/- 100px of hit bar
+      const candidateNotes = rhythmNotes.filter(n => {
+        if (n.lane !== laneIdx || n.hit || n.completed || !n.element) return false;
+        const noteTop = parseFloat(n.element.style.top || 0);
+        const distFromHitBar = Math.abs(noteTop - hitBarY);
+        return distFromHitBar <= 100;
+      });
+
+      if (candidateNotes.length > 0) {
+        candidateNotes.sort((a, b) => {
+          const distA = Math.abs(parseFloat(a.element.style.top) - hitBarY);
+          const distB = Math.abs(parseFloat(b.element.style.top) - hitBarY);
+          return distA - distB;
+        });
+
+        const targetNote = candidateNotes[0];
         targetNote.hit = true;
-        const diff = Math.abs(targetNote.time - currentTime);
+        const noteTop = parseFloat(targetNote.element.style.top);
+        const distFromHitBar = Math.abs(noteTop - hitBarY);
 
-        if (targetNote.element) {
-          targetNote.element.remove();
-          targetNote.element = null;
+        // Dynamic Judgement Windows for Early and Late Timing
+        let judgement = 'GOOD';
+        if (distFromHitBar <= 25) {
+          judgement = 'PERFECT';
+        } else if (distFromHitBar <= 60) {
+          judgement = 'GREAT';
+        } else if (distFromHitBar <= 100) {
+          judgement = 'GOOD';
         }
 
-        if (diff <= 0.08) {
-          registerJudgement('PERFECT');
+        if (targetNote.duration === 0) {
+          targetNote.completed = true;
+          if (targetNote.element) targetNote.element.remove();
+          registerJudgement(judgement);
         } else {
-          registerJudgement('GREAT');
+          registerJudgement(judgement);
         }
       }
     }
 
+    function releaseLaneInput(laneIdx) {
+      if (laneIdx >= activeLaneCount) return;
+      laneHeld[laneIdx] = false;
+
+      const laneEl = document.getElementById(`lane-${laneIdx}`);
+      laneEl.classList.remove('pressed');
+    }
+
     function registerJudgement(type) {
+      playHitSound(type);
+
       const judgeEl = document.getElementById('rhythm-judgement');
       const sideJudgeEl = document.getElementById('side-rhythm-judgement');
       
       judgeEl.innerText = type;
       sideJudgeEl.innerText = type;
 
-      const colorMap = { 'PERFECT': '#5bc0be', 'GREAT': '#e9c46a', 'MISS': '#e63946' };
+      const colorMap = { 
+        'PERFECT': '#5bc0be', 
+        'GREAT': '#e9c46a', 
+        'GOOD': '#48cae4', 
+        'MISS': '#e63946' 
+      };
       const color = colorMap[type] || '#fff';
 
       judgeEl.style.color = color;
@@ -1996,29 +2375,111 @@
       } else if (type === 'GREAT') {
         rhythmCombo++;
         totalHitsGreat++;
-        rhythmScore += 150;
-        ammoShells += 20;
+        rhythmScore += 180 * (1 + rhythmCombo * 0.05);
+        ammoShells += 30;
+      } else if (type === 'GOOD') {
+        rhythmCombo++;
+        totalHitsGood++;
+        rhythmScore += 80;
+        ammoShells += 10;
       } else if (type === 'MISS') {
         rhythmCombo = 0;
+        totalMisses++;
       }
 
       if (rhythmCombo > maxRhythmCombo) {
         maxRhythmCombo = rhythmCombo;
       }
 
-      const scoreFormatted = Math.floor(rhythmScore);
-      const comboFormatted = `${rhythmCombo}x`;
+      const totalHits = totalHitsPerfect + totalHitsGreat + totalHitsGood;
 
-      document.getElementById('rhythm-score').innerText = scoreFormatted;
-      document.getElementById('rhythm-combo').innerText = comboFormatted;
+      document.getElementById('rhythm-score').innerText = Math.floor(rhythmScore);
+      document.getElementById('rhythm-combo').innerText = `${rhythmCombo}x`;
+      document.getElementById('rhythm-hits').innerText = totalHits;
+      document.getElementById('rhythm-misses').innerText = totalMisses;
 
-      document.getElementById('side-rhythm-score').innerText = scoreFormatted;
-      document.getElementById('side-rhythm-combo').innerText = comboFormatted;
+      document.getElementById('side-rhythm-score').innerText = Math.floor(rhythmScore);
+      document.getElementById('side-rhythm-combo').innerText = `${rhythmCombo}x`;
+      document.getElementById('side-rhythm-hits').innerText = totalHits;
+      document.getElementById('side-rhythm-misses').innerText = totalMisses;
 
       updateClickerDisplay();
     }
 
-    /* ------------------- SCOREBOARD SYSTEM ------------------- */
+    /* Complete Expanded Rank Grading Scale (S to F) */
+    function showResultsSummaryModal() {
+      const totalNotes = totalHitsPerfect + totalHitsGreat + totalHitsGood + totalMisses;
+      const hitCount = totalHitsPerfect + totalHitsGreat + totalHitsGood;
+      const accuracy = totalNotes > 0 ? (hitCount / totalNotes) * 100 : 100;
+      const roundedAcc = parseFloat(accuracy.toFixed(1));
+
+      let rank = 'F';
+      let rankColor = '#e63946';
+
+      if (roundedAcc === 100 && totalMisses === 0) {
+        rank = 'S';
+        rankColor = '#ffd700';
+      } else if (roundedAcc >= 95.0) {
+        rank = 'A+';
+        rankColor = '#5bc0be';
+      } else if (roundedAcc >= 92.0) {
+        rank = 'A';
+        rankColor = '#48cae4';
+      } else if (roundedAcc >= 90.0) {
+        rank = 'A-';
+        rankColor = '#00b4d8';
+      } else if (roundedAcc >= 87.0) {
+        rank = 'B+';
+        rankColor = '#90be6d';
+      } else if (roundedAcc >= 83.0) {
+        rank = 'B';
+        rankColor = '#43aa8b';
+      } else if (roundedAcc >= 80.0) {
+        rank = 'B-';
+        rankColor = '#577590';
+      } else if (roundedAcc >= 77.0) {
+        rank = 'C+';
+        rankColor = '#f9c74f';
+      } else if (roundedAcc >= 73.0) {
+        rank = 'C';
+        rankColor = '#f8961e';
+      } else if (roundedAcc >= 70.0) {
+        rank = 'C-';
+        rankColor = '#f3722c';
+      } else if (roundedAcc >= 67.0) {
+        rank = 'D+';
+        rankColor = '#f94144';
+      } else if (roundedAcc >= 63.0) {
+        rank = 'D';
+        rankColor = '#d62828';
+      } else if (roundedAcc >= 60.0) {
+        rank = 'D-';
+        rankColor = '#9e2a2b';
+      } else {
+        rank = 'F';
+        rankColor = '#e63946';
+      }
+
+      const rankEl = document.getElementById('res-rank');
+      rankEl.innerText = rank;
+      rankEl.style.color = rankColor;
+      rankEl.style.textShadow = `0 0 25px ${rankColor}`;
+
+      document.getElementById('res-score').innerText = Math.floor(rhythmScore).toLocaleString();
+      document.getElementById('res-max-combo').innerText = `${maxRhythmCombo}x`;
+      document.getElementById('res-perfects').innerText = totalHitsPerfect;
+      document.getElementById('res-greats').innerText = totalHitsGreat;
+      document.getElementById('res-goods').innerText = totalHitsGood;
+      document.getElementById('res-misses').innerText = totalMisses;
+      document.getElementById('res-accuracy').innerText = `${roundedAcc}%`;
+
+      document.getElementById('results-modal').classList.remove('hidden');
+    }
+
+    function closeResultsModal() {
+      document.getElementById('results-modal').classList.add('hidden');
+    }
+
     function saveScoreToLeaderboard() {
       const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous Pilot';
       const allLeaderboards = JSON.parse(localStorage.getItem('naval_rhythm_scoreboards') || '{}');
@@ -2034,6 +2495,8 @@
         difficulty: activeDifficulty.toUpperCase(),
         perfects: totalHitsPerfect,
         greats: totalHitsGreat,
+        goods: totalHitsGood,
+        misses: totalMisses,
         date: new Date().toLocaleDateString()
       };
 
@@ -2075,14 +2538,13 @@
           </div>
           <div class="lb-stats">
             <div class="lb-score">${entry.score.toLocaleString()} pts</div>
-            <div class="lb-combo">Max Combo: ${entry.maxCombo}x</div>
+            <div class="lb-combo">Max Combo: ${entry.maxCombo}x | Misses: ${entry.misses || 0}</div>
           </div>
         `;
         container.appendChild(item);
       });
     }
 
-    /* ------------------- CONTROL MAPPER MODAL ------------------- */
     function openKeybindModal() {
       document.getElementById('keybind-modal').classList.remove('hidden');
     }
