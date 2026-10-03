@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Rhythm Surge - Full Window Arcade Station</title>
   
   <!-- Glowing Music Note SVG Favicon -->
@@ -26,8 +26,8 @@
     <section id="game-rhythm" class="game-panel">
       
       <!-- Overlay Menu Toggle Hint -->
-      <div class="menu-hint-banner" id="menu-hint">
-        <i class="fa-solid fa-eye"></i> Press [<span id="menu-key-label">TAB</span> / <span id="gp-menu-label">START</span>] to show/hide menu
+      <div class="menu-hint-banner" id="menu-hint" onclick="toggleHUDMenu()">
+        <i class="fa-solid fa-eye"></i> [<span id="menu-key-label">TAB</span> / <span id="gp-menu-label">START</span> / Tap] Menu
       </div>
 
       <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
@@ -49,12 +49,12 @@
         </div>
         <div class="side-stat-card">
           <i class="fa-solid fa-bolt"></i>
-          <div class="label">Surge Charges</div>
+          <div class="label">Surge</div>
           <div class="value" id="side-surge-charges">3 / 3</div>
         </div>
         <div class="side-stat-card">
           <i class="fa-solid fa-bullseye"></i>
-          <div class="label">Perfect Streak</div>
+          <div class="label">Perfect</div>
           <div class="value" id="side-perfect-streak">0 / 10</div>
         </div>
         <div class="side-stat-card">
@@ -64,7 +64,7 @@
         </div>
         <div class="side-stat-card">
           <i class="fa-solid fa-xmark"></i>
-          <div class="label">Misses</div>
+          <div class="label">Miss</div>
           <div class="value" id="side-rhythm-misses">0</div>
         </div>
         <div class="side-stat-card">
@@ -123,7 +123,7 @@
 
           <!-- Latency Delay Calibration Slider -->
           <div class="latency-slider-wrapper">
-            <label for="latency-offset-slider"><i class="fa-solid fa-stopwatch"></i> Latency Offset:</label>
+            <label for="latency-offset-slider"><i class="fa-solid fa-stopwatch"></i> Latency:</label>
             <input type="range" id="latency-offset-slider" min="-200" max="200" value="0" step="5" oninput="updateLatencyOffset(this.value)">
             <span id="latency-offset-val">0ms</span>
           </div>
@@ -253,16 +253,24 @@
         </div>
 
         <div class="rhythm-track-container-full" id="rhythm-track-container">
-          <div class="rhythm-lane-full" id="lane-0">
+          <div class="rhythm-lane-full" id="lane-0" 
+               ontouchstart="handleTouchLaneStart(event, 0)" ontouchend="handleTouchLaneEnd(event, 0)"
+               onmousedown="triggerLaneInput(0)" onmouseup="releaseLaneInput(0)">
             <span class="lane-key" id="key-label-0">A</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-1">
+          <div class="rhythm-lane-full" id="lane-1" 
+               ontouchstart="handleTouchLaneStart(event, 1)" ontouchend="handleTouchLaneEnd(event, 1)"
+               onmousedown="triggerLaneInput(1)" onmouseup="releaseLaneInput(1)">
             <span class="lane-key" id="key-label-1">S</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-2">
+          <div class="rhythm-lane-full" id="lane-2" 
+               ontouchstart="handleTouchLaneStart(event, 2)" ontouchend="handleTouchLaneEnd(event, 2)"
+               onmousedown="triggerLaneInput(2)" onmouseup="releaseLaneInput(2)">
             <span class="lane-key" id="key-label-2">K</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-3">
+          <div class="rhythm-lane-full" id="lane-3" 
+               ontouchstart="handleTouchLaneStart(event, 3)" ontouchend="handleTouchLaneEnd(event, 3)"
+               onmousedown="triggerLaneInput(3)" onmouseup="releaseLaneInput(3)">
             <span class="lane-key" id="key-label-3">L</span>
           </div>
           <div class="rhythm-hit-line-full"></div>
@@ -665,7 +673,7 @@
     let isRebindingGamepadPlay = false;
     let isRebindingGamepadStop = false;
 
-    let lastBeatTime = -1; // Initialized to -1 so first beat spawns instantly
+    let lastBeatTime = -1; 
     let prevGamepadState = [false, false, false, false];
     let prevGamepadSurgeState = false;
     let prevGamepadMenuState = false;
@@ -683,7 +691,7 @@
     let surgeChargesRemaining = 3;
     let consecutivePerfectStreak = 0;
 
-    let lastSpawnedLane = -1; // Tracks last lane to ensure varied random spawns
+    let lastSpawnedLane = -1;
 
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -765,25 +773,25 @@
         for (let i = 0; i < 4; i++) {
           document.getElementById(`key-label-${i}`).innerText = kbLabels[i];
         }
-        document.getElementById('rhythm-status').innerText = `4-Lane Keyboard: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}]. Surge: [${surgeKeyLabel}].`;
+        document.getElementById('rhythm-status').innerText = `4-Lane Keyboard/Touch: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}].`;
       } 
       else if (currentInputMode === 'controller-4lane') {
         document.getElementById('key-label-0').innerText = 'A';
         document.getElementById('key-label-1').innerText = 'X';
         document.getElementById('key-label-2').innerText = 'Y';
         document.getElementById('key-label-3').innerText = 'B';
-        document.getElementById('rhythm-status').innerText = `4-Lane Controller Active. Surge: [${gpSurgeLabel}]. Menu: [${gpMenuLabel}].`;
+        document.getElementById('rhythm-status').innerText = `4-Lane Controller Active. Surge: [${gpSurgeLabel}].`;
       } 
       else if (currentInputMode === 'controller-2lane') {
         document.getElementById('key-label-0').innerText = 'LT';
         document.getElementById('key-label-1').innerText = 'RT';
-        document.getElementById('rhythm-status').innerText = `2-Lane Controller Active: LT / RT Triggers. Surge: [${gpSurgeLabel}].`;
+        document.getElementById('rhythm-status').innerText = `2-Lane Controller Active: LT / RT Triggers.`;
       }
       document.getElementById('menu-key-label').innerText = menuToggleLabel;
       document.getElementById('gp-menu-label').innerText = gpMenuLabel;
     }
 
-    /* Multi-Slot Gamepad Support (Detects Player 1, 2, 3, or 4) */
+    /* Multi-Slot Gamepad Support */
     function initGamepadSupport() {
       function pollGamepad() {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -797,7 +805,6 @@
         }
 
         if (gp) {
-          // Check for Controller Rebinding States
           if (currentlyRebindingGamepadLane !== null) {
             for (let b = 0; b < gp.buttons.length; b++) {
               if (gp.buttons[b] && gp.buttons[b].pressed) {
@@ -835,7 +842,6 @@
             }
           }
 
-          // Active Controller Gameplay & System Inputs
           const menuPressed = (gp.buttons[gpMenuBtn] && gp.buttons[gpMenuBtn].pressed) || (gp.buttons[8] && gp.buttons[8].pressed);
           if (menuPressed && !prevGamepadMenuState) {
             toggleHUDMenu();
@@ -1008,7 +1014,7 @@
       totalHitsGood = 0;
       totalMisses = 0;
       rhythmNotes = [];
-      lastBeatTime = -1; // Reset to -1 for immediate startup beat spawning
+      lastBeatTime = -1;
       lastSpawnedLane = -1;
       laneHeld = [false, false, false, false];
 
@@ -1019,7 +1025,6 @@
       surgeChargesRemaining = 3;
       consecutivePerfectStreak = 0;
 
-      // Dynamic duration per difficulty
       if (activeDifficulty === 'easy') surgeMaxDuration = 12.0;
       else if (activeDifficulty === 'medium') surgeMaxDuration = 8.0;
       else if (activeDifficulty === 'hard') surgeMaxDuration = 5.0;
@@ -1073,19 +1078,17 @@
       return availableLanes[Math.floor(Math.random() * availableLanes.length)];
     }
 
-    /* True Video Beat & Rhythm Sync Generator */
     function checkDynamicBeatPeak(currentTime) {
-      let beatInterval = 0.5; // Default 120 BPM quarter notes
+      let beatInterval = 0.5;
 
       if (activeDifficulty === 'easy') {
-        beatInterval = 0.8; // Relaxed beat spacing for easy chill play
+        beatInterval = 0.8;
       } else if (activeDifficulty === 'medium') {
         beatInterval = 0.4;
       } else if (activeDifficulty === 'hard') {
-        beatInterval = 0.2; // Fast eighth/sixteenth sync
+        beatInterval = 0.2;
       }
 
-      // Snap note generation strictly to video musical time grid
       const currentBeatIndex = Math.floor(currentTime / beatInterval);
       const targetBeatTime = currentBeatIndex * beatInterval;
 
@@ -1099,17 +1102,14 @@
         lastSpawnedLane = targetLane;
 
         if (activeDifficulty === 'easy') {
-          // Easy: 100% Single Taps Only, perfectly synced to the video beat
           spawnSingleNote(targetBeatTime, targetLane, 0);
         }
         else if (activeDifficulty === 'medium') {
-          // Medium: Taps & Holds synced to beat (~30% hold chance)
           const isHold = Math.random() < 0.30;
           const holdDur = isHold ? (beatInterval * 1.5) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
         }
         else if (activeDifficulty === 'hard') {
-          // Hard: Fast rhythm streams & holds (~28% hold chance)
           const isHold = Math.random() < 0.28;
           const holdDur = isHold ? (beatInterval * 1.2) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
@@ -1120,7 +1120,7 @@
     function spawnSingleNote(beatTime, lane, duration) {
       rhythmNotes.push({
         id: Math.random().toString(36).substr(2, 9),
-        time: beatTime + 1.25, // Scroll lead-in time
+        time: beatTime + 1.25,
         duration: duration,
         lane: lane,
         hit: false,
@@ -1178,20 +1178,17 @@
               if (note.duration > 0) {
                 el.classList.add('hold-note');
 
-                // Start Head Cap
                 const headCap = document.createElement('div');
                 headCap.className = 'hold-head-cap';
                 el.appendChild(headCap);
                 note.headCapElement = headCap;
 
-                // Hold Body Trail
                 const tail = document.createElement('div');
                 tail.className = 'hold-tail';
                 tail.style.height = `${note.duration * scrollSpeed}px`;
                 el.appendChild(tail);
                 note.tailElement = tail;
 
-                // End Tail Cap
                 const endCap = document.createElement('div');
                 endCap.className = 'hold-end-cap';
                 endCap.style.bottom = `${note.duration * scrollSpeed}px`;
@@ -1359,6 +1356,17 @@
       laneEl.classList.remove('pressed');
     }
 
+    /* Mobile Touch Handlers */
+    function handleTouchLaneStart(e, laneIdx) {
+      e.preventDefault();
+      triggerLaneInput(laneIdx);
+    }
+
+    function handleTouchLaneEnd(e, laneIdx) {
+      e.preventDefault();
+      releaseLaneInput(laneIdx);
+    }
+
     function activateSurgeBoost() {
       if (currentMultiplier >= 4 && !isSurgeActive && meterProgress >= 100 && surgeChargesRemaining > 0) {
         isSurgeActive = true;
@@ -1379,7 +1387,6 @@
       valBadge.innerText = `${currentMultiplier}x`;
       fillBar.style.height = `${meterProgress}%`;
 
-      // Render Charges Bolt UI
       const boltsContainer = document.getElementById('surge-bolts-display');
       boltsContainer.innerHTML = '';
       for (let i = 0; i < MAX_SURGE_CHARGES; i++) {
@@ -1388,10 +1395,8 @@
         boltsContainer.appendChild(bolt);
       }
 
-      // Render 10 Perfect Streak Tracker
       document.getElementById('gh-p-streak-val').innerText = `${consecutivePerfectStreak} / 10`;
 
-      // Update Header & HUD Stat Displays
       document.getElementById('rhythm-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
       document.getElementById('side-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
       document.getElementById('rhythm-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
@@ -1413,7 +1418,7 @@
         } else if (currentMultiplier >= 4 && meterProgress >= 100) {
           surgeBtn.classList.remove('disabled');
           surgeBtn.classList.add('ready');
-          surgeBtn.innerText = `⚡ PRESS FOR 8X SURGE (${surgeChargesRemaining} LEFT)`;
+          surgeBtn.innerText = `⚡ 8X SURGE (${surgeChargesRemaining} LEFT)`;
           hintText.innerText = 'READY! Activate Surge now!';
         } else {
           surgeBtn.classList.add('disabled');
@@ -1450,7 +1455,6 @@
         consecutivePerfectStreak++;
         rhythmScore += 300 * currentMultiplier;
 
-        // Check 10 Perfect Streak Replenishment
         if (consecutivePerfectStreak >= 10) {
           consecutivePerfectStreak = 0;
           if (surgeChargesRemaining < MAX_SURGE_CHARGES) {
@@ -1740,7 +1744,6 @@
       updateControlLabels();
     }
 
-    /* Gamepad Rebinding Functions */
     function clearGamepadRebindListening() {
       document.querySelectorAll('#mapper-sec-controller .keybind-slot').forEach(b => b.classList.remove('listening'));
       currentlyRebindingGamepadLane = null;
