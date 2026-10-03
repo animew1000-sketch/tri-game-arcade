@@ -33,11 +33,6 @@
       <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
       <div class="rhythm-side-hud hidden" id="side-hud">
         <div class="side-stat-card">
-          <i class="fa-solid fa-heart-pulse"></i>
-          <div class="label">Shield Health</div>
-          <div class="value" id="side-rhythm-hp">100 / 100</div>
-        </div>
-        <div class="side-stat-card">
           <i class="fa-solid fa-clock"></i>
           <div class="label">Time</div>
           <div class="value" id="side-rhythm-timer">00:00 / 00:00</div>
@@ -63,6 +58,16 @@
           <div class="value" id="side-perfect-streak">0 / 10</div>
         </div>
         <div class="side-stat-card">
+          <i class="fa-solid fa-check"></i>
+          <div class="label">Hits</div>
+          <div class="value" id="side-rhythm-hits">0</div>
+        </div>
+        <div class="side-stat-card">
+          <i class="fa-solid fa-xmark"></i>
+          <div class="label">Miss</div>
+          <div class="value" id="side-rhythm-misses">0</div>
+        </div>
+        <div class="side-stat-card">
           <i class="fa-solid fa-star"></i>
           <div class="label">Judgement</div>
           <div class="value" id="side-rhythm-judgement">-</div>
@@ -72,23 +77,16 @@
       <div class="sub-panel rhythm-panel-overlay" id="rhythm-hud">
         <h2><i class="fa-solid fa-gamepad"></i> Surge Command Center</h2>
         
-        <!-- Profile Manager Bar -->
-        <div class="profile-toolbar">
-          <select id="profile-select" onchange="switchPilotProfile(this.value)">
-            <!-- Populated dynamically -->
-          </select>
-          <button class="btn btn-secondary" onclick="openProfileModal()">
-            <i class="fa-solid fa-user-gear"></i> Manage Pilots
-          </button>
-        </div>
-
         <div class="rhythm-config-bar">
+          <input type="text" id="player-name-input" placeholder="Pilot Name" value="Player 1">
           <input type="text" id="yt-url-input" placeholder="YouTube Video URL or ID" value="dQw4w9WgXcQ">
           
           <select id="res-selector" onchange="changeScreenResolution()">
             <option value="auto" selected>🖥 Res: Full Window (Auto)</option>
             <option value="1920x1080">📺 Res: 1080p (1920x1080)</option>
             <option value="1280x720">💻 Res: 720p (1280x720)</option>
+            <option value="2560x1440">🖥 Res: 2K (2560x1440)</option>
+            <option value="3840x2160">📺 Res: 4K UHD (3840x2160)</option>
           </select>
 
           <!-- Input Scheme Selector -->
@@ -112,6 +110,11 @@
               <option value="click">🔊 Sound: Percussive Click</option>
               <option value="laser">🔊 Sound: Laser Blast</option>
               <option value="pop">🔊 Sound: Cyber Pop</option>
+              <option value="woodblock">🔊 Sound: Acoustic Woodblock</option>
+              <option value="bass">🔊 Sound: Sub Bass Thump</option>
+              <option value="bell">🔊 Sound: High Pitch Bell</option>
+              <option value="jump">🔊 Sound: 8-Bit Jump</option>
+              <option value="snap">🔊 Sound: Metallic Snap</option>
             </select>
             <button class="btn btn-secondary btn-icon-only" title="Preview Selected Hit Sound" onclick="previewHitSound()">
               <i class="fa-solid fa-volume-high"></i>
@@ -151,13 +154,6 @@
         <!-- Rhythm Stats Dashboard -->
         <div class="dashboard rhythm-stats">
           <div class="stat-card">
-            <i class="fa-solid fa-heart-pulse"></i>
-            <div class="stat-info">
-              <div class="label">Shield Health</div>
-              <div class="value" id="rhythm-hp">100 / 100</div>
-            </div>
-          </div>
-          <div class="stat-card">
             <i class="fa-solid fa-clock"></i>
             <div class="stat-info">
               <div class="label">Current Time</div>
@@ -193,17 +189,26 @@
             </div>
           </div>
           <div class="stat-card">
+            <i class="fa-solid fa-check"></i>
+            <div class="stat-info">
+              <div class="label">Notes Hit</div>
+              <div class="value" id="rhythm-hits">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-xmark"></i>
+            <div class="stat-info">
+              <div class="label">Misses</div>
+              <div class="value" id="rhythm-misses">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
             <i class="fa-solid fa-star"></i>
             <div class="stat-info">
               <div class="label">Judgement</div>
               <div class="value" id="rhythm-judgement">-</div>
             </div>
           </div>
-        </div>
-
-        <!-- Health Bar Indicator -->
-        <div class="health-bar-container">
-          <div class="health-bar-fill" id="health-bar-fill" style="width: 100%;"></div>
         </div>
 
         <div class="controls">
@@ -217,12 +222,21 @@
           <div id="yt-player"></div>
         </div>
 
-        <!-- Perfect Hit Visual Particle Layer -->
-        <div id="perfect-fx-layer"></div>
+        <!-- TOP CENTER PILOT HEALTH / SHIELD DISPLAY -->
+        <div class="top-health-hud-container" id="top-health-box">
+          <div class="top-hp-header">
+            <span><i class="fa-solid fa-shield-heart"></i> PILOT SHIELD</span>
+            <span id="top-hp-text">100 / 100 HP</span>
+          </div>
+          <div class="top-hp-bar-outer">
+            <div class="top-hp-bar-fill" id="top-hp-fill" style="width: 100%;"></div>
+          </div>
+        </div>
 
         <!-- Guitar Hero Style Side Multiplier Meter -->
         <div class="gh-multiplier-meter-container" id="gh-meter-box">
-          <div class="gh-meter-title">MULTIPLIER</div>
+          <div class="gh-multiplier-title">MULTIPLIER</div>
+          <div class="gh-multiplier-meter-container-inner"></div>
           <div class="gh-meter-surge-btn disabled" id="surge-btn" onclick="activateSurgeBoost()">
             <i class="fa-solid fa-bolt"></i> 8X SURGE
           </div>
@@ -231,15 +245,17 @@
             <div class="gh-meter-fill" id="gh-meter-fill"></div>
           </div>
           
+          <!-- Surge Charges Indicator -->
           <div class="surge-charge-indicator">
             <span class="charge-label">SURGE USES:</span>
-            <div class="charge-bolts" id="surge-bolts-display">
+            <div class="surge-bolts" id="surge-bolts-display">
               <i class="fa-solid fa-bolt active"></i>
               <i class="fa-solid fa-bolt active"></i>
               <i class="fa-solid fa-bolt active"></i>
             </div>
           </div>
 
+          <!-- 10 Perfect Streak Tracker -->
           <div class="perfect-streak-box">
             <span class="p-streak-label">PERFECT RECHARGE</span>
             <span class="p-streak-val" id="gh-p-streak-val">0 / 10</span>
@@ -269,29 +285,10 @@
                onmousedown="triggerLaneInput(3)" onmouseup="releaseLaneInput(3)">
             <span class="lane-key" id="key-label-3">L</span>
           </div>
-          <div class="rhythm-hit-line-full"></div>
+          <div class="rhythm-hit-line-full" id="rhythm-hit-line"></div>
         </div>
       </div>
     </section>
-
-    <!-- Modal for Pilot Profile Creator & Manager -->
-    <div id="profile-modal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h3><i class="fa-solid fa-user-gear"></i> Pilot Profile Manager</h3>
-        <p>Create or switch pilot profiles to save custom keybinds and stats:</p>
-        
-        <div class="profile-input-group">
-          <input type="text" id="new-profile-name" placeholder="Enter New Pilot Name">
-          <button class="btn" onclick="createNewPilotProfile()">Create Profile</button>
-        </div>
-
-        <div class="profile-list-box" id="profile-list-container">
-          <!-- Populated in JS -->
-        </div>
-
-        <button class="btn btn-secondary" onclick="closeProfileModal()">Close Manager</button>
-      </div>
-    </div>
 
     <!-- Modal for End-of-Song Summary & Rank -->
     <div id="results-modal" class="modal-overlay hidden">
@@ -468,151 +465,8 @@
       initMissileBackground();
       initYouTubeAPI();
       initGamepadSupport();
-      loadPilotProfiles();
       document.getElementById('main-header').classList.add('header-overlay');
     });
-
-    /* Pilot Profile & Control Persistence */
-    let currentPilot = 'Player 1';
-    let pilotProfiles = {
-      'Player 1': {
-        kbMap: { 'a': 0, 's': 1, 'k': 2, 'l': 3 },
-        kbLabels: ['A', 'S', 'K', 'L'],
-        surgeKey: ' ',
-        surgeKeyLabel: 'SPACE',
-        menuToggleKey: 'tab',
-        menuToggleLabel: 'TAB',
-        gpBinds: [0, 2, 3, 1],
-        gpLabels: ['A (0)', 'X (2)', 'Y (3)', 'B (1)'],
-        gpSurgeBtn: 4,
-        gpMenuBtn: 9
-      }
-    };
-
-    function loadPilotProfiles() {
-      const saved = localStorage.getItem('surge_pilot_profiles');
-      if (saved) {
-        try {
-          pilotProfiles = JSON.parse(saved);
-        } catch(e) {}
-      }
-      
-      const savedActive = localStorage.getItem('surge_active_pilot');
-      if (savedActive && pilotProfiles[savedActive]) {
-        currentPilot = savedActive;
-      } else {
-        currentPilot = Object.keys(pilotProfiles)[0] || 'Player 1';
-      }
-
-      applyPilotProfile(currentPilot);
-      renderProfileSelector();
-    }
-
-    function savePilotProfiles() {
-      localStorage.setItem('surge_pilot_profiles', JSON.stringify(pilotProfiles));
-      localStorage.setItem('surge_active_pilot', currentPilot);
-    }
-
-    function applyPilotProfile(pilotName) {
-      currentPilot = pilotName;
-      const p = pilotProfiles[pilotName];
-      if (!p) return;
-
-      kbMap = p.kbMap;
-      kbLabels = p.kbLabels;
-      surgeKey = p.surgeKey;
-      surgeKeyLabel = p.surgeKeyLabel;
-      menuToggleKey = p.menuToggleKey;
-      menuToggleLabel = p.menuToggleLabel;
-      gpBinds = p.gpBinds;
-      gpLabels = p.gpLabels;
-      gpSurgeBtn = p.gpSurgeBtn;
-      gpMenuBtn = p.gpMenuBtn;
-
-      for (let i = 0; i < 4; i++) {
-        const el = document.getElementById(`kb-val-${i}`);
-        if (el) el.innerText = kbLabels[i];
-      }
-      const surgeEl = document.getElementById('kb-val-surge');
-      if (surgeEl) surgeEl.innerText = surgeKeyLabel;
-      const menuEl = document.getElementById('kb-val-menu');
-      if (menuEl) menuEl.innerText = menuToggleLabel;
-
-      updateControlLabels();
-    }
-
-    function renderProfileSelector() {
-      const sel = document.getElementById('profile-select');
-      if (!sel) return;
-      sel.innerHTML = '';
-      for (const name in pilotProfiles) {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.innerText = `Pilot: ${name}`;
-        if (name === currentPilot) opt.selected = true;
-        sel.appendChild(opt);
-      }
-      renderProfileManagerList();
-    }
-
-    function switchPilotProfile(name) {
-      applyPilotProfile(name);
-      savePilotProfiles();
-    }
-
-    function createNewPilotProfile() {
-      const input = document.getElementById('new-profile-name');
-      const name = input.value.trim();
-      if (!name) return;
-
-      if (!pilotProfiles[name]) {
-        pilotProfiles[name] = JSON.parse(JSON.stringify(pilotProfiles[currentPilot]));
-      }
-      currentPilot = name;
-      input.value = '';
-      savePilotProfiles();
-      applyPilotProfile(name);
-      renderProfileSelector();
-    }
-
-    function deletePilotProfile(name) {
-      if (Object.keys(pilotProfiles).length <= 1) {
-        alert("Cannot delete last pilot profile!");
-        return;
-      }
-      delete pilotProfiles[name];
-      currentPilot = Object.keys(pilotProfiles)[0];
-      savePilotProfiles();
-      applyPilotProfile(currentPilot);
-      renderProfileSelector();
-    }
-
-    function renderProfileManagerList() {
-      const container = document.getElementById('profile-list-container');
-      if (!container) return;
-      container.innerHTML = '';
-      for (const name in pilotProfiles) {
-        const row = document.createElement('div');
-        row.className = 'profile-row';
-        row.innerHTML = `
-          <span class="p-name">${name} ${name === currentPilot ? '(Active)' : ''}</span>
-          <div class="p-actions">
-            ${name !== currentPilot ? `<button class="btn btn-secondary" onclick="switchPilotProfile('${name}'); closeProfileModal();">Select</button>` : ''}
-            ${Object.keys(pilotProfiles).length > 1 ? `<button class="btn btn-playback btn-stop" onclick="deletePilotProfile('${name}')">Delete</button>` : ''}
-          </div>
-        `;
-        container.appendChild(row);
-      }
-    }
-
-    function openProfileModal() {
-      renderProfileManagerList();
-      document.getElementById('profile-modal').classList.remove('hidden');
-    }
-
-    function closeProfileModal() {
-      document.getElementById('profile-modal').classList.add('hidden');
-    }
 
     /* Sound Synthesizer Engine */
     let audioCtx = null;
@@ -710,6 +564,68 @@
         osc.start(now);
         osc.stop(now + 0.06);
       }
+      else if (selectedHitSoundPreset === 'woodblock') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isPerfect ? 1000 : (isGreat ? 800 : 600), now);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+      else if (selectedHitSoundPreset === 'bass') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 160 : (isGreat ? 130 : 100), now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+      else if (selectedHitSoundPreset === 'bell') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPerfect ? 1760 : (isGreat ? 1400 : 1050), now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+      else if (selectedHitSoundPreset === 'jump') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(isPerfect ? 300 : (isGreat ? 240 : 180), now);
+        osc.frequency.linearRampToValueAtTime(isPerfect ? 900 : 600, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+      else if (selectedHitSoundPreset === 'snap') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isPerfect ? 2400 : (isGreat ? 1800 : 1200), now);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
     }
 
     let ytPlayer = null;
@@ -721,11 +637,6 @@
     let totalHitsGreat = 0;
     let totalHitsGood = 0;
     let totalMisses = 0;
-    
-    // Shield Health System
-    let playerHealth = 100;
-    const maxPlayerHealth = 100;
-
     let rhythmNotes = [];
     let rhythmLoopId = null;
     let rhythmPlaying = false;
@@ -747,14 +658,21 @@
     let menuToggleKey = 'tab';
     let menuToggleLabel = 'TAB';
 
-    let gpBinds = [0, 2, 3, 1];
+    // Gamepad Input Controls & Default Binds
+    let gpBinds = [0, 2, 3, 1]; 
     let gpLabels = ['A (0)', 'X (2)', 'Y (3)', 'B (1)'];
-    let gpSurgeBtn = 4;
+    
+    let gpSurgeBtn = 4; 
     let gpSurgeLabel = 'LB (4)';
-    let gpMenuBtn = 9;
+    
+    let gpMenuBtn = 9; 
     let gpMenuLabel = 'START (9)';
-    let gpPlayBtn = 13;
-    let gpStopBtn = 12;
+
+    let gpPlayBtn = 13; 
+    let gpPlayLabel = 'DPAD DOWN (13)';
+
+    let gpStopBtn = 12; 
+    let gpStopLabel = 'DPAD UP (12)';
 
     let currentlyRebindingLane = null;
     let currentlyRebindingGamepadLane = null;
@@ -766,12 +684,16 @@
     let isRebindingGamepadPlay = false;
     let isRebindingGamepadStop = false;
 
-    let lastBeatTime = -1;
+    let lastBeatTime = -1; 
     let prevGamepadState = [false, false, false, false];
     let prevGamepadSurgeState = false;
     let prevGamepadMenuState = false;
     let prevGamepadPlayState = false;
     let prevGamepadStopState = false;
+
+    /* Pilot Health & Surge System Logic */
+    let playerHP = 100;
+    const MAX_HP = 100;
 
     let currentMultiplier = 1;
     let meterProgress = 0;
@@ -782,6 +704,7 @@
     const MAX_SURGE_CHARGES = 3;
     let surgeChargesRemaining = 3;
     let consecutivePerfectStreak = 0;
+
     let lastSpawnedLane = -1;
 
     function formatTime(seconds) {
@@ -882,9 +805,11 @@
       document.getElementById('gp-menu-label').innerText = gpMenuLabel;
     }
 
+    /* Multi-Slot Gamepad Support */
     function initGamepadSupport() {
       function pollGamepad() {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        
         let gp = null;
         for (let i = 0; i < gamepads.length; i++) {
           if (gamepads[i] && gamepads[i].connected) {
@@ -1095,6 +1020,7 @@
     }
 
     function resetRhythmGameState() {
+      playerHP = 100;
       rhythmScore = 0;
       rhythmCombo = 0;
       maxRhythmCombo = 0;
@@ -1102,7 +1028,6 @@
       totalHitsGreat = 0;
       totalHitsGood = 0;
       totalMisses = 0;
-      playerHealth = maxPlayerHealth;
       rhythmNotes = [];
       lastBeatTime = -1;
       lastSpawnedLane = -1;
@@ -1119,11 +1044,13 @@
       else if (activeDifficulty === 'medium') surgeMaxDuration = 8.0;
       else if (activeDifficulty === 'hard') surgeMaxDuration = 5.0;
       
-      updateHealthUI();
+      updateTopHealthUI();
       document.getElementById('rhythm-score').innerText = '0';
       document.getElementById('rhythm-combo').innerText = '0x';
       document.getElementById('rhythm-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
       document.getElementById('rhythm-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
+      document.getElementById('rhythm-hits').innerText = '0';
+      document.getElementById('rhythm-misses').innerText = '0';
       document.getElementById('rhythm-timer').innerText = '00:00 / 00:00';
       document.getElementById('rhythm-judgement').innerText = '-';
 
@@ -1131,36 +1058,30 @@
       document.getElementById('side-rhythm-combo').innerText = '0x';
       document.getElementById('side-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
       document.getElementById('side-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
-      document.getElementById('side-rhythm-timer').innerText = '00:00 / 00:00';
+      document.getElementById('side-rhythm-hits').innerText = '0';
+      document.getElementById('side-rhythm-misses').innerText = '0';
       document.getElementById('side-rhythm-judgement').innerText = '-';
+
+      document.getElementById('full-viewport-rhythm-stage').classList.remove('stage-surge-active');
 
       updateGHMeterUI();
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
     }
 
-    function updateHealthUI() {
-      const fill = document.getElementById('health-bar-fill');
-      const text = document.getElementById('rhythm-hp');
-      const sideText = document.getElementById('side-rhythm-hp');
+    function updateTopHealthUI() {
+      const hpFill = document.getElementById('top-hp-fill');
+      const hpText = document.getElementById('top-hp-text');
+      const hpBox = document.getElementById('top-health-box');
 
-      const pct = Math.max(0, (playerHealth / maxPlayerHealth) * 100);
-      if (fill) fill.style.width = `${pct}%`;
-      if (text) text.innerText = `${Math.floor(playerHealth)} / ${maxPlayerHealth}`;
-      if (sideText) sideText.innerText = `${Math.floor(playerHealth)} / ${maxPlayerHealth}`;
-    }
+      const hpPercent = Math.max(0, Math.min(100, (playerHP / MAX_HP) * 100));
+      hpFill.style.width = `${hpPercent}%`;
+      hpText.innerText = `${playerHP} / ${MAX_HP} HP`;
 
-    function damagePlayerHealth(amount) {
-      playerHealth = Math.max(0, playerHealth - amount);
-      updateHealthUI();
-      if (playerHealth <= 0) {
-        stopRhythmGameAndSaveScore();
-        document.getElementById('rhythm-status').innerText = "⚠️ SHIELD FAILURE! Game Over.";
+      if (playerHP <= 30) {
+        hpBox.classList.add('critical');
+      } else {
+        hpBox.classList.remove('critical');
       }
-    }
-
-    function healPlayerHealth(amount) {
-      playerHealth = Math.min(maxPlayerHealth, playerHealth + amount);
-      updateHealthUI();
     }
 
     function getAvailableLanes(currentTime) {
@@ -1253,22 +1174,8 @@
       function loop() {
         if (!rhythmPlaying) return;
 
-        // Safety check to ensure YT player API is fully initialized and ready
-        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') {
-          rhythmLoopId = requestAnimationFrame(loop);
-          return;
-        }
-
-        let rawCurrentTime = 0;
-        let totalDuration = 0;
-        try {
-          rawCurrentTime = ytPlayer.getCurrentTime() || 0;
-          totalDuration = ytPlayer.getDuration() || 0;
-        } catch (e) {
-          rhythmLoopId = requestAnimationFrame(loop);
-          return;
-        }
-
+        const rawCurrentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+        const totalDuration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
         const currentTime = rawCurrentTime + audioOffset;
 
         const formattedClock = `${formatTime(rawCurrentTime)} / ${formatTime(totalDuration)}`;
@@ -1286,9 +1193,9 @@
 
           if (surgeDuration <= 0) {
             isSurgeActive = false;
+            document.getElementById('full-viewport-rhythm-stage').classList.remove('stage-surge-active');
             currentMultiplier = Math.min(4, Math.floor(rhythmCombo / 10) + 1);
             updateGHMeterUI();
-            updateAllActiveNotesVisuals();
           }
         }
 
@@ -1301,7 +1208,6 @@
             if (!note.element) {
               const el = document.createElement('div');
               el.className = `rhythm-note lane-${note.lane}`;
-              if (isSurgeActive) el.classList.add('surge-overdrive-note');
               
               if (note.duration > 0) {
                 el.classList.add('hold-note');
@@ -1345,12 +1251,12 @@
 
                 if (currentTime >= note.time + note.duration) {
                   note.completed = true;
-                  registerJudgement('PERFECT');
+                  registerJudgement('PERFECT', note.lane);
                   if (note.element) note.element.remove();
                 }
               } else {
                 note.completed = true;
-                registerJudgement('MISS');
+                registerJudgement('MISS', note.lane);
                 if (note.element) note.element.remove();
               }
             }
@@ -1361,7 +1267,7 @@
                 note.element.classList.add('missed');
                 setTimeout(() => note.element && note.element.remove(), 100);
               }
-              registerJudgement('MISS');
+              registerJudgement('MISS', note.lane);
             }
           }
         });
@@ -1372,18 +1278,6 @@
       }
 
       rhythmLoopId = requestAnimationFrame(loop);
-    }
-
-    function updateAllActiveNotesVisuals() {
-      rhythmNotes.forEach(n => {
-        if (n.element) {
-          if (isSurgeActive) {
-            n.element.classList.add('surge-overdrive-note');
-          } else {
-            n.element.classList.remove('surge-overdrive-note');
-          }
-        }
-      });
     }
 
     function pauseRhythmGame() {
@@ -1481,9 +1375,9 @@
         if (targetNote.duration === 0) {
           targetNote.completed = true;
           if (targetNote.element) targetNote.element.remove();
-          registerJudgement(judgement);
+          registerJudgement(judgement, laneIdx);
         } else {
-          registerJudgement(judgement);
+          registerJudgement(judgement, laneIdx);
         }
       }
     }
@@ -1496,6 +1390,7 @@
       laneEl.classList.remove('pressed');
     }
 
+    /* Mobile Touch Handlers */
     function handleTouchLaneStart(e, laneIdx) {
       e.preventDefault();
       triggerLaneInput(laneIdx);
@@ -1506,54 +1401,19 @@
       releaseLaneInput(laneIdx);
     }
 
-    function spawnPerfectHitEffect(laneIdx) {
-      const fxLayer = document.getElementById('perfect-fx-layer');
-      const laneEl = document.getElementById(`lane-${laneIdx}`);
-      if (!fxLayer || !laneEl) return;
-
-      const laneRect = laneEl.getBoundingClientRect();
-      const stageRect = document.getElementById('full-viewport-rhythm-stage').getBoundingClientRect();
-
-      const centerX = laneRect.left + laneRect.width / 2 - stageRect.left;
-      const centerY = stageRect.height - 105;
-
-      const ring = document.createElement('div');
-      ring.className = 'perfect-burst-ring';
-      ring.style.left = `${centerX}px`;
-      ring.style.top = `${centerY}px`;
-      fxLayer.appendChild(ring);
-      setTimeout(() => ring.remove(), 600);
-
-      const txt = document.createElement('div');
-      txt.className = 'perfect-float-text';
-      txt.innerText = 'PERFECT!';
-      txt.style.left = `${centerX - 35}px`;
-      txt.style.top = `${centerY - 30}px`;
-      fxLayer.appendChild(txt);
-      setTimeout(() => txt.remove(), 700);
-
-      for (let i = 0; i < 6; i++) {
-        const spark = document.createElement('div');
-        spark.className = 'perfect-spark';
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 30 + Math.random() * 40;
-        spark.style.left = `${centerX}px`;
-        spark.style.top = `${centerY}px`;
-        spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
-        spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
-        fxLayer.appendChild(spark);
-        setTimeout(() => spark.remove(), 500);
-      }
-    }
-
     function activateSurgeBoost() {
       if (currentMultiplier >= 4 && !isSurgeActive && meterProgress >= 100 && surgeChargesRemaining > 0) {
         isSurgeActive = true;
         surgeChargesRemaining--;
         currentMultiplier = 8;
         surgeDuration = surgeMaxDuration;
+        
+        // Heal Pilot HP on Surge activation (+25 HP)
+        playerHP = Math.min(MAX_HP, playerHP + 25);
+        updateTopHealthUI();
+
+        document.getElementById('full-viewport-rhythm-stage').classList.add('stage-surge-active');
         updateGHMeterUI();
-        updateAllActiveNotesVisuals();
       }
     }
 
@@ -1587,7 +1447,7 @@
         surgeBtn.classList.remove('disabled');
         surgeBtn.classList.add('active');
         surgeBtn.innerText = '⚡ 8X SURGE ACTIVE!';
-        hintText.innerText = 'OVERDRIVE ACTIVE!';
+        hintText.innerText = 'OVERDRIVE ACTIVE (+HEAL)!';
       } else {
         containerBox.classList.remove('surge-active');
         if (surgeChargesRemaining === 0) {
@@ -1599,7 +1459,7 @@
           surgeBtn.classList.remove('disabled');
           surgeBtn.classList.add('ready');
           surgeBtn.innerText = `⚡ PRESS FOR 8X SURGE (${surgeChargesRemaining} LEFT)`;
-          hintText.innerText = 'READY! Activate Surge now!';
+          hintText.innerText = 'READY! Activate Surge to heal +25 HP!';
         } else {
           surgeBtn.classList.add('disabled');
           surgeBtn.classList.remove('ready', 'active');
@@ -1609,7 +1469,34 @@
       }
     }
 
-    function registerJudgement(type) {
+    function triggerPerfectVisualEffect(laneIdx) {
+      // 1. Flash Hit Line Cyan/White
+      const hitLine = document.getElementById('rhythm-hit-line');
+      hitLine.classList.add('perfect-flash');
+      setTimeout(() => hitLine.classList.remove('perfect-flash'), 200);
+
+      // 2. Flash Lane
+      const laneEl = document.getElementById(`lane-${laneIdx}`);
+      if (laneEl) {
+        laneEl.classList.add('perfect-lane-flash');
+        setTimeout(() => laneEl.classList.remove('perfect-lane-flash'), 250);
+      }
+
+      // 3. Spawn Floating Particle Burst at Hit Line
+      const stage = document.getElementById('full-viewport-rhythm-stage');
+      const burst = document.createElement('div');
+      burst.className = 'perfect-burst-particle';
+      
+      // Position horizontally near lane center
+      const laneWidth = laneEl ? laneEl.offsetWidth : 100;
+      const leftOffset = laneEl ? laneEl.offsetLeft + laneWidth / 2 : stage.clientWidth / 2;
+      burst.style.left = `${leftOffset}px`;
+      
+      stage.appendChild(burst);
+      setTimeout(() => burst.remove(), 400);
+    }
+
+    function registerJudgement(type, laneIdx = 0) {
       playHitSound(type);
 
       const judgeEl = document.getElementById('rhythm-judgement');
@@ -1634,10 +1521,9 @@
         totalHitsPerfect++;
         consecutivePerfectStreak++;
         rhythmScore += 300 * currentMultiplier;
-        healPlayerHealth(4);
 
-        const lastNote = rhythmNotes.find(n => n.completed);
-        if (lastNote) spawnPerfectHitEffect(lastNote.lane);
+        // Trigger Perfect Visual Effect
+        triggerPerfectVisualEffect(laneIdx);
 
         if (consecutivePerfectStreak >= 10) {
           consecutivePerfectStreak = 0;
@@ -1652,7 +1538,6 @@
         totalHitsGreat++;
         consecutivePerfectStreak = 0;
         rhythmScore += 180 * currentMultiplier;
-        healPlayerHealth(2);
       } else if (type === 'GOOD') {
         rhythmCombo++;
         totalHitsGood++;
@@ -1662,7 +1547,17 @@
         rhythmCombo = 0;
         consecutivePerfectStreak = 0;
         totalMisses++;
-        damagePlayerHealth(12);
+        
+        // Damage Pilot HP on Miss (-10 HP)
+        playerHP = Math.max(0, playerHP - 10);
+        updateTopHealthUI();
+
+        if (playerHP <= 0) {
+          document.getElementById('rhythm-status').innerText = '💥 PILOT SHIELD DESTROYED! Game Over!';
+          stopRhythmGameAndSaveScore();
+          return;
+        }
+
         if (!isSurgeActive) {
           currentMultiplier = 1;
           meterProgress = 0;
@@ -1778,6 +1673,7 @@
     }
 
     function saveScoreToLeaderboard() {
+      const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous Pilot';
       const allLeaderboards = JSON.parse(localStorage.getItem('surge_rhythm_scoreboards') || '{}');
 
       if (!allLeaderboards[currentVideoId]) {
@@ -1785,7 +1681,7 @@
       }
 
       const scoreEntry = {
-        player: currentPilot,
+        player: playerName,
         score: Math.floor(rhythmScore),
         maxCombo: maxRhythmCombo,
         difficulty: activeDifficulty.toUpperCase(),
@@ -1901,9 +1797,6 @@
       document.getElementById('kb-bind-surge').classList.remove('listening');
 
       isRebindingSurgeKey = false;
-      pilotProfiles[currentPilot].surgeKey = surgeKey;
-      pilotProfiles[currentPilot].surgeKeyLabel = surgeKeyLabel;
-      savePilotProfiles();
       updateControlLabels();
     }
 
@@ -1915,9 +1808,6 @@
       document.getElementById('kb-bind-menu').classList.remove('listening');
 
       isRebindingMenuKey = false;
-      pilotProfiles[currentPilot].menuToggleKey = menuToggleKey;
-      pilotProfiles[currentPilot].menuToggleLabel = menuToggleLabel;
-      savePilotProfiles();
       updateControlLabels();
     }
 
@@ -1932,9 +1822,95 @@
       document.getElementById(`kb-bind-${laneIdx}`).classList.remove('listening');
 
       currentlyRebindingLane = null;
-      pilotProfiles[currentPilot].kbMap = kbMap;
-      pilotProfiles[currentPilot].kbLabels = kbLabels;
-      savePilotProfiles();
+      updateControlLabels();
+    }
+
+    function clearGamepadRebindListening() {
+      document.querySelectorAll('#mapper-sec-controller .keybind-slot').forEach(b => b.classList.remove('listening'));
+      currentlyRebindingGamepadLane = null;
+      isRebindingGamepadSurge = false;
+      isRebindingGamepadMenu = false;
+      isRebindingGamepadPlay = false;
+      isRebindingGamepadStop = false;
+    }
+
+    function startRebindingGamepad(laneIdx) {
+      clearGamepadRebindListening();
+      currentlyRebindingGamepadLane = laneIdx;
+      document.getElementById(`gp-bind-${laneIdx}`).classList.add('listening');
+      document.getElementById(`gp-val-${laneIdx}`).innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadSurge() {
+      clearGamepadRebindListening();
+      isRebindingGamepadSurge = true;
+      document.getElementById('gp-bind-surge').classList.add('listening');
+      document.getElementById('gp-val-surge').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadMenu() {
+      clearGamepadRebindListening();
+      isRebindingGamepadMenu = true;
+      document.getElementById('gp-bind-menu').classList.add('listening');
+      document.getElementById('gp-val-menu').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadPlay() {
+      clearGamepadRebindListening();
+      isRebindingGamepadPlay = true;
+      document.getElementById('gp-bind-play').classList.add('listening');
+      document.getElementById('gp-val-play').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadStop() {
+      clearGamepadRebindListening();
+      isRebindingGamepadStop = true;
+      document.getElementById('gp-bind-stop').classList.add('listening');
+      document.getElementById('gp-val-stop').innerText = "Press Button...";
+    }
+
+    function bindGamepadLane(laneIdx, btnIdx) {
+      gpBinds[laneIdx] = btnIdx;
+      gpLabels[laneIdx] = `Btn ${btnIdx}`;
+
+      document.getElementById(`gp-val-${laneIdx}`).innerText = gpLabels[laneIdx];
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadSurge(btnIdx) {
+      gpSurgeBtn = btnIdx;
+      gpSurgeLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-surge').innerText = gpSurgeLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadMenu(btnIdx) {
+      gpMenuBtn = btnIdx;
+      gpMenuLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-menu').innerText = gpMenuLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadPlay(btnIdx) {
+      gpPlayBtn = btnIdx;
+      gpPlayLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-play').innerText = gpPlayLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadStop(btnIdx) {
+      gpStopBtn = btnIdx;
+      gpStopLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-stop').innerText = gpStopLabel;
+      clearGamepadRebindListening();
       updateControlLabels();
     }
   </script>
