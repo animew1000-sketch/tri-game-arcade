@@ -30,7 +30,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Background Animation Canvas */
 #missile-bg-canvas {
   position: fixed;
   top: 0;
@@ -86,6 +85,88 @@ header p {
 
 .hidden {
   display: none !important;
+}
+
+/* Profile Toolbar */
+.profile-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.profile-toolbar select {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  flex: 1;
+  font-weight: bold;
+}
+
+.profile-input-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.profile-input-group input {
+  flex: 1;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.profile-list-box {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.profile-row {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.p-name {
+  font-weight: bold;
+  color: var(--accent-blue);
+}
+
+.p-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Health Bar */
+.health-bar-container {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #e63946, #5bc0be);
+  transition: width 0.2s ease;
 }
 
 .dashboard {
@@ -153,7 +234,7 @@ header p {
   justify-content: center;
   gap: 8px;
   transition: 0.2s;
-  min-height: 44px; /* Mobile touch target standard */
+  min-height: 44px;
 }
 
 .btn:hover:not(:disabled) {
@@ -202,7 +283,7 @@ header p {
   border: 2px solid var(--border-color);
   padding: 20px;
   border-radius: 12px;
-  max-width: 450px;
+  max-width: 480px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -213,7 +294,7 @@ header p {
   text-align: center;
 }
 
-/* Guitar Hero Side Multiplier & Surge Meter (Mobile Responsive) */
+/* Guitar Hero Side Multiplier & Surge Meter */
 .gh-multiplier-meter-container {
   position: absolute;
   left: 10px;
@@ -569,6 +650,62 @@ header p {
   z-index: 1;
 }
 
+/* Perfect Hit Visual FX Layer */
+#perfect-fx-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.perfect-burst-ring {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border: 3px solid #5bc0be;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: burstRingAnim 0.6s ease-out forwards;
+  box-shadow: 0 0 20px #5bc0be;
+}
+
+@keyframes burstRingAnim {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+.perfect-float-text {
+  position: absolute;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #5bc0be;
+  text-shadow: 0 0 12px #5bc0be;
+  animation: floatTextAnim 0.7s ease-out forwards;
+}
+
+@keyframes floatTextAnim {
+  0% { transform: translateY(0) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-50px) scale(1.3); opacity: 0; }
+}
+
+.perfect-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffd166;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd166;
+  animation: sparkAnim 0.5s ease-out forwards;
+}
+
+@keyframes sparkAnim {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+}
+
 .rhythm-track-container-full {
   position: absolute;
   top: 0;
@@ -622,7 +759,7 @@ header p {
   z-index: 2;
 }
 
-/* Note Styling & Capped Hold Notes */
+/* Note Styling & Surge Overdrive Visuals */
 .rhythm-note {
   position: absolute;
   width: 80%;
@@ -632,6 +769,18 @@ header p {
   border-radius: 6px;
   box-shadow: 0 0 15px var(--accent-blue);
   z-index: 3;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.rhythm-note.surge-overdrive-note {
+  background: #ffd166 !important;
+  box-shadow: 0 0 25px #ffd166, 0 0 45px #f77f00 !important;
+  animation: surgeNotePulse 0.4s infinite alternate;
+}
+
+@keyframes surgeNotePulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.08); filter: brightness(1.3); }
 }
 
 .rhythm-note.hold-note {
@@ -850,7 +999,6 @@ header p {
   padding: 12px 0;
 }
 
-/* Media Query for Larger Desktops */
 @media (min-width: 768px) {
   .rhythm-config-bar {
     flex-direction: row;
