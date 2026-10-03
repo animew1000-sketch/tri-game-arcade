@@ -102,6 +102,21 @@
             <option value="hard">Hard (Fast Streams & Holds • 5s Surge)</option>
           </select>
 
+          <!-- Music Tempo & Sync Selector -->
+          <div class="sound-select-wrapper">
+            <select id="rhythm-bpm-select" onchange="changeSongBPM(this.value)">
+              <option value="90">🎵 Tempo: 90 BPM (Slow)</option>
+              <option value="110">🎵 Tempo: 110 BPM (Moderate)</option>
+              <option value="120" selected>🎵 Tempo: 120 BPM (Standard)</option>
+              <option value="135">🎵 Tempo: 135 BPM (Upbeat)</option>
+              <option value="150">🎵 Tempo: 150 BPM (Fast)</option>
+              <option value="170">🎵 Tempo: 170 BPM (Insane)</option>
+            </select>
+            <button class="btn btn-secondary" title="Tap along to song to set BPM" onclick="handleTapTempo()">
+              <i class="fa-solid fa-hand-pointer"></i> Tap BPM
+            </button>
+          </div>
+
           <!-- Sound Preset Selector -->
           <div class="sound-select-wrapper">
             <select id="hit-sound-select" onchange="changeHitSoundPreset(this.value)">
@@ -235,7 +250,7 @@
 
         <!-- Guitar Hero Style Side Multiplier Meter -->
         <div class="gh-multiplier-meter-container" id="gh-meter-box">
-          <div class="gh-multiplier-title">MULTIPLIER</div>
+          <div class="gh-meter-title">MULTIPLIER</div>
           <div class="gh-multiplier-meter-container-inner"></div>
           <div class="gh-meter-surge-btn disabled" id="surge-btn" onclick="activateSurgeBoost()">
             <i class="fa-solid fa-bolt"></i> 8X SURGE
@@ -644,6 +659,11 @@
     let isMenuHidden = false;
     let activeDifficulty = 'medium';
 
+    /* Music Sync BPM Variables */
+    let songBPM = 120;
+    let beatInterval = 60 / songBPM; // Seconds per beat
+    let tapTempoTimestamps = [];
+
     let audioOffset = 0;
 
     let currentInputMode = 'keyboard';
@@ -718,6 +738,53 @@
       audioOffset = parseFloat(msVal) / 1000;
       const displayVal = parseInt(msVal);
       document.getElementById('latency-offset-val').innerText = `${displayVal >= 0 ? '+' : ''}${displayVal}ms`;
+    }
+
+    function changeSongBPM(bpmVal) {
+      songBPM = parseInt(bpmVal);
+      beatInterval = 60 / songBPM;
+      document.getElementById('rhythm-status').innerText = `Song BPM set to ${songBPM} (Beat Interval: ${beatInterval.toFixed(2)}s).`;
+    }
+
+    function handleTapTempo() {
+      const now = Date.now();
+      if (tapTempoTimestamps.length > 0 && now - tapTempoTimestamps[tapTempoTimestamps.length - 1] > 2000) {
+        tapTempoTimestamps = []; // Reset if paused too long
+      }
+      tapTempoTimestamps.push(now);
+
+      if (tapTempoTimestamps.length >= 3) {
+        let intervals = [];
+        for (let i = 1; i < tapTempoTimestamps.length; i++) {
+          intervals.push(tapTempoTimestamps[i] - tapTempoTimestamps[i - 1]);
+        }
+        const avgIntervalMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const calculatedBPM = Math.round(60000 / avgIntervalMs);
+
+        if (calculatedBPM >= 60 && calculatedBPM <= 240) {
+          songBPM = calculatedBPM;
+          beatInterval = 60 / songBPM;
+          
+          const selectEl = document.getElementById('rhythm-bpm-select');
+          let found = false;
+          for (let opt of selectEl.options) {
+            if (parseInt(opt.value) === songBPM) {
+              selectEl.value = songBPM;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            let opt = document.createElement('option');
+            opt.value = songBPM;
+            opt.text = `🎵 Tempo: ${songBPM} BPM (Custom Tap)`;
+            selectEl.add(opt);
+            selectEl.value = songBPM;
+          }
+
+          document.getElementById('rhythm-status').innerText = `Tap Tempo Detected: ${songBPM} BPM! Notes perfectly synced.`;
+        }
+      }
     }
 
     function changeScreenResolution() {
@@ -1112,18 +1179,15 @@
     }
 
     function checkDynamicBeatPeak(currentTime) {
-      let beatInterval = 0.5;
+      // Sync note generation precisely to songBPM beat intervals
+      let subdivision = 1.0; // Quarter notes
+      if (activeDifficulty === 'easy') subdivision = 1.0;
+      else if (activeDifficulty === 'medium') subdivision = 0.5; // Eighth notes
+      else if (activeDifficulty === 'hard') subdivision = 0.25; // Sixteenth notes
 
-      if (activeDifficulty === 'easy') {
-        beatInterval = 0.8;
-      } else if (activeDifficulty === 'medium') {
-        beatInterval = 0.4;
-      } else if (activeDifficulty === 'hard') {
-        beatInterval = 0.2;
-      }
-
-      const currentBeatIndex = Math.floor(currentTime / beatInterval);
-      const targetBeatTime = currentBeatIndex * beatInterval;
+      const currentBeatInterval = beatInterval * subdivision;
+      const currentBeatIndex = Math.floor(currentTime / currentBeatInterval);
+      const targetBeatTime = currentBeatIndex * currentBeatInterval;
 
       if (targetBeatTime > lastBeatTime) {
         lastBeatTime = targetBeatTime;
@@ -1138,13 +1202,13 @@
           spawnSingleNote(targetBeatTime, targetLane, 0);
         }
         else if (activeDifficulty === 'medium') {
-          const isHold = Math.random() < 0.30;
-          const holdDur = isHold ? (beatInterval * 1.5) : 0;
+          const isHold = Math.random() < 0.28;
+          const holdDur = isHold ? (currentBeatInterval * 2) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
         }
         else if (activeDifficulty === 'hard') {
-          const isHold = Math.random() < 0.28;
-          const holdDur = isHold ? (beatInterval * 1.2) : 0;
+          const isHold = Math.random() < 0.25;
+          const holdDur = isHold ? (currentBeatInterval * 1.5) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
         }
       }
@@ -1183,7 +1247,7 @@
         document.getElementById('side-rhythm-timer').innerText = formattedClock;
 
         const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'hard' ? 500 : (activeDifficulty === 'medium' ? 440 : 380);
+        const scrollSpeed = activeDifficulty === 'hard' ? 520 : (activeDifficulty === 'medium' ? 450 : 380);
         const hitBarY = stageHeight - 105;
 
         if (isSurgeActive) {
@@ -1470,24 +1534,20 @@
     }
 
     function triggerPerfectVisualEffect(laneIdx) {
-      // 1. Flash Hit Line Cyan/White
       const hitLine = document.getElementById('rhythm-hit-line');
       hitLine.classList.add('perfect-flash');
       setTimeout(() => hitLine.classList.remove('perfect-flash'), 200);
 
-      // 2. Flash Lane
       const laneEl = document.getElementById(`lane-${laneIdx}`);
       if (laneEl) {
         laneEl.classList.add('perfect-lane-flash');
         setTimeout(() => laneEl.classList.remove('perfect-lane-flash'), 250);
       }
 
-      // 3. Spawn Floating Particle Burst at Hit Line
       const stage = document.getElementById('full-viewport-rhythm-stage');
       const burst = document.createElement('div');
       burst.className = 'perfect-burst-particle';
       
-      // Position horizontally near lane center
       const laneWidth = laneEl ? laneEl.offsetWidth : 100;
       const leftOffset = laneEl ? laneEl.offsetLeft + laneWidth / 2 : stage.clientWidth / 2;
       burst.style.left = `${leftOffset}px`;
@@ -1522,7 +1582,6 @@
         consecutivePerfectStreak++;
         rhythmScore += 300 * currentMultiplier;
 
-        // Trigger Perfect Visual Effect
         triggerPerfectVisualEffect(laneIdx);
 
         if (consecutivePerfectStreak >= 10) {
@@ -1548,7 +1607,6 @@
         consecutivePerfectStreak = 0;
         totalMisses++;
         
-        // Damage Pilot HP on Miss (-10 HP)
         playerHP = Math.max(0, playerHP - 10);
         updateTopHealthUI();
 
