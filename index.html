@@ -3,231 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naval Command - Tactical Arcade & Rhythm Station</title>
+  <title>Rhythm Surge - Full Window Arcade Station</title>
   
-  <!-- Navy Anchor SVG Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M256 0c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64zm0 96c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zM288 160h-64c-17.7 0-32 14.3-32 32v32H96c-17.7 0-32 14.3-32 32s14.3 32 32 32h96v76.8C108.9 374.9 32 411.3 32 448c0 35.3 86 64 224 64s224-28.7 224-64c0-36.7-76.9-73.1-160-83.2V256h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H320v-32c0-17.7-14.3-32-32-32zm-32 288c-106 0-160-19.8-160-32 0-8.8 30.6-22.1 96-28.5V416c0 17.7 14.3 32 32 32s32-14.3 32-32v-28.5c65.4 6.4 96 19.7 96 28.5 0 12.2-54 32-160 32z'/></svg>">
+  <!-- Glowing Music Note SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M470.38 1.51L150.38 50.36A32 32 0 0 0 128 81.33v286.83A111.4 111.4 0 0 0 80 352c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V188.8l288-43.9v143.23A111.4 111.4 0 0 0 400 288c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V32a32 32 0 0 0-29.62-30.49z'/></svg>">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-
-  <!-- Three.js Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <!-- Missile Rain Canvas Background -->
+  <!-- Background Canvas -->
   <canvas id="missile-bg-canvas"></canvas>
 
   <header id="main-header">
-    <h1><i class="fa-solid fa-anchor"></i> Naval Command</h1>
-    <p>Tactical Operations & Audio-Visual Command Center</p>
+    <h1><i class="fa-solid fa-music"></i> Rhythm Surge</h1>
+    <p>Tactical Beat Operations & Full-Window Audio Arcade</p>
   </header>
-
-  <!-- Navigation -->
-  <nav class="game-nav" id="main-nav">
-    <button class="nav-btn active" id="nav-battleship" onclick="switchGame('battleship')">
-      <i class="fa-solid fa-ship"></i> Battleship
-    </button>
-    <button class="nav-btn" id="nav-clicker" onclick="switchGame('clicker')">
-      <i class="fa-solid fa-burst"></i> Ammo Depot
-    </button>
-    <button class="nav-btn" id="nav-rhythm" onclick="switchGame('rhythm')">
-      <i class="fa-solid fa-music"></i> Rhythm Command
-    </button>
-  </nav>
 
   <main class="main-container">
 
-    <!-- ==================== BATTLESHIP ==================== -->
-    <section id="game-battleship" class="game-panel">
-      <div id="bs-setup" class="sub-panel">
-        <h2><i class="fa-solid fa-sliders"></i> Battleship Configuration</h2>
-        
-        <div class="setup-group">
-          <label><i class="fa-solid fa-cubes"></i> View Mode:</label>
-          <select id="bs-view-select" onchange="toggleBsViewMode()">
-            <option value="2d" selected>2D Classic Grid View</option>
-            <option value="3d">3D Blueprint Tactical View</option>
-          </select>
-        </div>
-
-        <div class="setup-group">
-          <label><i class="fa-solid fa-users"></i> Mode:</label>
-          <select id="bs-mode-select" onchange="toggleBsDifficulty()">
-            <option value="pve">Vs Computer</option>
-            <option value="pvp">Local Pass & Play</option>
-          </select>
-        </div>
-
-        <div class="setup-group" id="bs-diff-group">
-          <label><i class="fa-solid fa-brain"></i> AI Difficulty:</label>
-          <select id="bs-diff-select">
-            <option value="easy">Easy (Random Attack)</option>
-            <option value="medium" selected>Medium (Target Hunt)</option>
-            <option value="hard">Hard (Parity Grid)</option>
-          </select>
-        </div>
-
-        <div class="setup-group">
-          <label><i class="fa-solid fa-bolt"></i> Power-Ups:</label>
-          <select id="bs-powerups-toggle">
-            <option value="enabled" selected>Enabled (Radar, Multi-Shot, Clone)</option>
-            <option value="disabled">Disabled (Classic Rules)</option>
-          </select>
-        </div>
-
-        <div class="placement-area">
-          <h3>Fleet Deployment (A-J / 1-10)</h3>
-          <p id="bs-instruction">Select axis orientation and click coordinates to place your vessel.</p>
-          
-          <div class="placement-controls">
-            <button class="btn" onclick="toggleBsOrientation()">
-              <i class="fa-solid fa-rotate"></i> Axis: <span id="bs-orientation-label">Horizontal</span>
-            </button>
-            <button class="btn btn-secondary" onclick="autoPlaceBsShips()">
-              <i class="fa-solid fa-shuffle"></i> Auto Deploy
-            </button>
-          </div>
-
-          <div id="bs-2d-placement-wrapper" class="grid-container-with-labels">
-            <div id="bs-placement-grid" class="grid"></div>
-          </div>
-
-          <div id="bs-3d-placement-canvas" class="canvas-container hidden"></div>
-
-          <div class="ship-dock" id="bs-ship-dock"></div>
-        </div>
-
-        <button class="btn btn-start" id="bs-start-btn" onclick="startBsGame()" disabled>
-          <i class="fa-solid fa-play"></i> Commence Battle
-        </button>
-      </div>
-
-      <div id="bs-combat" class="sub-panel hidden">
-        <div class="dashboard">
-          <div class="stat-card">
-            <i class="fa-solid fa-crosshairs"></i>
-            <div class="stat-info">
-              <div class="label">Shots Fired</div>
-              <div class="value" id="bs-shots">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-skull"></i>
-            <div class="stat-info">
-              <div class="label">Sunk Ships</div>
-              <div class="value" id="bs-sunk">0 / 5</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-trophy"></i>
-            <div class="stat-info">
-              <div class="label">Score</div>
-              <div class="value" id="bs-score">0</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="powerups-bar" id="bs-powerups-bar">
-          <h3><i class="fa-solid fa-bolt"></i> Tactical Power-Ups</h3>
-          <div class="powerup-buttons">
-            <button class="btn powerup-btn" id="pw-radar" onclick="activatePowerUp('radar')">
-              <i class="fa-solid fa-radar"></i> Radar Scan (300 pts)
-            </button>
-            <button class="btn powerup-btn" id="pw-multishot" onclick="activatePowerUp('multishot')">
-              <i class="fa-solid fa-burst"></i> Multi-Shot x3 (700 pts)
-            </button>
-            <button class="btn powerup-btn" id="pw-clone" onclick="activatePowerUp('clone')">
-              <i class="fa-solid fa-clone"></i> Vessel Clone (1000 pts)
-            </button>
-          </div>
-        </div>
-
-        <div class="boards-container" id="bs-2d-boards">
-          <div class="grid-wrapper">
-            <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet</div>
-            <div id="bs-player-board-wrapper" class="grid-container-with-labels">
-              <div id="bs-player-board" class="grid"></div>
-            </div>
-          </div>
-          <div class="grid-wrapper">
-            <div class="grid-title"><i class="fa-solid fa-radar"></i> Target Grid</div>
-            <div id="bs-enemy-board-wrapper" class="grid-container-with-labels">
-              <div id="bs-enemy-board" class="grid"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="boards-container hidden" id="bs-3d-boards">
-          <div class="grid-wrapper">
-            <div class="grid-title"><i class="fa-solid fa-shield-halved"></i> Player Fleet (3D)</div>
-            <div id="bs-3d-player-canvas" class="canvas-container"></div>
-          </div>
-          <div class="grid-wrapper">
-            <div class="grid-title"><i class="fa-solid fa-radar"></i> Target Grid (3D)</div>
-            <div id="bs-3d-enemy-canvas" class="canvas-container"></div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div id="bs-status" class="status-msg">Select coordinates (A1 to J10) to fire.</div>
-          <button class="btn" onclick="resetBsSetup()"><i class="fa-solid fa-rotate-right"></i> Reset Battleship</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Modal for Clone Selection -->
-    <div id="clone-modal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h3><i class="fa-solid fa-clone"></i> Select Vessel to Clone</h3>
-        <p>Choose an active ship to duplicate onto your grid:</p>
-        <div id="clone-ship-options" class="clone-options-container"></div>
-        <button class="btn btn-secondary" onclick="closeCloneModal()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- ==================== AMMO DEPOT CLICKER ==================== -->
-    <section id="game-clicker" class="game-panel hidden">
-      <div class="sub-panel clicker-layout">
-        
-        <div class="clicker-left">
-          <h2><i class="fa-solid fa-cubes-stacked"></i> Naval Ammo Depot</h2>
-          <div class="clicker-score-display">
-            <div class="ammo-count" id="clicker-count">0 Shells</div>
-            <div class="ammo-rate" id="clicker-rate">0 per sec</div>
-            <div class="rebirth-stat" id="rebirth-multiplier">Production Multiplier: 1x</div>
-          </div>
-
-          <div class="main-click-container">
-            <button class="main-click-btn" id="main-click-btn" onclick="handleAmmoClick(event)">
-              <i class="fa-solid fa-burst"></i>
-            </button>
-          </div>
-
-          <div class="rebirth-card">
-            <h3><i class="fa-solid fa-arrows-spin"></i> Naval Rebirth</h3>
-            <p>Reset facility upgrades to gain permanent +100% shell production per Rebirth tier!</p>
-            <button class="btn btn-rebirth" id="rebirth-btn" onclick="triggerRebirth()" disabled>
-              Rebirth (1,000,000 Shells Required)
-            </button>
-          </div>
-        </div>
-
-        <div class="clicker-right">
-          <h3><i class="fa-solid fa-store"></i> Facility Upgrades</h3>
-          <div class="upgrades-list" id="clicker-upgrades"></div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ==================== YOUTUBE RHYTHM GAME ==================== -->
-    <section id="game-rhythm" class="game-panel hidden">
+    <section id="game-rhythm" class="game-panel">
       
       <!-- Overlay Menu Toggle Hint -->
       <div class="menu-hint-banner" id="menu-hint">
-        <i class="fa-solid fa-eye"></i> Press [<span id="menu-key-label">TAB</span>] to show/hide menu
+        <i class="fa-solid fa-eye"></i> Press [<span id="menu-key-label">TAB</span> / <span id="gp-menu-label">START</span>] to show/hide menu
       </div>
 
       <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
@@ -248,6 +48,16 @@
           <div class="value" id="side-rhythm-combo">0x</div>
         </div>
         <div class="side-stat-card">
+          <i class="fa-solid fa-bolt"></i>
+          <div class="label">Surge Charges</div>
+          <div class="value" id="side-surge-charges">3 / 3</div>
+        </div>
+        <div class="side-stat-card">
+          <i class="fa-solid fa-bullseye"></i>
+          <div class="label">Perfect Streak</div>
+          <div class="value" id="side-perfect-streak">0 / 10</div>
+        </div>
+        <div class="side-stat-card">
           <i class="fa-solid fa-check"></i>
           <div class="label">Hits</div>
           <div class="value" id="side-rhythm-hits">0</div>
@@ -258,46 +68,38 @@
           <div class="value" id="side-rhythm-misses">0</div>
         </div>
         <div class="side-stat-card">
-          <i class="fa-solid fa-bullseye"></i>
+          <i class="fa-solid fa-star"></i>
           <div class="label">Judgement</div>
           <div class="value" id="side-rhythm-judgement">-</div>
         </div>
       </div>
 
       <div class="sub-panel rhythm-panel-overlay" id="rhythm-hud">
-        <h2><i class="fa-solid fa-gamepad"></i> Rhythm Command: Full Window Arcade</h2>
-
-        <!-- Direct Game Switcher Inside Menu Bar -->
-        <div class="menu-game-switcher">
-          <button class="btn btn-secondary" onclick="switchGame('battleship')">
-            <i class="fa-solid fa-ship"></i> Battleship
-          </button>
-          <button class="btn btn-secondary" onclick="switchGame('clicker')">
-            <i class="fa-solid fa-burst"></i> Ammo Depot
-          </button>
-        </div>
+        <h2><i class="fa-solid fa-gamepad"></i> Surge Command Center</h2>
         
         <div class="rhythm-config-bar">
           <input type="text" id="player-name-input" placeholder="Pilot Name" value="Player 1">
           <input type="text" id="yt-url-input" placeholder="YouTube Video URL or ID" value="dQw4w9WgXcQ">
           
           <select id="res-selector" onchange="changeScreenResolution()">
-            <option value="auto" selected>🖥️ Res: Full Window (Auto)</option>
+            <option value="auto" selected>🖥 Res: Full Window (Auto)</option>
             <option value="1920x1080">📺 Res: 1080p (1920x1080)</option>
             <option value="1280x720">💻 Res: 720p (1280x720)</option>
             <option value="2560x1440">🖥 Res: 2K (2560x1440)</option>
             <option value="3840x2160">📺 Res: 4K UHD (3840x2160)</option>
           </select>
 
+          <!-- Input Scheme Selector -->
           <select id="control-mode-select" onchange="switchControlMode()">
             <option value="keyboard" selected>🎮 Mode: Keyboard (4-Lanes: A-S-K-L)</option>
-            <option value="controller">🕹 Mode: Controller (2-Lanes: LT / RT)</option>
+            <option value="controller-4lane">🕹 Controller: 4-Lanes (A-X-Y-B Buttons)</option>
+            <option value="controller-2lane">🕹 Controller: 2-Lanes (LT / RT Triggers)</option>
           </select>
 
           <select id="rhythm-diff-select">
-            <option value="easy">Easy (Single Notes)</option>
-            <option value="medium" selected>Medium (Single Notes)</option>
-            <option value="hard">Hard (Hold Notes Enabled)</option>
+            <option value="easy">Easy (Single Taps Only • 12s Surge)</option>
+            <option value="medium" selected>Medium (Taps & Holds • 8s Surge)</option>
+            <option value="hard">Hard (Fast Streams & Holds • 5s Surge)</option>
           </select>
 
           <!-- Sound Preset Selector -->
@@ -373,6 +175,20 @@
             </div>
           </div>
           <div class="stat-card">
+            <i class="fa-solid fa-bolt"></i>
+            <div class="stat-info">
+              <div class="label">Surge Charges</div>
+              <div class="value" id="rhythm-surge-charges">3 / 3</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-bullseye"></i>
+            <div class="stat-info">
+              <div class="label">Perfect Streak</div>
+              <div class="value" id="rhythm-perfect-streak">0 / 10</div>
+            </div>
+          </div>
+          <div class="stat-card">
             <i class="fa-solid fa-check"></i>
             <div class="stat-info">
               <div class="label">Notes Hit</div>
@@ -382,12 +198,12 @@
           <div class="stat-card">
             <i class="fa-solid fa-xmark"></i>
             <div class="stat-info">
-              <div class="label">Notes Missed</div>
+              <div class="label">Misses</div>
               <div class="value" id="rhythm-misses">0</div>
             </div>
           </div>
           <div class="stat-card">
-            <i class="fa-solid fa-bullseye"></i>
+            <i class="fa-solid fa-star"></i>
             <div class="stat-info">
               <div class="label">Judgement</div>
               <div class="value" id="rhythm-judgement">-</div>
@@ -401,9 +217,39 @@
       </div>
 
       <!-- Full Window Dynamic Stage Backdrop & Dynamic Lanes -->
-      <div id="full-viewport-rhythm-stage" class="viewport-stage auto-res">
+      <div id="full-viewport-rhythm-stage" class="viewport-stage auto-res active">
         <div class="yt-background-player-full">
           <div id="yt-player"></div>
+        </div>
+
+        <!-- Guitar Hero Style Side Multiplier Meter -->
+        <div class="gh-multiplier-meter-container" id="gh-meter-box">
+          <div class="gh-meter-title">MULTIPLIER</div>
+          <div class="gh-meter-surge-btn disabled" id="surge-btn" onclick="activateSurgeBoost()">
+            <i class="fa-solid fa-bolt"></i> 8X SURGE
+          </div>
+          <div class="gh-meter-badge" id="gh-multiplier-val">1x</div>
+          <div class="gh-meter-bar-wrapper">
+            <div class="gh-meter-fill" id="gh-meter-fill"></div>
+          </div>
+          
+          <!-- Surge Charges Indicator -->
+          <div class="surge-charge-indicator">
+            <span class="charge-label">SURGE USES:</span>
+            <div class="charge-bolts" id="surge-bolts-display">
+              <i class="fa-solid fa-bolt active"></i>
+              <i class="fa-solid fa-bolt active"></i>
+              <i class="fa-solid fa-bolt active"></i>
+            </div>
+          </div>
+
+          <!-- 10 Perfect Streak Tracker -->
+          <div class="perfect-streak-box">
+            <span class="p-streak-label">PERFECT RECHARGE</span>
+            <span class="p-streak-val" id="gh-p-streak-val">0 / 10</span>
+          </div>
+
+          <div class="gh-meter-hint" id="gh-surge-hint">Reach 4x multiplier to unlock Surge!</div>
         </div>
 
         <div class="rhythm-track-container-full" id="rhythm-track-container">
@@ -473,7 +319,7 @@
         
         <div class="mapper-tabs">
           <button class="tab-btn active" id="tab-keyboard" onclick="switchMapperTab('keyboard')">Keyboard Mapping</button>
-          <button class="tab-btn" id="tab-controller" onclick="switchMapperTab('controller')">Controller Triggers</button>
+          <button class="tab-btn" id="tab-controller" onclick="switchMapperTab('controller')">Controller Controls</button>
         </div>
 
         <div id="mapper-sec-keyboard" class="mapper-section">
@@ -485,6 +331,11 @@
             <button class="keybind-slot" id="kb-bind-3" onclick="startRebindingKey(3)">Lane 4: <span id="kb-val-3">L</span></button>
           </div>
           
+          <p style="margin-top: 15px;">Surge Boost Keybind:</p>
+          <div class="keybind-mapper-grid-4lane" style="grid-template-columns: 1fr;">
+            <button class="keybind-slot" id="kb-bind-surge" onclick="startRebindingSurgeKey()">Surge 8X Key: <span id="kb-val-surge">SPACE</span></button>
+          </div>
+
           <p style="margin-top: 15px;">Menu Toggle Keybind:</p>
           <div class="keybind-mapper-grid-4lane" style="grid-template-columns: 1fr;">
             <button class="keybind-slot" id="kb-bind-menu" onclick="startRebindingMenuKey()">Toggle Menu Key: <span id="kb-val-menu">TAB</span></button>
@@ -492,10 +343,20 @@
         </div>
 
         <div id="mapper-sec-controller" class="mapper-section hidden">
-          <p>2-Lane Trigger Mapping for Xbox, PlayStation, Switch Pro:</p>
+          <p>Click slot and press gamepad button to rebind:</p>
           <div class="keybind-mapper-grid-4lane">
-            <div class="controller-info-box">Lane 1: <strong>Left Trigger (LT / L2)</strong></div>
-            <div class="controller-info-box">Lane 2: <strong>Right Trigger (RT / R2)</strong></div>
+            <button class="keybind-slot" id="gp-bind-0" onclick="startRebindingGamepad(0)">Lane 1: <span id="gp-val-0">A (0)</span></button>
+            <button class="keybind-slot" id="gp-bind-1" onclick="startRebindingGamepad(1)">Lane 2: <span id="gp-val-1">X (2)</span></button>
+            <button class="keybind-slot" id="gp-bind-2" onclick="startRebindingGamepad(2)">Lane 3: <span id="gp-val-2">Y (3)</span></button>
+            <button class="keybind-slot" id="gp-bind-3" onclick="startRebindingGamepad(3)">Lane 4: <span id="gp-val-3">B (1)</span></button>
+          </div>
+          
+          <p style="margin-top: 15px;">Controller System Controls:</p>
+          <div class="keybind-mapper-grid-4lane">
+            <button class="keybind-slot" id="gp-bind-surge" onclick="startRebindingGamepadSurge()">Surge 8X: <span id="gp-val-surge">LB (4)</span></button>
+            <button class="keybind-slot" id="gp-bind-menu" onclick="startRebindingGamepadMenu()">Toggle Menu: <span id="gp-val-menu">START (9)</span></button>
+            <button class="keybind-slot" id="gp-bind-play" onclick="startRebindingGamepadPlay()">Start / Pause: <span id="gp-val-play">DPAD DOWN (13)</span></button>
+            <button class="keybind-slot" id="gp-bind-stop" onclick="startRebindingGamepadStop()">Stop Track: <span id="gp-val-stop">DPAD UP (12)</span></button>
           </div>
         </div>
 
@@ -520,28 +381,6 @@
   </main>
 
   <script>
-    function switchGame(gameName) {
-      document.querySelectorAll('.game-panel').forEach(p => p.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-      document.getElementById(`game-${gameName}`).classList.remove('hidden');
-      document.getElementById(`nav-${gameName}`).classList.add('active');
-
-      if (gameName === 'rhythm') {
-        document.getElementById('full-viewport-rhythm-stage').classList.add('active');
-        document.getElementById('main-header').classList.add('header-overlay');
-        initAudioContext();
-      } else {
-        document.getElementById('full-viewport-rhythm-stage').classList.remove('active');
-        document.getElementById('main-header').classList.remove('header-overlay');
-        document.getElementById('main-header').classList.remove('menu-hidden');
-        document.getElementById('main-nav').classList.remove('menu-hidden');
-        document.getElementById('rhythm-hud').classList.remove('menu-hidden');
-        document.getElementById('side-hud').classList.add('hidden');
-        if (rhythmPlaying) pauseRhythmGame();
-      }
-    }
-
     /* Background Missile Canvas Animation */
     let bgCanvas, bgCtx;
     let bgMissiles = [];
@@ -602,1094 +441,12 @@
       requestAnimationFrame(animateBackgroundMissiles);
     }
 
-    /* Battleship Game Logic */
-    const BS_SIZE = 10;
-    const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    const BS_SHIPS = [
-      { name: 'Carrier', size: 5, type: 'carrier' },
-      { name: 'Battleship', size: 4, type: 'cruiser' },
-      { name: 'Destroyer', size: 3, type: 'destroyer' },
-      { name: 'Submarine', size: 3, type: 'submarine' },
-      { name: 'Patrol Boat', size: 2, type: 'patrol' }
-    ];
-
-    let bsPlayerGrid = [], bsEnemyGrid = [];
-    let bsPlayerShips = [], bsEnemyShips = [];
-    let bsIsHorizontal = true, bsSelectedShipIdx = 0, bsPlacedCount = 0;
-    let bsMode = 'pve', bsDiff = 'medium', bsTurn = 'player', bsGameOver = false;
-    let bsShots = 0, bsHits = 0, bsSunkCount = 0, bsScore = 0;
-    let bsPowerUpsEnabled = true;
-    let bsViewMode = '2d';
-    let bsAiHuntStack = [];
-
-    let activePowerUp = null;
-    let multiShotRemaining = 0;
-    let shipToClone = null;
-
-    let placement3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
-    let player3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
-    let enemy3D = { scene: null, camera: null, renderer: null, gridTiles: [] };
-
     document.addEventListener('DOMContentLoaded', () => {
       initMissileBackground();
-      initBsPlacementGrid();
-      renderBsDock();
-      initClickerGame();
       initYouTubeAPI();
       initGamepadSupport();
+      document.getElementById('main-header').classList.add('header-overlay');
     });
-
-    function getCoordString(r, c) {
-      return `${ROW_LABELS[r]}-${c + 1}`;
-    }
-
-    function toggleBsDifficulty() {
-      const mode = document.getElementById('bs-mode-select').value;
-      document.getElementById('bs-diff-group').style.display = mode === 'pve' ? 'flex' : 'none';
-    }
-
-    function toggleBsOrientation() {
-      bsIsHorizontal = !bsIsHorizontal;
-      document.getElementById('bs-orientation-label').innerText = bsIsHorizontal ? 'Horizontal' : 'Vertical';
-    }
-
-    function toggleBsViewMode() {
-      bsViewMode = document.getElementById('bs-view-select').value;
-      const grid2D = document.getElementById('bs-2d-placement-wrapper');
-      const grid3D = document.getElementById('bs-3d-placement-canvas');
-
-      if (bsViewMode === '3d') {
-        grid2D.classList.add('hidden');
-        grid3D.classList.remove('hidden');
-        if (!placement3D.renderer) init3DPlacementView();
-      } else {
-        grid2D.classList.remove('hidden');
-        grid3D.classList.add('hidden');
-      }
-    }
-
-    function buildGridWithLabels(wrapperId, gridId, cellClickCallback, cellHoverCallback, cellOutCallback) {
-      const wrapper = document.getElementById(wrapperId);
-      wrapper.innerHTML = '';
-
-      const topHeader = document.createElement('div');
-      topHeader.classList.add('grid-header-row');
-      topHeader.appendChild(document.createElement('div'));
-      for (let c = 1; c <= 10; c++) {
-        const lbl = document.createElement('div');
-        lbl.classList.add('header-label');
-        lbl.innerText = c;
-        topHeader.appendChild(lbl);
-      }
-      wrapper.appendChild(topHeader);
-
-      const bodyRow = document.createElement('div');
-      bodyRow.classList.add('grid-body-row');
-
-      const leftHeader = document.createElement('div');
-      leftHeader.classList.add('grid-header-col');
-      for (let r = 0; r < 10; r++) {
-        const lbl = document.createElement('div');
-        lbl.classList.add('header-label');
-        lbl.innerText = ROW_LABELS[r];
-        leftHeader.appendChild(lbl);
-      }
-      bodyRow.appendChild(leftHeader);
-
-      const gridEl = document.createElement('div');
-      gridEl.id = gridId;
-      gridEl.classList.add('grid');
-
-      for (let r = 0; r < BS_SIZE; r++) {
-        for (let c = 0; c < BS_SIZE; c++) {
-          const cell = document.createElement('div');
-          cell.classList.add('cell');
-          cell.dataset.row = r;
-          cell.dataset.col = c;
-          if (cellHoverCallback) cell.addEventListener('mouseover', cellHoverCallback);
-          if (cellOutCallback) cell.addEventListener('mouseout', cellOutCallback);
-          if (cellClickCallback) cell.addEventListener('click', cellClickCallback);
-          gridEl.appendChild(cell);
-        }
-      }
-
-      bodyRow.appendChild(gridEl);
-      wrapper.appendChild(bodyRow);
-    }
-
-    function initBsPlacementGrid() {
-      bsPlayerGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
-      buildGridWithLabels('bs-2d-placement-wrapper', 'bs-placement-grid', handleBs2DClick, handleBs2DHover, clearBs2DHover);
-    }
-
-    function renderBsDock() {
-      const dock = document.getElementById('bs-ship-dock');
-      dock.innerHTML = '';
-      BS_SHIPS.forEach((ship, idx) => {
-        const item = document.createElement('div');
-        item.classList.add('dock-item');
-        if (idx === bsSelectedShipIdx) item.classList.add('selected');
-        if (ship.placed) item.classList.add('placed');
-        item.innerText = `${ship.name} (${ship.size})`;
-        item.onclick = () => {
-          if (!ship.placed) {
-            bsSelectedShipIdx = idx;
-            renderBsDock();
-          }
-        };
-        dock.appendChild(item);
-      });
-    }
-
-    function handleBs2DHover(e) {
-      if (bsPlacedCount >= BS_SHIPS.length) return;
-      const ship = BS_SHIPS[bsSelectedShipIdx];
-      if (!ship || ship.placed) return;
-
-      const r = parseInt(e.target.dataset.row);
-      const c = parseInt(e.target.dataset.col);
-      const canPlace = checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal);
-
-      for (let i = 0; i < ship.size; i++) {
-        const targetR = bsIsHorizontal ? r : r + i;
-        const targetC = bsIsHorizontal ? c + i : c;
-        if (targetR < BS_SIZE && targetC < BS_SIZE) {
-          const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${targetR}"][data-col="${targetC}"]`);
-          if (cell) cell.classList.add(canPlace ? 'preview-valid' : 'preview-invalid');
-        }
-      }
-    }
-
-    function clearBs2DHover() {
-      document.querySelectorAll('#bs-placement-grid .cell').forEach(c => c.classList.remove('preview-valid', 'preview-invalid'));
-    }
-
-    function handleBs2DClick(e) {
-      if (bsPlacedCount >= BS_SHIPS.length) return;
-      const ship = BS_SHIPS[bsSelectedShipIdx];
-      if (!ship || ship.placed) return;
-
-      const r = parseInt(e.target.dataset.row);
-      const c = parseInt(e.target.dataset.col);
-
-      if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal)) {
-        const coords = [];
-        for (let i = 0; i < ship.size; i++) {
-          const targetR = bsIsHorizontal ? r : r + i;
-          const targetC = bsIsHorizontal ? c + i : c;
-          bsPlayerGrid[targetR][targetC] = 1;
-          coords.push({ r: targetR, c: targetC, hit: false });
-          const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${targetR}"][data-col="${targetC}"]`);
-          if (cell) cell.classList.add('ship');
-        }
-
-        ship.placed = true;
-        bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false });
-        bsPlacedCount++;
-
-        const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
-        if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
-
-        renderBsDock();
-        if (bsPlacedCount === BS_SHIPS.length) {
-          document.getElementById('bs-start-btn').disabled = false;
-          document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
-        }
-      }
-    }
-
-    function checkCanPlaceBs(grid, r, c, size, horiz) {
-      for (let i = 0; i < size; i++) {
-        const tr = horiz ? r : r + i;
-        const tc = horiz ? c + i : c;
-        if (tr >= BS_SIZE || tc >= BS_SIZE || grid[tr][tc] !== 0) return false;
-      }
-      return true;
-    }
-
-    function autoPlaceBsShips() {
-      initBsPlacementGrid();
-      bsPlayerShips = [];
-      BS_SHIPS.forEach(s => s.placed = false);
-      bsPlacedCount = 0;
-
-      if (bsViewMode === '3d') init3DPlacementView();
-
-      BS_SHIPS.forEach(ship => {
-        let placed = false;
-        while (!placed) {
-          const horiz = Math.random() < 0.5;
-          const r = Math.floor(Math.random() * (horiz ? BS_SIZE : BS_SIZE - ship.size + 1));
-          const c = Math.floor(Math.random() * (horiz ? BS_SIZE - ship.size + 1 : BS_SIZE));
-
-          if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, horiz)) {
-            const coords = [];
-            for (let i = 0; i < ship.size; i++) {
-              const tr = horiz ? r : r + i;
-              const tc = horiz ? c + i : c;
-              bsPlayerGrid[tr][tc] = 1;
-              coords.push({ r: tr, c: tc, hit: false });
-              const cell = document.querySelector(`#bs-placement-grid .cell[data-row="${tr}"][data-col="${tc}"]`);
-              if (cell) cell.classList.add('ship');
-
-              if (bsViewMode === '3d' && placement3D.gridTiles[tr]) {
-                placement3D.gridTiles[tr][tc].material.color.setHex(0x5bc0be);
-              }
-            }
-
-            let shipMesh = null;
-            if (bsViewMode === '3d' && placement3D.scene) {
-              shipMesh = createBlueprintShipMesh(ship);
-              if (horiz) {
-                shipMesh.position.set(c + (ship.size / 2), 0.05, r + 0.5);
-                shipMesh.rotation.y = Math.PI / 2;
-              } else {
-                shipMesh.position.set(c + 0.5, 0.05, r + (ship.size / 2));
-              }
-              placement3D.scene.add(shipMesh);
-            }
-
-            ship.placed = true;
-            bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, mesh: shipMesh });
-            placed = true;
-          }
-        }
-      });
-
-      bsPlacedCount = BS_SHIPS.length;
-      renderBsDock();
-      document.getElementById('bs-start-btn').disabled = false;
-      document.getElementById('bs-instruction').innerText = "Fleet automated successfully! Ready to engage.";
-    }
-
-    function createBlueprintShipMesh(shipInfo, isEnemy = false) {
-      const shipGroup = new THREE.Group();
-      const size = shipInfo.size;
-      const type = shipInfo.type;
-
-      const deckMat = new THREE.MeshStandardMaterial({ 
-        color: isEnemy ? 0x2b1318 : 0x1c2541, 
-        roughness: 0.4, 
-        metalness: 0.8 
-      });
-
-      const glowMat = new THREE.MeshBasicMaterial({ color: isEnemy ? 0xe63946 : 0x5bc0be });
-
-      if (type === 'carrier') {
-        const hullGeo = new THREE.BoxGeometry(0.85, 0.25, size * 0.95);
-        const hull = new THREE.Mesh(hullGeo, deckMat);
-        hull.position.y = 0.12;
-        shipGroup.add(hull);
-
-        const islandGeo = new THREE.BoxGeometry(0.2, 0.35, 0.8);
-        const island = new THREE.Mesh(islandGeo, deckMat);
-        island.position.set(0.28, 0.3, 0);
-        shipGroup.add(island);
-
-        for (let i = -1; i <= 1; i++) {
-          const jetGeo = new THREE.ConeGeometry(0.08, 0.2, 3);
-          const jet = new THREE.Mesh(jetGeo, glowMat);
-          jet.rotation.x = Math.PI / 2;
-          jet.position.set(-0.2, 0.26, i * 0.8);
-          shipGroup.add(jet);
-        }
-      } else if (type === 'submarine') {
-        const subGeo = new THREE.CylinderGeometry(0.3, 0.3, size * 0.9, 16);
-        subGeo.rotateX(Math.PI / 2);
-        const sub = new THREE.Mesh(subGeo, deckMat);
-        sub.position.y = 0.15;
-        shipGroup.add(sub);
-
-        const sailGeo = new THREE.BoxGeometry(0.18, 0.3, 0.4);
-        const sail = new THREE.Mesh(sailGeo, deckMat);
-        sail.position.set(0, 0.35, 0);
-        shipGroup.add(sail);
-      } else {
-        const hullGeo = new THREE.BoxGeometry(0.7, 0.25, size * 0.9);
-        const hull = new THREE.Mesh(hullGeo, deckMat);
-        hull.position.y = 0.12;
-        shipGroup.add(hull);
-
-        const bowGeo = new THREE.ConeGeometry(0.35, 0.5, 4);
-        const bow = new THREE.Mesh(bowGeo, deckMat);
-        bow.rotation.x = Math.PI / 2;
-        bow.position.set(0, 0.12, (size * 0.9) / 2 + 0.2);
-        shipGroup.add(bow);
-
-        const turretGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.15, 8);
-        const t1 = new THREE.Mesh(turretGeo, deckMat);
-        t1.position.set(0, 0.28, (size * 0.8) / 3);
-        shipGroup.add(t1);
-
-        const t2 = new THREE.Mesh(turretGeo, deckMat);
-        t2.position.set(0, 0.28, -(size * 0.8) / 3);
-        shipGroup.add(t2);
-      }
-
-      const outlineGeo = new THREE.BoxGeometry(0.9, 0.3, size * 0.98);
-      const edges = new THREE.EdgesGeometry(outlineGeo);
-      const lineMat = new THREE.LineBasicMaterial({ color: isEnemy ? 0xe63946 : 0x5bc0be, linewidth: 2 });
-      const wireframe = new THREE.LineSegments(edges, lineMat);
-      wireframe.position.y = 0.15;
-      shipGroup.add(wireframe);
-
-      return shipGroup;
-    }
-
-    function create3DTextSprite(text) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#48cae4';
-      ctx.font = 'Bold 32px Segoe UI, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, 32, 32);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({ map: texture });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(0.8, 0.8, 1);
-      return sprite;
-    }
-
-    function setupOrthographic3DViewport(containerId, isInteractive, clickCallback) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
-
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0b132b);
-
-      const aspect = container.clientWidth / container.clientHeight;
-      const d = 7.2;
-      const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
-      camera.position.set(5, 14, 5);
-      camera.lookAt(5, 0, 5);
-
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      container.appendChild(renderer.domElement);
-
-      const light = new THREE.DirectionalLight(0xffffff, 1.2);
-      light.position.set(5, 15, 5);
-      scene.add(light);
-
-      const ambient = new THREE.AmbientLight(0x5bc0be, 0.3);
-      scene.add(ambient);
-
-      for (let c = 0; c < BS_SIZE; c++) {
-        const sprite = create3DTextSprite(`${c + 1}`);
-        sprite.position.set(c + 0.5, 0.1, -0.4);
-        scene.add(sprite);
-      }
-
-      for (let r = 0; r < BS_SIZE; r++) {
-        const sprite = create3DTextSprite(ROW_LABELS[r]);
-        sprite.position.set(-0.4, 0.1, r + 0.5);
-        scene.add(sprite);
-      }
-
-      const gridTiles = [];
-      for (let r = 0; r < BS_SIZE; r++) {
-        gridTiles[r] = [];
-        for (let c = 0; c < BS_SIZE; c++) {
-          const tileGeo = new THREE.PlaneGeometry(0.92, 0.92);
-          tileGeo.rotateX(-Math.PI / 2);
-          
-          const tileMat = new THREE.MeshBasicMaterial({ 
-            color: 0x111e38, 
-            side: THREE.DoubleSide
-          });
-          const tile = new THREE.Mesh(tileGeo, tileMat);
-          tile.position.set(c + 0.5, 0, r + 0.5);
-          tile.userData = { row: r, col: c };
-
-          const tileEdges = new THREE.EdgesGeometry(tileGeo);
-          const lineMat = new THREE.LineBasicMaterial({ color: 0x3a506b });
-          const wire = new THREE.LineSegments(tileEdges, lineMat);
-          tile.add(wire);
-
-          scene.add(tile);
-          gridTiles[r][c] = tile;
-        }
-      }
-
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-
-      if (isInteractive) {
-        renderer.domElement.addEventListener('click', (e) => {
-          const rect = renderer.domElement.getBoundingClientRect();
-          mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-          mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-          raycaster.setFromCamera(mouse, camera);
-          const intersects = raycaster.intersectObjects(scene.children, true);
-
-          if (intersects.length > 0) {
-            let hitTile = intersects.find(i => i.object.userData && i.object.userData.row !== undefined);
-            if (!hitTile && intersects[0].object.parent) {
-              hitTile = intersects.find(i => i.object.parent.userData && i.object.parent.userData.row !== undefined);
-            }
-            if (hitTile) {
-              const { row, col } = hitTile.object.userData || hitTile.object.parent.userData;
-              clickCallback(row, col);
-            }
-          }
-        });
-      }
-
-      function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      return { scene, camera, renderer, gridTiles };
-    }
-
-    function init3DPlacementView() {
-      placement3D = setupOrthographic3DViewport('bs-3d-placement-canvas', true, handle3DPlacementClick);
-    }
-
-    function handle3DPlacementClick(r, c) {
-      if (bsPlacedCount >= BS_SHIPS.length) return;
-      const ship = BS_SHIPS[bsSelectedShipIdx];
-      if (!ship || ship.placed) return;
-
-      if (checkCanPlaceBs(bsPlayerGrid, r, c, ship.size, bsIsHorizontal)) {
-        const coords = [];
-        for (let i = 0; i < ship.size; i++) {
-          const tr = bsIsHorizontal ? r : r + i;
-          const tc = bsIsHorizontal ? c + i : c;
-          bsPlayerGrid[tr][tc] = 1;
-          coords.push({ r: tr, c: tc, hit: false });
-
-          placement3D.gridTiles[tr][tc].material.color.setHex(0x5bc0be);
-        }
-
-        const shipMesh = createBlueprintShipMesh(ship);
-        if (bsIsHorizontal) {
-          shipMesh.position.set(c + (ship.size / 2), 0.05, r + 0.5);
-          shipMesh.rotation.y = Math.PI / 2;
-        } else {
-          shipMesh.position.set(c + 0.5, 0.05, r + (ship.size / 2));
-        }
-        placement3D.scene.add(shipMesh);
-
-        ship.placed = true;
-        bsPlayerShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, mesh: shipMesh });
-        bsPlacedCount++;
-
-        const nextIdx = BS_SHIPS.findIndex(s => !s.placed);
-        if (nextIdx !== -1) bsSelectedShipIdx = nextIdx;
-
-        renderBsDock();
-        if (bsPlacedCount === BS_SHIPS.length) {
-          document.getElementById('bs-start-btn').disabled = false;
-          document.getElementById('bs-instruction').innerText = "All ships deployed! Press Commence Battle to begin.";
-        }
-      }
-    }
-
-    function generateBsEnemyBoard() {
-      bsEnemyGrid = Array(BS_SIZE).fill(null).map(() => Array(BS_SIZE).fill(0));
-      bsEnemyShips = [];
-
-      BS_SHIPS.forEach(ship => {
-        let placed = false;
-        while (!placed) {
-          const horiz = Math.random() < 0.5;
-          const r = Math.floor(Math.random() * (horiz ? BS_SIZE : BS_SIZE - ship.size + 1));
-          const c = Math.floor(Math.random() * (horiz ? BS_SIZE - ship.size + 1 : BS_SIZE));
-
-          if (checkCanPlaceBs(bsEnemyGrid, r, c, ship.size, horiz)) {
-            const coords = [];
-            for (let i = 0; i < ship.size; i++) {
-              const tr = horiz ? r : r + i;
-              const tc = horiz ? c + i : c;
-              bsEnemyGrid[tr][tc] = 1;
-              coords.push({ r: tr, c: tc, hit: false });
-            }
-            bsEnemyShips.push({ name: ship.name, size: ship.size, type: ship.type, coords: coords, sunk: false, horiz: horiz, r: r, c: c });
-            placed = true;
-          }
-        }
-      });
-    }
-
-    function startBsGame() {
-      bsMode = document.getElementById('bs-mode-select').value;
-      bsDiff = document.getElementById('bs-diff-select').value;
-      bsPowerUpsEnabled = document.getElementById('bs-powerups-toggle').value === 'enabled';
-      bsViewMode = document.getElementById('bs-view-select').value;
-
-      generateBsEnemyBoard();
-
-      document.getElementById('bs-setup').classList.add('hidden');
-      document.getElementById('bs-combat').classList.remove('hidden');
-
-      document.getElementById('bs-powerups-bar').style.display = bsPowerUpsEnabled ? 'flex' : 'none';
-
-      if (bsViewMode === '3d') {
-        document.getElementById('bs-2d-boards').classList.add('hidden');
-        document.getElementById('bs-3d-boards').classList.remove('hidden');
-
-        player3D = setupOrthographic3DViewport('bs-3d-player-canvas', true, handlePlayerBoardClick);
-        enemy3D = setupOrthographic3DViewport('bs-3d-enemy-canvas', true, handleBsAttack);
-
-        bsPlayerShips.forEach(ship => {
-          ship.coords.forEach(co => {
-            player3D.gridTiles[co.r][co.c].material.color.setHex(0x5bc0be);
-          });
-          const cloneMesh = createBlueprintShipMesh(ship);
-          if (ship.mesh) {
-            cloneMesh.position.copy(ship.mesh.position);
-            cloneMesh.rotation.copy(ship.mesh.rotation);
-          }
-          player3D.scene.add(cloneMesh);
-        });
-      } else {
-        document.getElementById('bs-2d-boards').classList.remove('hidden');
-        document.getElementById('bs-3d-boards').classList.add('hidden');
-        renderBsCombatBoards2D();
-      }
-
-      updateBsDashboard();
-    }
-
-    function renderBsCombatBoards2D() {
-      buildGridWithLabels('bs-player-board-wrapper', 'bs-player-board', handlePlayerBoardClick);
-      buildGridWithLabels('bs-enemy-board-wrapper', 'bs-enemy-board', handleBsAttack);
-
-      bsPlayerShips.forEach(ship => {
-        ship.coords.forEach(co => {
-          const cell = document.querySelector(`#bs-player-board .cell[data-row="${co.r}"][data-col="${co.c}"]`);
-          if (cell) cell.classList.add('ship');
-        });
-      });
-    }
-
-    function handleBsAttack(eOrR, colVal) {
-      if (bsGameOver || bsTurn !== 'player') return;
-
-      let r, c;
-      if (typeof eOrR === 'number') {
-        r = eOrR;
-        c = colVal;
-      } else {
-        const cell = eOrR.currentTarget;
-        r = parseInt(cell.dataset.row);
-        c = parseInt(cell.dataset.col);
-      }
-
-      const coordStr = getCoordString(r, c);
-
-      if (bsViewMode === '3d') {
-        if (enemy3D.gridTiles[r][c].userData.attacked) return;
-      } else {
-        const cell = document.querySelector(`#bs-enemy-board .cell[data-row="${r}"][data-col="${c}"]`);
-        if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
-      }
-
-      if (activePowerUp === 'radar' && bsPowerUpsEnabled) {
-        bsScore -= 300;
-        activePowerUp = null;
-        updateBsDashboard();
-
-        let enemyDetected = false;
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            const tr = r + dr;
-            const tc = c + dc;
-            if (tr >= 0 && tr < BS_SIZE && tc >= 0 && tc < BS_SIZE) {
-              if (bsViewMode === '3d') {
-                if (!enemy3D.gridTiles[tr][tc].userData.attacked) {
-                  enemy3D.gridTiles[tr][tc].material.color.setHex(0xe9c46a);
-                }
-              } else {
-                const targetCell = document.querySelector(`#bs-enemy-board .cell[data-row="${tr}"][data-col="${tc}"]`);
-                if (targetCell && !targetCell.classList.contains('hit') && !targetCell.classList.contains('miss')) {
-                  targetCell.classList.add('scanned');
-                }
-              }
-              if (bsEnemyGrid[tr][tc] === 1) enemyDetected = true;
-            }
-          }
-        }
-
-        document.getElementById('bs-status').innerText = enemyDetected 
-          ? `RADAR SCAN: Enemy contacts detected in sector around ${coordStr}!` 
-          : `RADAR SCAN: Sector around ${coordStr} is clear.`;
-        return;
-      }
-
-      if (activePowerUp === 'multishot' && bsPowerUpsEnabled) {
-        fireSingleShot(r, c);
-        multiShotRemaining--;
-
-        if (multiShotRemaining > 0) {
-          document.getElementById('bs-status').innerText = `MULTI-SHOT: ${multiShotRemaining} shot(s) remaining! Select next target.`;
-          return;
-        } else {
-          activePowerUp = null;
-          if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
-          if (bsMode === 'pve') {
-            bsTurn = 'computer';
-            setTimeout(bsComputerTurn, 800);
-          }
-          return;
-        }
-      }
-
-      fireSingleShot(r, c);
-      updateBsDashboard();
-
-      if (checkBsWin(bsEnemyShips, 'PLAYER')) return;
-
-      if (bsMode === 'pve') {
-        bsTurn = 'computer';
-        setTimeout(bsComputerTurn, 800);
-      }
-    }
-
-    function fireSingleShot(r, c) {
-      bsShots++;
-      const coordStr = getCoordString(r, c);
-
-      if (bsViewMode === '3d') {
-        const tile = enemy3D.gridTiles[r][c];
-        tile.userData.attacked = true;
-
-        if (bsEnemyGrid[r][c] === 1) {
-          tile.material.color.setHex(0xe63946);
-          bsHits++;
-          bsScore += 100;
-          document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
-          checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
-        } else {
-          tile.material.color.setHex(0x6c757d);
-          bsScore = Math.max(0, bsScore - 10);
-          document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
-        }
-      } else {
-        const cell = document.querySelector(`#bs-enemy-board .cell[data-row="${r}"][data-col="${c}"]`);
-        if (bsEnemyGrid[r][c] === 1) {
-          cell.classList.remove('scanned');
-          cell.classList.add('hit');
-          cell.innerHTML = '<i class="fa-solid fa-fire"></i>';
-          bsHits++;
-          bsScore += 100;
-          document.getElementById('bs-status').innerText = `DIRECT HIT at ${coordStr}!`;
-          checkBsShipSunk(bsEnemyShips, r, c, 'Enemy');
-        } else {
-          cell.classList.remove('scanned');
-          cell.classList.add('miss');
-          cell.innerHTML = '<i class="fa-solid fa-circle"></i>';
-          bsScore = Math.max(0, bsScore - 10);
-          document.getElementById('bs-status').innerText = `Splash! Missed at ${coordStr}.`;
-        }
-      }
-      updateBsDashboard();
-    }
-
-    function bsComputerTurn() {
-      if (bsGameOver) return;
-
-      let r, c;
-      if (bsDiff === 'easy' || bsAiHuntStack.length === 0) {
-        do {
-          r = Math.floor(Math.random() * BS_SIZE);
-          c = Math.floor(Math.random() * BS_SIZE);
-          if (bsDiff === 'hard' && (r + c) % 2 !== 0) continue;
-        } while (isBsTargeted(r, c));
-      } else {
-        const target = bsAiHuntStack.pop();
-        r = target.r;
-        c = target.c;
-      }
-
-      const coordStr = getCoordString(r, c);
-
-      if (bsViewMode === '3d') {
-        const tile = player3D.gridTiles[r][c];
-        tile.userData.attacked = true;
-
-        if (bsPlayerGrid[r][c] === 1) {
-          tile.material.color.setHex(0xe63946);
-          document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
-
-          const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
-          adjs.forEach(a => {
-            if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !player3D.gridTiles[a.r][a.c].userData.attacked) {
-              bsAiHuntStack.push(a);
-            }
-          });
-
-          checkBsShipSunk(bsPlayerShips, r, c, 'Player');
-        } else {
-          tile.material.color.setHex(0x6c757d);
-          document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
-        }
-      } else {
-        const pCell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
-        if (bsPlayerGrid[r][c] === 1) {
-          pCell.classList.add('hit');
-          pCell.innerHTML = '<i class="fa-solid fa-fire"></i>';
-          document.getElementById('bs-status').innerText = `Computer hit your ship at ${coordStr}!`;
-
-          const adjs = [{ r: r - 1, c: c }, { r: r + 1, c: c }, { r: r, c: c - 1 }, { r: r, c: c + 1 }];
-          adjs.forEach(a => {
-            if (a.r >= 0 && a.r < BS_SIZE && a.c >= 0 && a.c < BS_SIZE && !isBsTargeted(a.r, a.c)) {
-              bsAiHuntStack.push(a);
-            }
-          });
-
-          checkBsShipSunk(bsPlayerShips, r, c, 'Player');
-        } else {
-          pCell.classList.add('miss');
-          pCell.innerHTML = '<i class="fa-solid fa-circle"></i>';
-          document.getElementById('bs-status').innerText = `Computer missed at ${coordStr}.`;
-        }
-      }
-
-      if (checkBsWin(bsPlayerShips, 'COMPUTER')) return;
-      bsTurn = 'player';
-    }
-
-    function isBsTargeted(r, c) {
-      if (bsViewMode === '3d') {
-        return player3D.gridTiles[r][c] && player3D.gridTiles[r][c].userData.attacked;
-      } else {
-        const cell = document.querySelector(`#bs-player-board .cell[data-row="${r}"][data-col="${c}"]`);
-        return cell && (cell.classList.contains('hit') || cell.classList.contains('miss'));
-      }
-    }
-
-    function activatePowerUp(type) {
-      if (!bsPowerUpsEnabled || bsGameOver || bsTurn !== 'player') return;
-
-      if (type === 'radar') {
-        if (bsScore < 300) {
-          document.getElementById('bs-status').innerText = "Insufficient points for Radar Scan! (300 pts required)";
-          return;
-        }
-        activePowerUp = 'radar';
-        document.getElementById('bs-status').innerText = "RADAR ACTIVE: Click grid coordinate (A1–J10) to scan 3x3 sector.";
-      } 
-      else if (type === 'multishot') {
-        if (bsScore < 700) {
-          document.getElementById('bs-status').innerText = "Insufficient points for Multi-Shot! (700 pts required)";
-          return;
-        }
-        activePowerUp = 'multishot';
-        multiShotRemaining = 3;
-        bsScore -= 700;
-        updateBsDashboard();
-        document.getElementById('bs-status').innerText = "MULTI-SHOT ACTIVATED! Click 3 targets on grid.";
-      }
-      else if (type === 'clone') {
-        if (bsScore < 1000) {
-          document.getElementById('bs-status').innerText = "Insufficient points for Vessel Clone! (1000 pts required)";
-          return;
-        }
-        openCloneModal();
-      }
-    }
-
-    function openCloneModal() {
-      const container = document.getElementById('clone-ship-options');
-      container.innerHTML = '';
-      const activeShips = bsPlayerShips.filter(s => !s.sunk);
-
-      if (activeShips.length === 0) {
-        document.getElementById('bs-status').innerText = "No active vessels available to clone!";
-        return;
-      }
-
-      activeShips.forEach((ship) => {
-        const btn = document.createElement('button');
-        btn.classList.add('btn');
-        btn.innerText = `${ship.name} (${ship.size} tiles)`;
-        btn.onclick = () => selectShipToClone(ship);
-        container.appendChild(btn);
-      });
-
-      document.getElementById('clone-modal').classList.remove('hidden');
-    }
-
-    function closeCloneModal() {
-      document.getElementById('clone-modal').classList.add('hidden');
-    }
-
-    function selectShipToClone(ship) {
-      shipToClone = ship;
-      closeCloneModal();
-      activePowerUp = 'clone';
-      document.getElementById('bs-status').innerText = `CLONE READY: Click on fleet grid to deploy duplicate ${ship.name}.`;
-    }
-
-    function handlePlayerBoardClick(eOrR, colVal) {
-      if (activePowerUp !== 'clone' || !shipToClone || !bsPowerUpsEnabled) return;
-
-      let r, c;
-      if (typeof eOrR === 'number') {
-        r = eOrR;
-        c = colVal;
-      } else {
-        const cell = eOrR.currentTarget;
-        r = parseInt(cell.dataset.row);
-        c = parseInt(cell.dataset.col);
-      }
-
-      if (checkCanPlaceBs(bsPlayerGrid, r, c, shipToClone.size, bsIsHorizontal)) {
-        bsScore -= 1000;
-        const coords = [];
-
-        for (let i = 0; i < shipToClone.size; i++) {
-          const targetR = bsIsHorizontal ? r : r + i;
-          const targetC = bsIsHorizontal ? c + i : c;
-          bsPlayerGrid[targetR][targetC] = 1;
-          coords.push({ r: targetR, c: targetC, hit: false });
-
-          if (bsViewMode === '3d') {
-            player3D.gridTiles[targetR][targetC].material.color.setHex(0x5bc0be);
-          } else {
-            const targetCell = document.querySelector(`#bs-player-board .cell[data-row="${targetR}"][data-col="${targetC}"]`);
-            if (targetCell) targetCell.classList.add('ship');
-          }
-        }
-
-        let cloneMesh = null;
-        if (bsViewMode === '3d' && player3D.scene) {
-          cloneMesh = createBlueprintShipMesh(shipToClone);
-          if (bsIsHorizontal) {
-            cloneMesh.position.set(c + (shipToClone.size / 2), 0.05, r + 0.5);
-            cloneMesh.rotation.y = Math.PI / 2;
-          } else {
-            cloneMesh.position.set(c + 0.5, 0.05, r + (shipToClone.size / 2));
-          }
-          player3D.scene.add(cloneMesh);
-        }
-
-        bsPlayerShips.push({ name: `${shipToClone.name} (Clone)`, size: shipToClone.size, type: shipToClone.type, coords: coords, sunk: false, mesh: cloneMesh });
-        activePowerUp = null;
-        shipToClone = null;
-        updateBsDashboard();
-        document.getElementById('bs-status').innerText = "CLONE SUCCESSFUL! Duplicate warship deployed to grid.";
-      } else {
-        document.getElementById('bs-status').innerText = "Invalid placement location for vessel clone!";
-      }
-    }
-
-    function checkBsShipSunk(ships, r, c, owner) {
-      ships.forEach(ship => {
-        if (ship.sunk) return;
-        const part = ship.coords.find(co => co.r === r && co.c === c);
-        if (part) part.hit = true;
-
-        if (ship.coords.every(co => co.hit)) {
-          ship.sunk = true;
-          if (owner === 'Enemy') {
-            bsSunkCount++;
-            bsScore += 250;
-
-            if (bsViewMode === '3d' && enemy3D.scene) {
-              const enemyMesh = createBlueprintShipMesh(ship, true);
-              if (ship.horiz) {
-                enemyMesh.position.set(ship.c + (ship.size / 2), 0.05, ship.r + 0.5);
-                enemyMesh.rotation.y = Math.PI / 2;
-              } else {
-                enemyMesh.position.set(ship.c + 0.5, 0.05, ship.r + (ship.size / 2));
-              }
-              enemy3D.scene.add(enemyMesh);
-            }
-
-            document.getElementById('bs-status').innerText = `BOOM! You sunk the enemy ${ship.name}!`;
-          } else {
-            document.getElementById('bs-status').innerText = `ALERT! Computer destroyed your ${ship.name}!`;
-          }
-        }
-      });
-    }
-
-    function checkBsWin(ships, attacker) {
-      if (ships.every(s => s.sunk)) {
-        bsGameOver = true;
-        const statusMsg = attacker === 'PLAYER' ? `VICTORY! All enemy ships eliminated! Score: ${bsScore}` : `DEFEAT! Your fleet was wiped out!`;
-        document.getElementById('bs-status').innerText = statusMsg;
-        return true;
-      }
-      return false;
-    }
-
-    function updateBsDashboard() {
-      document.getElementById('bs-shots').innerText = bsShots;
-      document.getElementById('bs-sunk').innerText = `${bsSunkCount} / ${BS_SHIPS.length}`;
-      document.getElementById('bs-score').innerText = bsScore;
-
-      if (bsPowerUpsEnabled) {
-        document.getElementById('pw-radar').disabled = bsScore < 300;
-        document.getElementById('pw-multishot').disabled = bsScore < 700;
-        document.getElementById('pw-clone').disabled = bsScore < 1000;
-      }
-    }
-
-    function resetBsSetup() {
-      document.getElementById('bs-combat').classList.add('hidden');
-      document.getElementById('bs-setup').classList.remove('hidden');
-      BS_SHIPS.forEach(s => s.placed = false);
-      bsPlacedCount = 0;
-      bsSelectedShipIdx = 0;
-      bsPlayerShips = [];
-      bsEnemyShips = [];
-      bsAiHuntStack = [];
-      bsShots = 0;
-      bsHits = 0;
-      bsSunkCount = 0;
-      bsScore = 0;
-      bsGameOver = false;
-      bsTurn = 'player';
-      activePowerUp = null;
-      shipToClone = null;
-
-      document.getElementById('bs-start-btn').disabled = true;
-      initBsPlacementGrid();
-      renderBsDock();
-
-      if (bsViewMode === '3d') init3DPlacementView();
-    }
-
-    /* Ammo Depot Clicker Logic */
-    let ammoShells = 0;
-    let baseAmmoPerClick = 1;
-    let baseAmmoPerSec = 0;
-    let rebirthCount = 0;
-    let rebirthMultiplier = 1;
-
-    const REBIRTH_COST = 1000000;
-
-    const INITIAL_UPGRADES = [
-      { id: 'manual_press', name: 'Manual Shell Press', baseCost: 15, cost: 15, cpc: 1, cps: 0, count: 0, icon: 'fa-hand-pointer' },
-      { id: 'armory_loader', name: 'Armory Auto-Loader', baseCost: 100, cost: 100, cpc: 0, cps: 5, count: 0, icon: 'fa-robot' },
-      { id: 'munition_factory', name: 'Munitions Foundry', baseCost: 1100, cost: 1100, cpc: 0, cps: 32, count: 0, icon: 'fa-industry' },
-      { id: 'naval_foundry', name: 'Heavy Artillery Line', baseCost: 12000, cost: 12000, cpc: 0, cps: 260, count: 0, icon: 'fa-gears' },
-      { id: 'quantum_press', name: 'Automated Missile Rig', baseCost: 130000, cost: 130000, cpc: 0, cps: 1400, count: 0, icon: 'fa-rocket' }
-    ];
-
-    let clickerUpgrades = JSON.parse(JSON.stringify(INITIAL_UPGRADES));
-
-    function initClickerGame() {
-      renderClickerUpgrades();
-      setInterval(() => {
-        const totalCps = baseAmmoPerSec * rebirthMultiplier;
-        if (totalCps > 0) {
-          ammoShells += totalCps / 10;
-          updateClickerDisplay();
-        }
-      }, 100);
-    }
-
-    function handleAmmoClick(e) {
-      const added = baseAmmoPerClick * rebirthMultiplier;
-      ammoShells += added;
-      updateClickerDisplay();
-
-      const btn = document.getElementById('main-click-btn');
-      const rect = btn.getBoundingClientRect();
-      const pop = document.createElement('div');
-      pop.className = 'click-particle';
-      pop.innerText = `+${added}`;
-      pop.style.left = `${e.clientX - rect.left}px`;
-      pop.style.top = `${e.clientY - rect.top}px`;
-      btn.appendChild(pop);
-
-      setTimeout(() => pop.remove(), 800);
-    }
-
-    function updateClickerDisplay() {
-      const totalCps = baseAmmoPerSec * rebirthMultiplier;
-      document.getElementById('clicker-count').innerText = `${Math.floor(ammoShells).toLocaleString()} Shells`;
-      document.getElementById('clicker-rate').innerText = `${totalCps.toLocaleString()} per sec`;
-      document.getElementById('rebirth-multiplier').innerText = `Production Multiplier: ${rebirthMultiplier}x (${rebirthCount} Rebirths)`;
-
-      const rebirthBtn = document.getElementById('rebirth-btn');
-      if (ammoShells >= REBIRTH_COST) {
-        rebirthBtn.disabled = false;
-        rebirthBtn.classList.add('ready');
-      } else {
-        rebirthBtn.disabled = true;
-        rebirthBtn.classList.remove('ready');
-      }
-
-      updateUpgradeButtonsState();
-    }
-
-    function renderClickerUpgrades() {
-      const list = document.getElementById('clicker-upgrades');
-      list.innerHTML = '';
-
-      clickerUpgrades.forEach(upg => {
-        const item = document.createElement('div');
-        item.className = 'upgrade-card';
-        item.id = `upg-card-${upg.id}`;
-        item.onclick = () => buyUpgrade(upg.id);
-
-        item.innerHTML = `
-          <div class="upg-icon"><i class="fa-solid ${upg.icon}"></i></div>
-          <div class="upg-info">
-            <div class="upg-name">${upg.name}</div>
-            <div class="upg-cost"><i class="fa-solid fa-cubes-stacked"></i> ${upg.cost.toLocaleString()} Shells</div>
-          </div>
-          <div class="upg-badge" id="upg-badge-${upg.id}">${upg.count}</div>
-        `;
-        list.appendChild(item);
-      });
-
-      updateUpgradeButtonsState();
-    }
-
-    function updateUpgradeButtonsState() {
-      clickerUpgrades.forEach(upg => {
-        const card = document.getElementById(`upg-card-${upg.id}`);
-        if (card) {
-          if (ammoShells >= upg.cost) card.classList.remove('disabled');
-          else card.classList.add('disabled');
-        }
-      });
-    }
-
-    function buyUpgrade(id) {
-      const upg = clickerUpgrades.find(u => u.id === id);
-      if (!upg || ammoShells < upg.cost) return;
-
-      ammoShells -= upg.cost;
-      upg.count++;
-      upg.cost = Math.floor(upg.cost * 1.15);
-
-      baseAmmoPerClick += upg.cpc;
-      baseAmmoPerSec += upg.cps;
-
-      document.getElementById(`upg-badge-${upg.id}`).innerText = upg.count;
-      renderClickerUpgrades();
-      updateClickerDisplay();
-    }
-
-    function triggerRebirth() {
-      if (ammoShells < REBIRTH_COST) return;
-
-      rebirthCount++;
-      rebirthMultiplier = 1 + rebirthCount;
-
-      ammoShells = 0;
-      baseAmmoPerClick = 1;
-      baseAmmoPerSec = 0;
-
-      clickerUpgrades = JSON.parse(JSON.stringify(INITIAL_UPGRADES));
-      renderClickerUpgrades();
-      updateClickerDisplay();
-    }
 
     /* Sound Synthesizer Engine */
     let audioCtx = null;
@@ -1876,13 +633,57 @@
 
     let kbMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
     let kbLabels = ['A', 'S', 'K', 'L'];
+    let surgeKey = ' ';
+    let surgeKeyLabel = 'SPACE';
     let menuToggleKey = 'tab';
     let menuToggleLabel = 'TAB';
-    let currentlyRebindingLane = null;
-    let isRebindingMenuKey = false;
 
-    let lastBeatTime = 0;
-    let prevGamepadState = [false, false];
+    // Gamepad Input Controls & Default Binds
+    let gpBinds = [0, 2, 3, 1]; // Default: A(0), X(2), Y(3), B(1)
+    let gpLabels = ['A (0)', 'X (2)', 'Y (3)', 'B (1)'];
+    
+    let gpSurgeBtn = 4; // Default: LB (4)
+    let gpSurgeLabel = 'LB (4)';
+    
+    let gpMenuBtn = 9; // Default: START (9)
+    let gpMenuLabel = 'START (9)';
+
+    let gpPlayBtn = 13; // Default: DPAD DOWN (13)
+    let gpPlayLabel = 'DPAD DOWN (13)';
+
+    let gpStopBtn = 12; // Default: DPAD UP (12)
+    let gpStopLabel = 'DPAD UP (12)';
+
+    let currentlyRebindingLane = null;
+    let currentlyRebindingGamepadLane = null;
+    let isRebindingMenuKey = false;
+    let isRebindingSurgeKey = false;
+
+    // Gamepad System Rebind Flags
+    let isRebindingGamepadSurge = false;
+    let isRebindingGamepadMenu = false;
+    let isRebindingGamepadPlay = false;
+    let isRebindingGamepadStop = false;
+
+    let lastBeatTime = -1; // Initialized to -1 so first beat spawns instantly
+    let prevGamepadState = [false, false, false, false];
+    let prevGamepadSurgeState = false;
+    let prevGamepadMenuState = false;
+    let prevGamepadPlayState = false;
+    let prevGamepadStopState = false;
+
+    /* Multiplier, Surge & Charge System Logic */
+    let currentMultiplier = 1;
+    let meterProgress = 0;
+    let isSurgeActive = false;
+    let surgeDuration = 0;
+    let surgeMaxDuration = 8.0;
+
+    const MAX_SURGE_CHARGES = 3;
+    let surgeChargesRemaining = 3;
+    let consecutivePerfectStreak = 0;
+
+    let lastSpawnedLane = -1; // Tracks last lane to ensure varied random spawns
 
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -1944,7 +745,8 @@
 
     function switchControlMode() {
       currentInputMode = document.getElementById('control-mode-select').value;
-      if (currentInputMode === 'controller') {
+      
+      if (currentInputMode === 'controller-2lane') {
         activeLaneCount = 2;
         document.getElementById('lane-2').style.display = 'none';
         document.getElementById('lane-3').style.display = 'none';
@@ -1953,6 +755,7 @@
         document.getElementById('lane-2').style.display = 'flex';
         document.getElementById('lane-3').style.display = 'flex';
       }
+
       resetRhythmGameState();
       updateControlLabels();
     }
@@ -1962,32 +765,129 @@
         for (let i = 0; i < 4; i++) {
           document.getElementById(`key-label-${i}`).innerText = kbLabels[i];
         }
-        document.getElementById('rhythm-status').innerText = `4-Lane Active: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}]. Menu: [${menuToggleLabel}].`;
-      } else {
+        document.getElementById('rhythm-status').innerText = `4-Lane Keyboard: [${kbLabels[0]}], [${kbLabels[1]}], [${kbLabels[2]}], [${kbLabels[3]}]. Surge: [${surgeKeyLabel}].`;
+      } 
+      else if (currentInputMode === 'controller-4lane') {
+        document.getElementById('key-label-0').innerText = 'A';
+        document.getElementById('key-label-1').innerText = 'X';
+        document.getElementById('key-label-2').innerText = 'Y';
+        document.getElementById('key-label-3').innerText = 'B';
+        document.getElementById('rhythm-status').innerText = `4-Lane Controller Active. Surge: [${gpSurgeLabel}]. Menu: [${gpMenuLabel}].`;
+      } 
+      else if (currentInputMode === 'controller-2lane') {
         document.getElementById('key-label-0').innerText = 'LT';
         document.getElementById('key-label-1').innerText = 'RT';
-        document.getElementById('rhythm-status').innerText = `2-Lane Controller Active: LT (Lane 1) / RT (Lane 2). Menu: [${menuToggleLabel}].`;
+        document.getElementById('rhythm-status').innerText = `2-Lane Controller Active: LT / RT Triggers. Surge: [${gpSurgeLabel}].`;
       }
       document.getElementById('menu-key-label').innerText = menuToggleLabel;
+      document.getElementById('gp-menu-label').innerText = gpMenuLabel;
     }
 
+    /* Multi-Slot Gamepad Support (Detects Player 1, 2, 3, or 4) */
     function initGamepadSupport() {
       function pollGamepad() {
-        if (currentInputMode === 'controller') {
-          const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-          if (gamepads[0]) {
-            const gp = gamepads[0];
-            const ltPressed = gp.buttons[6] && gp.buttons[6].pressed;
-            const rtPressed = gp.buttons[7] && gp.buttons[7].pressed;
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        
+        let gp = null;
+        for (let i = 0; i < gamepads.length; i++) {
+          if (gamepads[i] && gamepads[i].connected) {
+            gp = gamepads[i];
+            break;
+          }
+        }
 
-            if (ltPressed && !prevGamepadState[0]) triggerLaneInput(0);
-            if (!ltPressed && prevGamepadState[0]) releaseLaneInput(0);
+        if (gp) {
+          // Check for Controller Rebinding States
+          if (currentlyRebindingGamepadLane !== null) {
+            for (let b = 0; b < gp.buttons.length; b++) {
+              if (gp.buttons[b] && gp.buttons[b].pressed) {
+                bindGamepadLane(currentlyRebindingGamepadLane, b);
+                break;
+              }
+            }
+          } else if (isRebindingGamepadSurge) {
+            for (let b = 0; b < gp.buttons.length; b++) {
+              if (gp.buttons[b] && gp.buttons[b].pressed) {
+                bindGamepadSurge(b);
+                break;
+              }
+            }
+          } else if (isRebindingGamepadMenu) {
+            for (let b = 0; b < gp.buttons.length; b++) {
+              if (gp.buttons[b] && gp.buttons[b].pressed) {
+                bindGamepadMenu(b);
+                break;
+              }
+            }
+          } else if (isRebindingGamepadPlay) {
+            for (let b = 0; b < gp.buttons.length; b++) {
+              if (gp.buttons[b] && gp.buttons[b].pressed) {
+                bindGamepadPlay(b);
+                break;
+              }
+            }
+          } else if (isRebindingGamepadStop) {
+            for (let b = 0; b < gp.buttons.length; b++) {
+              if (gp.buttons[b] && gp.buttons[b].pressed) {
+                bindGamepadStop(b);
+                break;
+              }
+            }
+          }
 
-            if (rtPressed && !prevGamepadState[1]) triggerLaneInput(1);
-            if (!rtPressed && prevGamepadState[1]) releaseLaneInput(1);
+          // Active Controller Gameplay & System Inputs
+          const menuPressed = (gp.buttons[gpMenuBtn] && gp.buttons[gpMenuBtn].pressed) || (gp.buttons[8] && gp.buttons[8].pressed);
+          if (menuPressed && !prevGamepadMenuState) {
+            toggleHUDMenu();
+          }
+          prevGamepadMenuState = menuPressed;
 
-            prevGamepadState[0] = ltPressed;
-            prevGamepadState[1] = rtPressed;
+          const playPressed = gp.buttons[gpPlayBtn] && gp.buttons[gpPlayBtn].pressed;
+          if (playPressed && !prevGamepadPlayState) {
+            togglePlayPauseRhythm();
+          }
+          prevGamepadPlayState = playPressed;
+
+          const stopPressed = gp.buttons[gpStopBtn] && gp.buttons[gpStopBtn].pressed;
+          if (stopPressed && !prevGamepadStopState) {
+            stopRhythmGameAndSaveScore();
+          }
+          prevGamepadStopState = stopPressed;
+
+          if (currentInputMode.startsWith('controller')) {
+            if (currentInputMode === 'controller-4lane') {
+              const btnStates = [
+                gp.buttons[gpBinds[0]] && gp.buttons[gpBinds[0]].pressed,
+                gp.buttons[gpBinds[1]] && gp.buttons[gpBinds[1]].pressed,
+                gp.buttons[gpBinds[2]] && gp.buttons[gpBinds[2]].pressed,
+                gp.buttons[gpBinds[3]] && gp.buttons[gpBinds[3]].pressed
+              ];
+
+              for (let lane = 0; lane < 4; lane++) {
+                if (btnStates[lane] && !prevGamepadState[lane]) triggerLaneInput(lane);
+                else if (!btnStates[lane] && prevGamepadState[lane]) releaseLaneInput(lane);
+                prevGamepadState[lane] = btnStates[lane];
+              }
+            } 
+            else if (currentInputMode === 'controller-2lane') {
+              const ltPressed = gp.buttons[6] && gp.buttons[6].pressed;
+              const rtPressed = gp.buttons[7] && gp.buttons[7].pressed;
+
+              if (ltPressed && !prevGamepadState[0]) triggerLaneInput(0);
+              else if (!ltPressed && prevGamepadState[0]) releaseLaneInput(0);
+
+              if (rtPressed && !prevGamepadState[1]) triggerLaneInput(1);
+              else if (!rtPressed && prevGamepadState[1]) releaseLaneInput(1);
+
+              prevGamepadState[0] = ltPressed;
+              prevGamepadState[1] = rtPressed;
+            }
+
+            const surgePressed = gp.buttons[gpSurgeBtn] && gp.buttons[gpSurgeBtn].pressed;
+            if (surgePressed && !prevGamepadSurgeState) {
+              activateSurgeBoost();
+            }
+            prevGamepadSurgeState = surgePressed;
           }
         }
         requestAnimationFrame(pollGamepad);
@@ -2034,7 +934,6 @@
     function hideHUDMenu() {
       isMenuHidden = true;
       document.getElementById('main-header').classList.add('menu-hidden');
-      document.getElementById('main-nav').classList.add('menu-hidden');
       document.getElementById('rhythm-hud').classList.add('menu-hidden');
       document.getElementById('side-hud').classList.remove('hidden');
     }
@@ -2042,7 +941,6 @@
     function showHUDMenu() {
       isMenuHidden = false;
       document.getElementById('main-header').classList.remove('menu-hidden');
-      document.getElementById('main-nav').classList.remove('menu-hidden');
       document.getElementById('rhythm-hud').classList.remove('menu-hidden');
       document.getElementById('side-hud').classList.add('hidden');
     }
@@ -2110,11 +1008,26 @@
       totalHitsGood = 0;
       totalMisses = 0;
       rhythmNotes = [];
-      lastBeatTime = 0;
+      lastBeatTime = -1; // Reset to -1 for immediate startup beat spawning
+      lastSpawnedLane = -1;
       laneHeld = [false, false, false, false];
+
+      currentMultiplier = 1;
+      meterProgress = 0;
+      isSurgeActive = false;
+      surgeDuration = 0;
+      surgeChargesRemaining = 3;
+      consecutivePerfectStreak = 0;
+
+      // Dynamic duration per difficulty
+      if (activeDifficulty === 'easy') surgeMaxDuration = 12.0;
+      else if (activeDifficulty === 'medium') surgeMaxDuration = 8.0;
+      else if (activeDifficulty === 'hard') surgeMaxDuration = 5.0;
       
       document.getElementById('rhythm-score').innerText = '0';
       document.getElementById('rhythm-combo').innerText = '0x';
+      document.getElementById('rhythm-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
+      document.getElementById('rhythm-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
       document.getElementById('rhythm-hits').innerText = '0';
       document.getElementById('rhythm-misses').innerText = '0';
       document.getElementById('rhythm-timer').innerText = '00:00 / 00:00';
@@ -2122,38 +1035,102 @@
 
       document.getElementById('side-rhythm-score').innerText = '0';
       document.getElementById('side-rhythm-combo').innerText = '0x';
+      document.getElementById('side-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
+      document.getElementById('side-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
       document.getElementById('side-rhythm-hits').innerText = '0';
       document.getElementById('side-rhythm-misses').innerText = '0';
       document.getElementById('side-rhythm-timer').innerText = '00:00 / 00:00';
       document.getElementById('side-rhythm-judgement').innerText = '-';
 
+      updateGHMeterUI();
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
     }
 
-    function checkDynamicBeatPeak(currentTime) {
-      let minInterval = 0.35;
-      if (activeDifficulty === 'easy') minInterval = 0.55;
-      if (activeDifficulty === 'hard') minInterval = 0.20;
-
-      if (currentTime - lastBeatTime >= minInterval) {
-        const lane = Math.floor(Math.random() * activeLaneCount);
-        lastBeatTime = currentTime;
-
-        const isHold = (activeDifficulty === 'hard') && (Math.random() < 0.35);
-        const duration = isHold ? (0.4 + Math.random() * 0.6) : 0;
-
-        rhythmNotes.push({
-          id: Math.random().toString(36).substr(2, 9),
-          time: currentTime + 1.25,
-          duration: duration,
-          lane: lane,
-          hit: false,
-          holding: false,
-          completed: false,
-          element: null,
-          tailElement: null
+    function getAvailableLanes(currentTime) {
+      let openLanes = [];
+      for (let l = 0; l < activeLaneCount; l++) {
+        const isOccupiedByHold = rhythmNotes.some(n => {
+          if (n.lane !== l || n.completed) return false;
+          const holdEndTime = n.time + n.duration + 0.15;
+          return currentTime < holdEndTime;
         });
+
+        if (!isOccupiedByHold) {
+          openLanes.push(l);
+        }
       }
+      return openLanes;
+    }
+
+    function pickRandomLane(availableLanes) {
+      if (availableLanes.length === 0) return -1;
+      if (availableLanes.length === 1) return availableLanes[0];
+
+      const candidates = availableLanes.filter(l => l !== lastSpawnedLane);
+      if (candidates.length > 0) {
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      return availableLanes[Math.floor(Math.random() * availableLanes.length)];
+    }
+
+    /* True Video Beat & Rhythm Sync Generator */
+    function checkDynamicBeatPeak(currentTime) {
+      let beatInterval = 0.5; // Default 120 BPM quarter notes
+
+      if (activeDifficulty === 'easy') {
+        beatInterval = 0.8; // Relaxed beat spacing for easy chill play
+      } else if (activeDifficulty === 'medium') {
+        beatInterval = 0.4;
+      } else if (activeDifficulty === 'hard') {
+        beatInterval = 0.2; // Fast eighth/sixteenth sync
+      }
+
+      // Snap note generation strictly to video musical time grid
+      const currentBeatIndex = Math.floor(currentTime / beatInterval);
+      const targetBeatTime = currentBeatIndex * beatInterval;
+
+      if (targetBeatTime > lastBeatTime) {
+        lastBeatTime = targetBeatTime;
+
+        const availableLanes = getAvailableLanes(currentTime);
+        const targetLane = pickRandomLane(availableLanes);
+        if (targetLane === -1) return;
+
+        lastSpawnedLane = targetLane;
+
+        if (activeDifficulty === 'easy') {
+          // Easy: 100% Single Taps Only, perfectly synced to the video beat
+          spawnSingleNote(targetBeatTime, targetLane, 0);
+        }
+        else if (activeDifficulty === 'medium') {
+          // Medium: Taps & Holds synced to beat (~30% hold chance)
+          const isHold = Math.random() < 0.30;
+          const holdDur = isHold ? (beatInterval * 1.5) : 0;
+          spawnSingleNote(targetBeatTime, targetLane, holdDur);
+        }
+        else if (activeDifficulty === 'hard') {
+          // Hard: Fast rhythm streams & holds (~28% hold chance)
+          const isHold = Math.random() < 0.28;
+          const holdDur = isHold ? (beatInterval * 1.2) : 0;
+          spawnSingleNote(targetBeatTime, targetLane, holdDur);
+        }
+      }
+    }
+
+    function spawnSingleNote(beatTime, lane, duration) {
+      rhythmNotes.push({
+        id: Math.random().toString(36).substr(2, 9),
+        time: beatTime + 1.25, // Scroll lead-in time
+        duration: duration,
+        lane: lane,
+        hit: false,
+        holding: false,
+        completed: false,
+        element: null,
+        tailElement: null,
+        headCapElement: null,
+        endCapElement: null
+      });
     }
 
     function startRhythmGameLoop() {
@@ -2173,8 +1150,20 @@
         document.getElementById('side-rhythm-timer').innerText = formattedClock;
 
         const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'hard' ? 480 : 400;
+        const scrollSpeed = activeDifficulty === 'hard' ? 500 : (activeDifficulty === 'medium' ? 440 : 380);
         const hitBarY = stageHeight - 105;
+
+        if (isSurgeActive) {
+          surgeDuration -= 0.016;
+          meterProgress = Math.max(0, (surgeDuration / surgeMaxDuration) * 100);
+          updateGHMeterUI();
+
+          if (surgeDuration <= 0) {
+            isSurgeActive = false;
+            currentMultiplier = Math.min(4, Math.floor(rhythmCombo / 10) + 1);
+            updateGHMeterUI();
+          }
+        }
 
         checkDynamicBeatPeak(currentTime);
 
@@ -2187,12 +1176,27 @@
               el.className = `rhythm-note lane-${note.lane}`;
               
               if (note.duration > 0) {
-                el.classList.add('hold-head');
+                el.classList.add('hold-note');
+
+                // Start Head Cap
+                const headCap = document.createElement('div');
+                headCap.className = 'hold-head-cap';
+                el.appendChild(headCap);
+                note.headCapElement = headCap;
+
+                // Hold Body Trail
                 const tail = document.createElement('div');
                 tail.className = 'hold-tail';
                 tail.style.height = `${note.duration * scrollSpeed}px`;
                 el.appendChild(tail);
                 note.tailElement = tail;
+
+                // End Tail Cap
+                const endCap = document.createElement('div');
+                endCap.className = 'hold-end-cap';
+                endCap.style.bottom = `${note.duration * scrollSpeed}px`;
+                el.appendChild(endCap);
+                note.endCapElement = endCap;
               }
 
               document.getElementById(`lane-${note.lane}`).appendChild(el);
@@ -2209,7 +1213,7 @@
 
                 if (Math.random() < 0.15) {
                   rhythmCombo++;
-                  rhythmScore += 20;
+                  rhythmScore += 20 * currentMultiplier;
                   document.getElementById('rhythm-score').innerText = Math.floor(rhythmScore);
                   document.getElementById('rhythm-combo').innerText = `${rhythmCombo}x`;
                 }
@@ -2226,7 +1230,6 @@
               }
             }
 
-            // Expanded Auto-Miss Threshold beyond early/late window (dist > 100px past hit bar)
             if (note.duration === 0 && topPos > hitBarY + 100 && !note.hit) {
               note.completed = true;
               if (note.element) {
@@ -2263,6 +1266,12 @@
         return;
       }
 
+      if (isRebindingSurgeKey) {
+        e.preventDefault();
+        bindSurgeKey(e.key);
+        return;
+      }
+
       if (currentlyRebindingLane !== null) {
         bindLaneKey(currentlyRebindingLane, e.key);
         return;
@@ -2271,6 +1280,12 @@
       if (pressedKey === menuToggleKey) {
         e.preventDefault();
         toggleHUDMenu();
+        return;
+      }
+
+      if (pressedKey === surgeKey) {
+        e.preventDefault();
+        activateSurgeBoost();
         return;
       }
 
@@ -2288,7 +1303,6 @@
       }
     }
 
-    /* Trigger Lane Input with Early & Late Timing Windows */
     function triggerLaneInput(laneIdx) {
       if (laneIdx >= activeLaneCount) return;
       laneHeld[laneIdx] = true;
@@ -2299,7 +1313,6 @@
       const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
       const hitBarY = stageHeight - 105;
 
-      // Expanded Timing Window: Accepts hit if within +/- 100px of hit bar
       const candidateNotes = rhythmNotes.filter(n => {
         if (n.lane !== laneIdx || n.hit || n.completed || !n.element) return false;
         const noteTop = parseFloat(n.element.style.top || 0);
@@ -2319,7 +1332,6 @@
         const noteTop = parseFloat(targetNote.element.style.top);
         const distFromHitBar = Math.abs(noteTop - hitBarY);
 
-        // Dynamic Judgement Windows for Early and Late Timing
         let judgement = 'GOOD';
         if (distFromHitBar <= 25) {
           judgement = 'PERFECT';
@@ -2347,6 +1359,71 @@
       laneEl.classList.remove('pressed');
     }
 
+    function activateSurgeBoost() {
+      if (currentMultiplier >= 4 && !isSurgeActive && meterProgress >= 100 && surgeChargesRemaining > 0) {
+        isSurgeActive = true;
+        surgeChargesRemaining--;
+        currentMultiplier = 8;
+        surgeDuration = surgeMaxDuration;
+        updateGHMeterUI();
+      }
+    }
+
+    function updateGHMeterUI() {
+      const valBadge = document.getElementById('gh-multiplier-val');
+      const fillBar = document.getElementById('gh-meter-fill');
+      const surgeBtn = document.getElementById('surge-btn');
+      const hintText = document.getElementById('gh-surge-hint');
+      const containerBox = document.getElementById('gh-meter-box');
+
+      valBadge.innerText = `${currentMultiplier}x`;
+      fillBar.style.height = `${meterProgress}%`;
+
+      // Render Charges Bolt UI
+      const boltsContainer = document.getElementById('surge-bolts-display');
+      boltsContainer.innerHTML = '';
+      for (let i = 0; i < MAX_SURGE_CHARGES; i++) {
+        const bolt = document.createElement('i');
+        bolt.className = `fa-solid fa-bolt ${i < surgeChargesRemaining ? 'active' : 'depleted'}`;
+        boltsContainer.appendChild(bolt);
+      }
+
+      // Render 10 Perfect Streak Tracker
+      document.getElementById('gh-p-streak-val').innerText = `${consecutivePerfectStreak} / 10`;
+
+      // Update Header & HUD Stat Displays
+      document.getElementById('rhythm-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
+      document.getElementById('side-surge-charges').innerText = `${surgeChargesRemaining} / ${MAX_SURGE_CHARGES}`;
+      document.getElementById('rhythm-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
+      document.getElementById('side-perfect-streak').innerText = `${consecutivePerfectStreak} / 10`;
+
+      if (isSurgeActive) {
+        containerBox.classList.add('surge-active');
+        surgeBtn.classList.remove('disabled');
+        surgeBtn.classList.add('active');
+        surgeBtn.innerText = '⚡ 8X SURGE ACTIVE!';
+        hintText.innerText = 'OVERDRIVE ACTIVE!';
+      } else {
+        containerBox.classList.remove('surge-active');
+        if (surgeChargesRemaining === 0) {
+          surgeBtn.classList.add('disabled');
+          surgeBtn.classList.remove('ready', 'active');
+          surgeBtn.innerText = '⚡ OUT OF SURGES';
+          hintText.innerText = 'Get 10 Perfects in a row to gain +1 Charge!';
+        } else if (currentMultiplier >= 4 && meterProgress >= 100) {
+          surgeBtn.classList.remove('disabled');
+          surgeBtn.classList.add('ready');
+          surgeBtn.innerText = `⚡ PRESS FOR 8X SURGE (${surgeChargesRemaining} LEFT)`;
+          hintText.innerText = 'READY! Activate Surge now!';
+        } else {
+          surgeBtn.classList.add('disabled');
+          surgeBtn.classList.remove('ready', 'active');
+          surgeBtn.innerText = `⚡ 8X SURGE (${surgeChargesRemaining} LEFT)`;
+          hintText.innerText = 'Reach 4x multiplier to unlock Surge!';
+        }
+      }
+    }
+
     function registerJudgement(type) {
       playHitSound(type);
 
@@ -2370,22 +1447,55 @@
       if (type === 'PERFECT') {
         rhythmCombo++;
         totalHitsPerfect++;
-        rhythmScore += 300 * (1 + rhythmCombo * 0.1);
-        ammoShells += 50;
+        consecutivePerfectStreak++;
+        rhythmScore += 300 * currentMultiplier;
+
+        // Check 10 Perfect Streak Replenishment
+        if (consecutivePerfectStreak >= 10) {
+          consecutivePerfectStreak = 0;
+          if (surgeChargesRemaining < MAX_SURGE_CHARGES) {
+            surgeChargesRemaining++;
+            document.getElementById('rhythm-status').innerText = '⚡ 10 PERFECT STREAK! +1 Surge Charge Replenished!';
+          }
+        }
+
       } else if (type === 'GREAT') {
         rhythmCombo++;
         totalHitsGreat++;
-        rhythmScore += 180 * (1 + rhythmCombo * 0.05);
-        ammoShells += 30;
+        consecutivePerfectStreak = 0;
+        rhythmScore += 180 * currentMultiplier;
       } else if (type === 'GOOD') {
         rhythmCombo++;
         totalHitsGood++;
-        rhythmScore += 80;
-        ammoShells += 10;
+        consecutivePerfectStreak = 0;
+        rhythmScore += 80 * currentMultiplier;
       } else if (type === 'MISS') {
         rhythmCombo = 0;
+        consecutivePerfectStreak = 0;
         totalMisses++;
+        if (!isSurgeActive) {
+          currentMultiplier = 1;
+          meterProgress = 0;
+        }
       }
+
+      if (!isSurgeActive) {
+        if (rhythmCombo >= 30) {
+          currentMultiplier = 4;
+          meterProgress = 100;
+        } else if (rhythmCombo >= 20) {
+          currentMultiplier = 3;
+          meterProgress = ((rhythmCombo - 20) / 10) * 100;
+        } else if (rhythmCombo >= 10) {
+          currentMultiplier = 2;
+          meterProgress = ((rhythmCombo - 10) / 10) * 100;
+        } else {
+          currentMultiplier = 1;
+          meterProgress = (rhythmCombo / 10) * 100;
+        }
+      }
+
+      updateGHMeterUI();
 
       if (rhythmCombo > maxRhythmCombo) {
         maxRhythmCombo = rhythmCombo;
@@ -2402,11 +1512,8 @@
       document.getElementById('side-rhythm-combo').innerText = `${rhythmCombo}x`;
       document.getElementById('side-rhythm-hits').innerText = totalHits;
       document.getElementById('side-rhythm-misses').innerText = totalMisses;
-
-      updateClickerDisplay();
     }
 
-    /* Complete Expanded Rank Grading Scale (S to F) */
     function showResultsSummaryModal() {
       const totalNotes = totalHitsPerfect + totalHitsGreat + totalHitsGood + totalMisses;
       const hitCount = totalHitsPerfect + totalHitsGreat + totalHitsGood;
@@ -2482,7 +1589,7 @@
 
     function saveScoreToLeaderboard() {
       const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous Pilot';
-      const allLeaderboards = JSON.parse(localStorage.getItem('naval_rhythm_scoreboards') || '{}');
+      const allLeaderboards = JSON.parse(localStorage.getItem('surge_rhythm_scoreboards') || '{}');
 
       if (!allLeaderboards[currentVideoId]) {
         allLeaderboards[currentVideoId] = [];
@@ -2503,7 +1610,7 @@
       allLeaderboards[currentVideoId].push(scoreEntry);
       allLeaderboards[currentVideoId].sort((a, b) => b.score - a.score);
 
-      localStorage.setItem('naval_rhythm_scoreboards', JSON.stringify(allLeaderboards));
+      localStorage.setItem('surge_rhythm_scoreboards', JSON.stringify(allLeaderboards));
     }
 
     function openLeaderboardModal() {
@@ -2519,7 +1626,7 @@
       const container = document.getElementById('leaderboard-list');
       container.innerHTML = '';
 
-      const allLeaderboards = JSON.parse(localStorage.getItem('naval_rhythm_scoreboards') || '{}');
+      const allLeaderboards = JSON.parse(localStorage.getItem('surge_rhythm_scoreboards') || '{}');
       const trackScores = allLeaderboards[currentVideoId] || [];
 
       if (trackScores.length === 0) {
@@ -2551,7 +1658,13 @@
 
     function closeKeybindModal() {
       currentlyRebindingLane = null;
+      currentlyRebindingGamepadLane = null;
       isRebindingMenuKey = false;
+      isRebindingSurgeKey = false;
+      isRebindingGamepadSurge = false;
+      isRebindingGamepadMenu = false;
+      isRebindingGamepadPlay = false;
+      isRebindingGamepadStop = false;
       document.getElementById('keybind-modal').classList.add('hidden');
       updateControlLabels();
     }
@@ -2567,17 +1680,39 @@
     function startRebindingKey(laneIdx) {
       currentlyRebindingLane = laneIdx;
       isRebindingMenuKey = false;
+      isRebindingSurgeKey = false;
       document.querySelectorAll('#mapper-sec-keyboard .keybind-slot').forEach(b => b.classList.remove('listening'));
       document.getElementById(`kb-bind-${laneIdx}`).classList.add('listening');
       document.getElementById(`kb-val-${laneIdx}`).innerText = "Press Key...";
     }
 
+    function startRebindingSurgeKey() {
+      isRebindingSurgeKey = true;
+      currentlyRebindingLane = null;
+      isRebindingMenuKey = false;
+      document.querySelectorAll('#mapper-sec-keyboard .keybind-slot').forEach(b => b.classList.remove('listening'));
+      document.getElementById('kb-bind-surge').classList.add('listening');
+      document.getElementById('kb-val-surge').innerText = "Press Key...";
+    }
+
     function startRebindingMenuKey() {
       isRebindingMenuKey = true;
       currentlyRebindingLane = null;
+      isRebindingSurgeKey = false;
       document.querySelectorAll('#mapper-sec-keyboard .keybind-slot').forEach(b => b.classList.remove('listening'));
       document.getElementById('kb-bind-menu').classList.add('listening');
       document.getElementById('kb-val-menu').innerText = "Press Key...";
+    }
+
+    function bindSurgeKey(key) {
+      surgeKey = key.toLowerCase();
+      surgeKeyLabel = key === ' ' ? 'SPACE' : key.toUpperCase();
+
+      document.getElementById('kb-val-surge').innerText = surgeKeyLabel;
+      document.getElementById('kb-bind-surge').classList.remove('listening');
+
+      isRebindingSurgeKey = false;
+      updateControlLabels();
     }
 
     function bindMenuToggleKey(key) {
@@ -2595,13 +1730,103 @@
       const lowerKey = key.toLowerCase();
       
       delete kbMap[kbLabels[laneIdx].toLowerCase()];
-      kbLabels[laneIdx] = key.toUpperCase();
+      kbLabels[laneIdx] = key === ' ' ? 'SPACE' : key.toUpperCase();
       kbMap[lowerKey] = laneIdx;
 
-      document.getElementById(`kb-val-${laneIdx}`).innerText = key.toUpperCase();
+      document.getElementById(`kb-val-${laneIdx}`).innerText = kbLabels[laneIdx];
       document.getElementById(`kb-bind-${laneIdx}`).classList.remove('listening');
 
       currentlyRebindingLane = null;
+      updateControlLabels();
+    }
+
+    /* Gamepad Rebinding Functions */
+    function clearGamepadRebindListening() {
+      document.querySelectorAll('#mapper-sec-controller .keybind-slot').forEach(b => b.classList.remove('listening'));
+      currentlyRebindingGamepadLane = null;
+      isRebindingGamepadSurge = false;
+      isRebindingGamepadMenu = false;
+      isRebindingGamepadPlay = false;
+      isRebindingGamepadStop = false;
+    }
+
+    function startRebindingGamepad(laneIdx) {
+      clearGamepadRebindListening();
+      currentlyRebindingGamepadLane = laneIdx;
+      document.getElementById(`gp-bind-${laneIdx}`).classList.add('listening');
+      document.getElementById(`gp-val-${laneIdx}`).innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadSurge() {
+      clearGamepadRebindListening();
+      isRebindingGamepadSurge = true;
+      document.getElementById('gp-bind-surge').classList.add('listening');
+      document.getElementById('gp-val-surge').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadMenu() {
+      clearGamepadRebindListening();
+      isRebindingGamepadMenu = true;
+      document.getElementById('gp-bind-menu').classList.add('listening');
+      document.getElementById('gp-val-menu').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadPlay() {
+      clearGamepadRebindListening();
+      isRebindingGamepadPlay = true;
+      document.getElementById('gp-bind-play').classList.add('listening');
+      document.getElementById('gp-val-play').innerText = "Press Button...";
+    }
+
+    function startRebindingGamepadStop() {
+      clearGamepadRebindListening();
+      isRebindingGamepadStop = true;
+      document.getElementById('gp-bind-stop').classList.add('listening');
+      document.getElementById('gp-val-stop').innerText = "Press Button...";
+    }
+
+    function bindGamepadLane(laneIdx, btnIdx) {
+      gpBinds[laneIdx] = btnIdx;
+      gpLabels[laneIdx] = `Btn ${btnIdx}`;
+
+      document.getElementById(`gp-val-${laneIdx}`).innerText = gpLabels[laneIdx];
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadSurge(btnIdx) {
+      gpSurgeBtn = btnIdx;
+      gpSurgeLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-surge').innerText = gpSurgeLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadMenu(btnIdx) {
+      gpMenuBtn = btnIdx;
+      gpMenuLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-menu').innerText = gpMenuLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadPlay(btnIdx) {
+      gpPlayBtn = btnIdx;
+      gpPlayLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-play').innerText = gpPlayLabel;
+      clearGamepadRebindListening();
+      updateControlLabels();
+    }
+
+    function bindGamepadStop(btnIdx) {
+      gpStopBtn = btnIdx;
+      gpStopLabel = `Btn ${btnIdx}`;
+
+      document.getElementById('gp-val-stop').innerText = gpStopLabel;
+      clearGamepadRebindListening();
       updateControlLabels();
     }
   </script>

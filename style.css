@@ -7,7 +7,7 @@
   --hit-color: #e63946;
   --miss-color: #6c757d;
   --text-color: #edf2f4;
-  --ship-color: #3a86ff;
+  --surge-yellow: #ffd166;
 }
 
 * {
@@ -29,7 +29,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Background Missile Animation Canvas */
+/* Background Animation Canvas */
 #missile-bg-canvas {
   position: fixed;
   top: 0;
@@ -40,7 +40,7 @@ body {
   z-index: 0;
 }
 
-header, nav, .main-container {
+header, .main-container {
   position: relative;
   z-index: 10;
   transition: opacity 0.4s ease, transform 0.4s ease;
@@ -56,41 +56,15 @@ header.header-overlay {
 }
 
 header h1 {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   color: var(--accent-blue);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 15px rgba(91, 192, 190, 0.5);
 }
 
 header p {
   color: #a0aab2;
-}
-
-/* Nav Tabs */
-.game-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.nav-btn {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: 0.2s;
-}
-
-.nav-btn.active, .nav-btn:hover {
-  background: var(--border-color);
-  color: var(--bg-color);
 }
 
 .main-container {
@@ -113,7 +87,7 @@ header p {
 
 .dashboard {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   margin-bottom: 20px;
   justify-content: center;
   flex-wrap: wrap;
@@ -123,26 +97,26 @@ header p {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 10px 18px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 140px;
+  min-width: 125px;
 }
 
 .stat-card i {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: var(--accent-blue);
 }
 
 .stat-info .label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   color: #a0aab2;
 }
 
 .stat-info .value {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
@@ -203,194 +177,6 @@ header p {
   font-size: 1.1rem;
 }
 
-/* Battleship Layout */
-.setup-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.setup-group label {
-  font-weight: bold;
-  width: 180px;
-}
-
-.setup-group select {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  padding: 8px 12px;
-  border-radius: 6px;
-  flex: 1;
-}
-
-.placement-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 15px 0;
-}
-
-.placement-controls {
-  display: flex;
-  gap: 10px;
-  margin: 12px 0;
-}
-
-.ship-dock {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 15px;
-  justify-content: center;
-}
-
-.dock-item {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.dock-item.selected {
-  border-color: var(--accent-blue);
-  background: #112240;
-}
-
-.dock-item.placed {
-  opacity: 0.4;
-  text-decoration: line-through;
-}
-
-.powerups-bar {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px 18px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.powerups-bar h3 {
-  font-size: 0.95rem;
-  color: var(--accent-blue);
-  text-transform: uppercase;
-}
-
-.powerup-buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.powerup-btn {
-  background: #112240;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  font-size: 0.85rem;
-  padding: 8px 14px;
-}
-
-.powerup-btn:hover:not(:disabled) {
-  background: var(--border-color);
-  color: var(--bg-color);
-}
-
-.boards-container {
-  display: flex;
-  gap: 25px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.grid-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.grid-title {
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: var(--accent-blue);
-}
-
-.grid-container-with-labels {
-  display: flex;
-  flex-direction: column;
-  background-color: #0b132b;
-  padding: 8px;
-  border-radius: 8px;
-  border: 2px solid var(--border-color);
-}
-
-.grid-header-row {
-  display: grid;
-  grid-template-columns: 24px repeat(10, 30px);
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.grid-body-row {
-  display: flex;
-  gap: 4px;
-}
-
-.grid-header-col {
-  display: grid;
-  grid-template-rows: repeat(10, 30px);
-  gap: 4px;
-  width: 24px;
-}
-
-.header-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: var(--accent-blue);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(10, 30px);
-  grid-template-rows: repeat(10, 30px);
-  gap: 4px;
-}
-
-.cell {
-  background-color: #111e38;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.cell.preview-valid { background-color: rgba(91, 192, 190, 0.5); }
-.cell.preview-invalid { background-color: rgba(230, 57, 70, 0.5); }
-.cell.ship { background-color: var(--ship-color); }
-.cell.hit { background-color: rgba(230, 57, 70, 0.3); color: var(--hit-color); }
-.cell.miss { background-color: rgba(108, 117, 125, 0.3); color: var(--miss-color); }
-.cell.scanned { background-color: rgba(233, 196, 106, 0.3); border: 1px dashed #e9c46a; }
-
-.canvas-container {
-  width: 400px;
-  height: 380px;
-  background: #0b132b;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-}
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -418,205 +204,176 @@ header p {
   text-align: center;
 }
 
-.clone-options-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-}
-
-/* Ammo Depot Clicker Styles */
-.clicker-layout {
-  display: flex;
-  gap: 25px;
-  flex-wrap: wrap;
-}
-
-.clicker-left {
-  flex: 1;
-  min-width: 280px;
+/* Guitar Hero Side Multiplier & Surge Meter */
+.gh-multiplier-meter-container {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 95;
+  background: rgba(11, 19, 43, 0.88);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  width: 150px;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.clicker-left h2 {
+.gh-multiplier-meter-container.surge-active {
+  border-color: var(--surge-yellow);
+  box-shadow: 0 0 30px var(--surge-yellow);
+  animation: pulseGlow 1s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 15px var(--surge-yellow); }
+  100% { box-shadow: 0 0 35px var(--surge-yellow); }
+}
+
+.gh-meter-title {
+  font-size: 0.68rem;
+  font-weight: 900;
   color: var(--accent-blue);
-  margin-bottom: 15px;
+  letter-spacing: 1.5px;
 }
 
-.clicker-score-display {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px 24px;
+.gh-meter-badge {
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: var(--surge-yellow);
+  text-shadow: 0 0 12px var(--surge-yellow);
+}
+
+.gh-meter-bar-wrapper {
+  width: 22px;
+  height: 140px;
+  background: rgba(28, 37, 65, 0.9);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.gh-meter-fill {
   width: 100%;
-  margin-bottom: 20px;
+  height: 0%;
+  background: linear-gradient(to top, var(--accent-blue), var(--surge-yellow));
+  box-shadow: 0 0 15px var(--surge-yellow);
+  transition: height 0.15s ease-out;
 }
 
-.ammo-count {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: var(--accent-blue);
-}
-
-.ammo-rate {
-  font-size: 0.9rem;
-  color: #a0aab2;
+/* Surge Charge Indicator Bolts */
+.surge-charge-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   margin-top: 4px;
 }
 
-.rebirth-stat {
-  font-size: 0.85rem;
-  color: #e9c46a;
-  margin-top: 6px;
+.charge-label {
+  font-size: 0.58rem;
   font-weight: bold;
-}
-
-.main-click-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 15px 0;
-}
-
-.main-click-btn {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-blue) 0%, var(--card-bg) 100%);
-  border: 4px solid var(--border-color);
-  color: var(--bg-color);
-  font-size: 3.8rem;
-  cursor: pointer;
-  box-shadow: 0 0 25px rgba(91, 192, 190, 0.4);
-  transition: transform 0.08s ease, box-shadow 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.main-click-btn:active {
-  transform: scale(0.92);
-  box-shadow: 0 0 10px rgba(91, 192, 190, 0.8);
-}
-
-.click-particle {
-  position: absolute;
-  color: var(--accent-blue);
-  font-weight: bold;
-  font-size: 1.3rem;
-  pointer-events: none;
-  animation: floatUp 0.8s ease-out forwards;
-}
-
-@keyframes floatUp {
-  0% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-40px); }
-}
-
-.rebirth-card {
-  background: var(--bg-color);
-  border: 1px solid #e9c46a;
-  border-radius: 8px;
-  padding: 15px;
-  width: 100%;
-  margin-top: 15px;
-  text-align: center;
-}
-
-.rebirth-card h3 {
-  color: #e9c46a;
-  font-size: 1rem;
-  margin-bottom: 6px;
-}
-
-.rebirth-card p {
-  font-size: 0.78rem;
   color: #a0aab2;
-  margin-bottom: 12px;
+  letter-spacing: 1px;
 }
 
-.btn-rebirth {
+.charge-bolts {
+  display: flex;
+  gap: 6px;
+}
+
+.charge-bolts i {
+  font-size: 1rem;
+  color: #555;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.charge-bolts i.active {
+  color: var(--surge-yellow);
+  text-shadow: 0 0 8px var(--surge-yellow);
+  transform: scale(1.1);
+}
+
+.charge-bolts i.depleted {
+  color: #444;
+  opacity: 0.3;
+}
+
+/* Perfect Streak Meter Box */
+.perfect-streak-box {
+  background: rgba(28, 37, 65, 0.8);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-align: center;
   width: 100%;
-  background: var(--card-bg);
-  color: var(--text-color);
-  border: 1px solid #e9c46a;
-  justify-content: center;
-  font-size: 0.85rem;
 }
 
-.btn-rebirth.ready {
-  background: #e9c46a;
-  color: var(--bg-color);
+.p-streak-label {
+  display: block;
+  font-size: 0.55rem;
+  color: #a0aab2;
   font-weight: bold;
 }
 
-.clicker-right {
-  flex: 1.2;
-  min-width: 300px;
-  display: flex;
-  flex-direction: column;
-}
-
-.clicker-right h3 {
+.p-streak-val {
+  font-size: 0.85rem;
+  font-weight: bold;
   color: var(--accent-blue);
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.upgrades-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.upgrade-card {
-  background: var(--bg-color);
+.gh-meter-surge-btn {
+  background: rgba(28, 37, 65, 0.9);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 10px 15px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  color: var(--text-color);
+  font-size: 0.68rem;
+  font-weight: bold;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: center;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  user-select: none;
+  width: 100%;
+  transition: 0.2s;
 }
 
-.upgrade-card:hover:not(.disabled) {
-  background: #112240;
-  border-color: var(--accent-blue);
-}
-
-.upgrade-card.disabled {
+.gh-meter-surge-btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.upg-icon {
-  font-size: 1.4rem;
-  color: var(--accent-blue);
-  width: 30px;
-  text-align: center;
+.gh-meter-surge-btn.ready {
+  background: var(--surge-yellow);
+  color: var(--bg-color);
+  border-color: var(--surge-yellow);
+  box-shadow: 0 0 15px var(--surge-yellow);
+  animation: flashBtn 0.8s infinite alternate;
 }
 
-.upg-info { flex: 1; }
-.upg-name { font-weight: bold; font-size: 0.95rem; }
-.upg-cost { font-size: 0.8rem; color: #a0aab2; }
+@keyframes flashBtn {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
 
-.upg-badge {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--accent-blue);
+.gh-meter-surge-btn.active {
+  background: #e63946;
+  color: #fff;
+  border-color: #e63946;
+  box-shadow: 0 0 15px #e63946;
+}
+
+.gh-meter-hint {
+  font-size: 0.6rem;
+  color: #a0aab2;
+  text-align: center;
 }
 
 /* Overlay & Dynamic Stage Styles */
@@ -634,13 +391,6 @@ header p {
   backdrop-filter: blur(6px);
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.menu-game-switcher {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-bottom: 15px;
 }
 
 .sound-select-wrapper {
@@ -687,14 +437,14 @@ header p {
   z-index: 90;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: none;
 }
 
 .side-stat-card {
   background: rgba(28, 37, 65, 0.85);
   border: 1px solid var(--border-color);
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   text-align: center;
   backdrop-filter: blur(6px);
@@ -703,20 +453,20 @@ header p {
 }
 
 .side-stat-card i {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--accent-blue);
   margin-bottom: 2px;
 }
 
 .side-stat-card .label {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
   color: #a0aab2;
   letter-spacing: 1px;
 }
 
 .side-stat-card .value {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: bold;
   color: var(--text-color);
 }
@@ -850,6 +600,13 @@ header p {
   background-color: rgba(91, 192, 190, 0.35);
 }
 
+.lane-key {
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: var(--accent-blue);
+  text-shadow: 0 0 10px rgba(91, 192, 190, 0.8);
+}
+
 .rhythm-hit-line-full {
   position: absolute;
   bottom: 80px;
@@ -861,6 +618,7 @@ header p {
   z-index: 2;
 }
 
+/* Note Styling & Capped Hold Notes */
 .rhythm-note {
   position: absolute;
   width: 80%;
@@ -872,23 +630,46 @@ header p {
   z-index: 3;
 }
 
-.rhythm-note.hold-head {
-  border-radius: 6px 6px 0 0;
+.rhythm-note.hold-note {
+  background: transparent;
+  box-shadow: none;
+}
+
+.hold-head-cap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
   background: #e9c46a;
-  box-shadow: 0 0 15px #e9c46a;
+  border-radius: 6px;
+  box-shadow: 0 0 18px #e9c46a;
+  z-index: 4;
+}
+
+.hold-end-cap {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  background: #f4a261;
+  border-radius: 6px;
+  box-shadow: 0 0 14px #f4a261;
+  z-index: 4;
 }
 
 .hold-tail {
   position: absolute;
-  bottom: 24px;
+  bottom: 12px;
   left: 35%;
   width: 30%;
-  background: linear-gradient(to top, rgba(233, 196, 106, 0.8), rgba(91, 192, 190, 0.4));
-  border-radius: 4px 4px 0 0;
+  background: linear-gradient(to top, rgba(233, 196, 106, 0.85), rgba(244, 162, 97, 0.5));
+  border-radius: 4px;
   pointer-events: none;
+  z-index: 3;
 }
 
-.rhythm-note.active-hold {
+.rhythm-note.active-hold .hold-head-cap {
   background: #5bc0be;
   box-shadow: 0 0 25px #5bc0be;
 }
