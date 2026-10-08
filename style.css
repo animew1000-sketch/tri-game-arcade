@@ -481,6 +481,16 @@ header p {
   width: 100%;
 }
 
+.bpm-wrapper select {
+  flex: 1.5;
+}
+
+.bpm-wrapper .btn {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 0.8rem;
+}
+
 .latency-slider-wrapper {
   display: flex;
   align-items: center;
