@@ -98,7 +98,7 @@
 
           <select id="rhythm-diff-select">
             <option value="easy">Easy (Quarter Notes • 12s Surge)</option>
-            <option value="medium" selected>Medium (Eighth Notes & Holds • 8s Surge)</option>
+            <option value="medium" selected>Medium (Streamlined Single Holds • 8s Surge)</option>
             <option value="hard">Hard (Sixteenth Streams & Syncopation • 5s Surge)</option>
           </select>
 
@@ -233,7 +233,7 @@
         </div>
 
         <div class="controls">
-          <div class="status-msg" id="rhythm-status">Ready to load track.</div>
+          <div class="status-msg" id="rhythm-status">Ready to load track (10s lead-in wait).</div>
         </div>
       </div>
 
@@ -316,7 +316,7 @@
       <div class="modal-content results-modal-content">
         <h2><i class="fa-solid fa-award"></i> Performance Summary</h2>
         
-        <div class="rank-display" id="res-rank">S</div>
+        <div class="rank-display" id="res-rank">SS</div>
 
         <div class="results-stats-grid">
           <div class="res-card">
@@ -494,7 +494,6 @@
     let selectedHitSoundPreset = 'arcade';
     let isHitSoundMuted = false;
 
-    // High-Precision Audio Clock variables
     let audioClockStartTime = 0;
     let audioClockOffset = 0;
     let isAudioClockRunning = false;
@@ -511,10 +510,8 @@
     function getPreciseAudioClockTime() {
       if (!audioCtx) initAudioContext();
       if (!isAudioClockRunning) {
-        // Fallback to YouTube time if audio clock hasn't started yet
         return ytPlayer && ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
       }
-      // Microsecond-accurate audio sample time clock
       return (audioCtx.currentTime - audioClockStartTime) + audioClockOffset;
     }
 
@@ -1103,7 +1100,7 @@
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
         resetRhythmGameState();
-        document.getElementById('rhythm-status').innerText = "Stage initialized. Press Start Track to play!";
+        document.getElementById('rhythm-status').innerText = "Stage initialized with 10s lead-in wait. Press Start Track to play!";
       }
     }
 
@@ -1283,32 +1280,35 @@
       return availableLanes[Math.floor(Math.random() * availableLanes.length)];
     }
 
-    /* Advanced Difficulty-Based Rhythm Tracking & High-Precision Audio Clock Generation */
+    /* Advanced Rhythm Tracking with 10-Second Initial Wait Time */
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
 
+      // Ensure at least a 10-second wait time before the first note appears
+      if (currentTime < 10.0) return;
+
       let subdivision = 0.5; 
-      if (activeDifficulty === 'easy') subdivision = 1.0; // Quarter note pulse only
-      else if (activeDifficulty === 'medium') subdivision = 0.5; // Eighth note melodic flow
-      else if (activeDifficulty === 'hard') subdivision = 0.25; // Sixteenth note complex streams & syncopation
+      if (activeDifficulty === 'easy') subdivision = 1.0; 
+      else if (activeDifficulty === 'medium') subdivision = 0.5; 
+      else if (activeDifficulty === 'hard') subdivision = 0.25; 
 
       const currentBeatInterval = beatInterval * subdivision;
-      const currentBeatIndex = Math.floor(currentTime / currentBeatInterval);
-      const targetBeatTime = currentBeatIndex * currentBeatInterval;
+      const adjustedTime = currentTime - 10.0; // Offset by 10s wait time
+      const currentBeatIndex = Math.floor(adjustedTime / currentBeatInterval);
+      const targetBeatTime = (currentBeatIndex * currentBeatInterval) + 10.0;
 
       if (targetBeatTime > lastBeatTime) {
         lastBeatTime = targetBeatTime;
 
-        // Phrase modulation simulating verses vs. high-energy choruses
-        const phraseCycle = Math.floor(currentTime / 8) % 3; 
+        const phraseCycle = Math.floor(adjustedTime / 8) % 3; 
         
         let spawnProbability = 0.65;
         if (activeDifficulty === 'easy') {
           spawnProbability = phraseCycle === 1 ? 0.70 : 0.45;
         } else if (activeDifficulty === 'medium') {
-          spawnProbability = phraseCycle === 1 ? 0.85 : 0.60;
+          spawnProbability = phraseCycle === 1 ? 0.80 : 0.50; 
         } else if (activeDifficulty === 'hard') {
-          spawnProbability = phraseCycle === 1 ? 0.95 : 0.75; // Dense lightning-fast streams during chorus
+          spawnProbability = phraseCycle === 1 ? 0.95 : 0.75; 
         }
 
         if (Math.random() > spawnProbability) return;
@@ -1323,8 +1323,9 @@
           spawnSingleNote(targetBeatTime, targetLane, 0);
         }
         else if (activeDifficulty === 'medium') {
-          const isHold = Math.random() < 0.28;
-          const holdDur = isHold ? (currentBeatInterval * 1.5) : 0;
+          // Streamlined medium difficulty: single-line holds only (shorter, cleaner hold duration)
+          const isHold = Math.random() < 0.22;
+          const holdDur = isHold ? (currentBeatInterval * 1.0) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
         }
         else if (activeDifficulty === 'hard') {
@@ -1359,12 +1360,10 @@
       function loop() {
         if (!rhythmPlaying) return;
 
-        // High-precision audio clock synchronized time
         const rawCurrentTime = getPreciseAudioClockTime();
         const totalDuration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
         const currentTime = rawCurrentTime + audioOffset;
 
-        // Periodic drift correction check against YouTube player every few seconds
         if (Math.random() < 0.05 && ytPlayer && ytPlayer.getCurrentTime) {
           const ytTime = ytPlayer.getCurrentTime();
           if (Math.abs(ytTime - rawCurrentTime) > 0.3) {
@@ -1795,7 +1794,11 @@
       let rank = 'F';
       let rankColor = '#e63946';
 
+      // SS Rank for 100% accuracy and zero misses
       if (roundedAcc === 100 && totalMisses === 0) {
+        rank = 'SS';
+        rankColor = '#00f5d4';
+      } else if (roundedAcc >= 98.0) {
         rank = 'S';
         rankColor = '#ffd700';
       } else if (roundedAcc >= 95.0) {
