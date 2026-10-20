@@ -233,7 +233,7 @@
         </div>
 
         <div class="controls">
-          <div class="status-msg" id="rhythm-status">Ready to load track (10s lead-in wait).</div>
+          <div class="status-msg" id="rhythm-status">Ready to load track (Immediate notes & auto song-end detection).</div>
         </div>
       </div>
 
@@ -784,6 +784,7 @@
     let consecutivePerfectStreak = 0;
 
     let lastSpawnedLane = -1;
+    let detectedSongEndDuration = 0;
 
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -1100,7 +1101,7 @@
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
         resetRhythmGameState();
-        document.getElementById('rhythm-status').innerText = "Stage initialized with 10s lead-in wait. Press Start Track to play!";
+        document.getElementById('rhythm-status').innerText = "Stage initialized (Immediate start & auto song-end detection). Press Start Track to play!";
       }
     }
 
@@ -1162,7 +1163,7 @@
 
       resetRhythmGameState();
       document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Start Track';
-      document.getElementById('rhythm-status').innerText = "Track stopped. Performance summary generated!";
+      document.getElementById('rhythm-status').innerText = "Track completed & scored automatically!";
     }
 
     function onPlayerError(e) {
@@ -1175,6 +1176,14 @@
         if (!rhythmPlaying) {
           const ytCurrent = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
           startPreciseAudioClock(ytCurrent);
+          
+          const fullDur = ytPlayer.getDuration ? ytPlayer.getDuration() : 180;
+          if (fullDur > 240) {
+            detectedSongEndDuration = fullDur * 0.82;
+          } else {
+            detectedSongEndDuration = Math.max(30, fullDur - 5);
+          }
+
           startRhythmGameLoop();
           hideHUDMenu();
         }
@@ -1201,6 +1210,7 @@
       lastBeatTime = -1;
       lastSpawnedLane = -1;
       laneHeld = [false, false, false, false];
+      detectedSongEndDuration = 0;
 
       currentMultiplier = 1;
       meterProgress = 0;
@@ -1280,12 +1290,16 @@
       return availableLanes[Math.floor(Math.random() * availableLanes.length)];
     }
 
-    /* Advanced Rhythm Tracking with 10-Second Initial Wait Time */
+    /* Advanced Rhythm Tracking with Immediate Start & Auto Song-End Detection */
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
 
-      // Ensure at least a 10-second wait time before the first note appears
-      if (currentTime < 10.0) return;
+      // Auto-detect when the actual song ends and end credits start
+      if (detectedSongEndDuration > 0 && currentTime >= detectedSongEndDuration) {
+        document.getElementById('rhythm-status').innerText = "🎵 Actual song ended (credits cutoff reached). Ending round...";
+        stopRhythmGameAndSaveScore();
+        return;
+      }
 
       let subdivision = 0.5; 
       if (activeDifficulty === 'easy') subdivision = 1.0; 
@@ -1293,14 +1307,13 @@
       else if (activeDifficulty === 'hard') subdivision = 0.25; 
 
       const currentBeatInterval = beatInterval * subdivision;
-      const adjustedTime = currentTime - 10.0; // Offset by 10s wait time
-      const currentBeatIndex = Math.floor(adjustedTime / currentBeatInterval);
-      const targetBeatTime = (currentBeatIndex * currentBeatInterval) + 10.0;
+      const currentBeatIndex = Math.floor(currentTime / currentBeatInterval);
+      const targetBeatTime = currentBeatIndex * currentBeatInterval;
 
       if (targetBeatTime > lastBeatTime) {
         lastBeatTime = targetBeatTime;
 
-        const phraseCycle = Math.floor(adjustedTime / 8) % 3; 
+        const phraseCycle = Math.floor(currentTime / 8) % 3; 
         
         let spawnProbability = 0.65;
         if (activeDifficulty === 'easy') {
@@ -1323,7 +1336,6 @@
           spawnSingleNote(targetBeatTime, targetLane, 0);
         }
         else if (activeDifficulty === 'medium') {
-          // Streamlined medium difficulty: single-line holds only (shorter, cleaner hold duration)
           const isHold = Math.random() < 0.22;
           const holdDur = isHold ? (currentBeatInterval * 1.0) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
@@ -1794,7 +1806,6 @@
       let rank = 'F';
       let rankColor = '#e63946';
 
-      // SS Rank for 100% accuracy and zero misses
       if (roundedAcc === 100 && totalMisses === 0) {
         rank = 'SS';
         rankColor = '#00f5d4';
