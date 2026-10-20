@@ -175,6 +175,12 @@ header p {
   padding: 10px;
 }
 
+#mute-sound-btn.muted {
+  background-color: #e63946 !important;
+  color: #fff !important;
+  border-color: #e63946 !important;
+}
+
 .btn-start {
   width: 100%;
   justify-content: center;
