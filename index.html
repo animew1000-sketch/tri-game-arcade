@@ -489,10 +489,15 @@
       document.getElementById('main-header').classList.add('header-overlay');
     });
 
-    /* Sound Synthesizer Engine & Mute Control */
+    /* High-Precision Audio Synthesizer & Audio Clock Engine */
     let audioCtx = null;
     let selectedHitSoundPreset = 'arcade';
     let isHitSoundMuted = false;
+
+    // High-Precision Audio Clock variables
+    let audioClockStartTime = 0;
+    let audioClockOffset = 0;
+    let isAudioClockRunning = false;
 
     function initAudioContext() {
       if (!audioCtx) {
@@ -501,6 +506,36 @@
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
+    }
+
+    function getPreciseAudioClockTime() {
+      if (!audioCtx) initAudioContext();
+      if (!isAudioClockRunning) {
+        // Fallback to YouTube time if audio clock hasn't started yet
+        return ytPlayer && ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+      }
+      // Microsecond-accurate audio sample time clock
+      return (audioCtx.currentTime - audioClockStartTime) + audioClockOffset;
+    }
+
+    function startPreciseAudioClock(startOffset = 0) {
+      if (!audioCtx) initAudioContext();
+      audioClockStartTime = audioCtx.currentTime;
+      audioClockOffset = startOffset;
+      isAudioClockRunning = true;
+    }
+
+    function pausePreciseAudioClock() {
+      if (isAudioClockRunning) {
+        audioClockOffset = getPreciseAudioClockTime();
+        isAudioClockRunning = false;
+      }
+    }
+
+    function resetPreciseAudioClock() {
+      isAudioClockRunning = false;
+      audioClockOffset = 0;
+      audioClockStartTime = 0;
     }
 
     function changeHitSoundPreset(presetKey) {
@@ -1100,12 +1135,15 @@
 
       if (!rhythmPlaying) {
         ytPlayer.playVideo();
+        const ytCurrent = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+        startPreciseAudioClock(ytCurrent);
         startRhythmGameLoop();
         hideHUDMenu();
         document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i> Pause Track';
       } else {
         pauseRhythmGame();
         ytPlayer.pauseVideo();
+        pausePreciseAudioClock();
         showHUDMenu();
         document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Resume Track';
       }
@@ -1117,6 +1155,7 @@
       }
 
       pauseRhythmGame();
+      resetPreciseAudioClock();
       showHUDMenu();
 
       if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalHitsGood > 0 || totalMisses > 0) {
@@ -1137,11 +1176,14 @@
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.PLAYING) {
         if (!rhythmPlaying) {
+          const ytCurrent = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+          startPreciseAudioClock(ytCurrent);
           startRhythmGameLoop();
           hideHUDMenu();
         }
       } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
         pauseRhythmGame();
+        pausePreciseAudioClock();
         showHUDMenu();
         if (event.data === YT.PlayerState.ENDED) {
           stopRhythmGameAndSaveScore();
@@ -1241,7 +1283,7 @@
       return availableLanes[Math.floor(Math.random() * availableLanes.length)];
     }
 
-    /* Advanced Difficulty-Based Rhythm Tracking & Chart Generation */
+    /* Advanced Difficulty-Based Rhythm Tracking & High-Precision Audio Clock Generation */
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
 
@@ -1278,17 +1320,14 @@
         lastSpawnedLane = targetLane;
 
         if (activeDifficulty === 'easy') {
-          // Easy: Pure single quarter notes
           spawnSingleNote(targetBeatTime, targetLane, 0);
         }
         else if (activeDifficulty === 'medium') {
-          // Medium: Eighth-note syncopation and occasional hold notes
           const isHold = Math.random() < 0.28;
           const holdDur = isHold ? (currentBeatInterval * 1.5) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
         }
         else if (activeDifficulty === 'hard') {
-          // Hard: Complex sixteenth streams, rapid jumps, and prolonged vocal hold notes
           const isHold = Math.random() < 0.22;
           const holdDur = isHold ? (currentBeatInterval * 2.5) : 0;
           spawnSingleNote(targetBeatTime, targetLane, holdDur);
@@ -1320,9 +1359,18 @@
       function loop() {
         if (!rhythmPlaying) return;
 
-        const rawCurrentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+        // High-precision audio clock synchronized time
+        const rawCurrentTime = getPreciseAudioClockTime();
         const totalDuration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
         const currentTime = rawCurrentTime + audioOffset;
+
+        // Periodic drift correction check against YouTube player every few seconds
+        if (Math.random() < 0.05 && ytPlayer && ytPlayer.getCurrentTime) {
+          const ytTime = ytPlayer.getCurrentTime();
+          if (Math.abs(ytTime - rawCurrentTime) > 0.3) {
+            startPreciseAudioClock(ytTime);
+          }
+        }
 
         const formattedClock = `${formatTime(rawCurrentTime)} / ${formatTime(totalDuration)}`;
         document.getElementById('rhythm-timer').innerText = formattedClock;
