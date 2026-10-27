@@ -471,15 +471,16 @@
     }
     function previewHitSound() { playHitSound('PERFECT'); }
 
-    /* Floating Feedback Notification Generator with Good, Great, Perfect & Miss */
+    /* Floating Feedback Notification Generator with Correct Lane Alignment */
     function showFloatingFeedback(text, type, laneIdx) {
       const layer = document.getElementById('floating-notification-layer');
       const notif = document.createElement('div');
       notif.className = `floating-notif ${type.toLowerCase()}`;
       notif.innerText = text;
-      notif.style.left = `${25 + (laneIdx * 15)}%`;
+      const leftPositions = [18, 38, 62, 82];
+      notif.style.left = `${leftPositions[laneIdx]}%`;
       layer.appendChild(notif);
-      setTimeout(() => notif.remove(), 600);
+      setTimeout(() => notif.remove(), 550);
     }
 
     /* Grading Scale (Dying = Automatic F) */
@@ -673,16 +674,17 @@
       const candidates = rhythmNotes.filter(n => n.lane === laneIdx && !n.hit && !n.completed && n.element);
       if (candidates.length > 0) {
         const note = candidates[0];
-        const distance = Math.abs(parseFloat(note.element.style.top) - hitBarY);
+        const noteTop = parseFloat(note.element.style.top);
+        const distance = Math.abs(noteTop - hitBarY);
         
-        if (distance <= 95) {
+        if (distance <= 110) {
           note.hit = true;
           note.completed = true;
           if (note.element) note.element.remove();
 
-          if (distance <= 30) {
+          if (distance <= 35) {
             registerJudgement('PERFECT', laneIdx);
-          } else if (distance <= 60) {
+          } else if (distance <= 70) {
             registerJudgement('GREAT', laneIdx);
           } else {
             registerJudgement('GOOD', laneIdx);
@@ -771,7 +773,7 @@
       document.getElementById('results-modal').classList.remove('hidden');
     }
     function closeResultsModal() { document.getElementById('results-modal').classList.add('hidden'); }
-    function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.remove('hidden'); }
+    function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.add('hidden'); }
     function closeLeaderboardModal() { document.getElementById('leaderboard-modal').classList.add('hidden'); }
     function changeScreenResolution() {}
     function changeSongBPM(v) { songBPM = parseInt(v); beatInterval = 60 / songBPM; }
