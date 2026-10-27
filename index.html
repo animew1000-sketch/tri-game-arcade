@@ -61,7 +61,6 @@
     </div>
     <canvas id="missile-bg-canvas"></canvas>
     <div id="bg-lighting-overlay" class="lighting-ambient"></div>
-    <!-- Hardware RGB Peripheral Glow Flash Overlay -->
     <div id="rgb-hardware-glow-flash" class="rgb-glow-overlay"></div>
   </div>
 
@@ -84,7 +83,7 @@
         <div class="side-stat-card"><i class="fa-solid fa-trophy"></i><div class="label">Score</div><div class="value" id="side-rhythm-score">0</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-fire"></i><div class="label">Streak</div><div class="value" id="side-rhythm-combo">0x</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-bolt"></i><div class="label">Surge</div><div class="value" id="side-surge-charges">3 / 3</div></div>
-        <div class="side-stat-card"><i class="fa-solid fa-bullseye"></i><div class="label">Perfect</div><div class="value" id="side-perfect-streak">0 / 10</div></div>
+        <div class="side-stat-card"><i class="fa-solid fa-bullseye"></i><div class="label">Rank</div><div class="value" id="side-rhythm-rank">-</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-check"></i><div class="label">Hits</div><div class="value" id="side-rhythm-hits">0</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-xmark"></i><div class="label">Miss</div><div class="value" id="side-rhythm-misses">0</div></div>
       </div>
@@ -93,7 +92,6 @@
         <div class="panel-header-row">
           <h2><i class="fa-solid fa-gamepad"></i> Surge Command Center</h2>
           <div class="panel-quick-actions">
-            <button class="btn btn-secondary btn-sm" onclick="openKeybindModal()"><i class="fa-solid fa-sliders"></i> Controls</button>
             <button class="btn btn-secondary btn-sm" onclick="openLeaderboardModal()"><i class="fa-solid fa-trophy"></i> Clever Cloud DB</button>
             <button class="btn btn-secondary btn-sm" onclick="openBgStudioModal()"><i class="fa-solid fa-palette"></i> Background Studio</button>
             <button class="btn btn-primary btn-sm" onclick="rgbBridge.requestDevice()"><i class="fa-solid fa-lightbulb"></i> Connect RGB</button>
@@ -123,7 +121,7 @@
           <div class="command-row">
             <div class="input-group">
               <label><i class="fa-solid fa-gamepad"></i> Input Mode</label>
-              <select id="control-mode-select" onchange="switchControlMode()">
+              <select id="control-mode-select">
                 <option value="keyboard" selected>Keyboard (4-Lanes: A-S-K-L)</option>
               </select>
             </div>
@@ -154,21 +152,16 @@
                   <option value="150">150 BPM</option>
                 </select>
                 <button class="btn btn-secondary btn-icon-sm" title="Auto-Sync" onclick="autoDetectSongBPM()"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto</button>
-                <button class="btn btn-secondary btn-icon-sm" title="Tap BPM" onclick="handleTapTempo()"><i class="fa-solid fa-hand-pointer"></i> Tap</button>
               </div>
             </div>
 
             <div class="input-group">
               <label><i class="fa-solid fa-volume-high"></i> Hit Sound Effect</label>
               <div class="inline-select-tools">
-                <select id="hit-sound-select" onchange="changeHitSoundPreset(this.value)">
+                <select id="hit-sound-select">
                   <option value="arcade" selected>Arcade Chime</option>
-                  <option value="synth">Electric Synth</option>
-                  <option value="click">Percussive Click</option>
-                  <option value="laser">Laser Blast</option>
                 </select>
                 <button class="btn btn-secondary btn-icon-sm" title="Preview" onclick="previewHitSound()"><i class="fa-solid fa-volume-high"></i></button>
-                <button class="btn btn-secondary btn-icon-sm" id="mute-sound-btn" title="Mute" onclick="toggleHitSoundMute()"><i class="fa-solid fa-volume-high" id="mute-icon"></i></button>
               </div>
             </div>
 
@@ -192,7 +185,7 @@
           <div class="stat-card"><i class="fa-solid fa-clock"></i><div class="stat-info"><div class="label">Time</div><div class="value" id="rhythm-timer">00:00 / 00:00</div></div></div>
           <div class="stat-card"><i class="fa-solid fa-trophy"></i><div class="stat-info"><div class="label">Score</div><div class="value" id="rhythm-score">0</div></div></div>
           <div class="stat-card"><i class="fa-solid fa-fire"></i><div class="stat-info"><div class="label">Combo</div><div class="value" id="rhythm-combo">0x</div></div></div>
-          <div class="stat-card"><i class="fa-solid fa-bolt"></i><div class="stat-info"><div class="label">Surges</div><div class="value" id="rhythm-surge-charges">3 / 3</div></div></div>
+          <div class="stat-card"><i class="fa-solid fa-medal"></i><div class="stat-info"><div class="label">Rank</div><div class="value" id="rhythm-live-rank">-</div></div></div>
         </div>
 
         <div class="controls">
@@ -216,20 +209,9 @@
 
         <div class="gh-multiplier-meter-container" id="gh-meter-box">
           <div class="gh-multiplier-title">MULTIPLIER</div>
-          <div class="gh-meter-surge-btn disabled" id="surge-btn" onclick="activateSurgeBoost()">
-            <i class="fa-solid fa-bolt"></i> 8X SURGE
-          </div>
           <div class="gh-multiplier-badge" id="gh-multiplier-val">1x</div>
           <div class="gh-meter-bar-wrapper">
             <div class="gh-meter-fill" id="gh-meter-fill"></div>
-          </div>
-          <div class="surge-charge-indicator">
-            <span class="charge-label">SURGES:</span>
-            <div class="surge-bolts" id="surge-bolts-display">
-              <i class="fa-solid fa-bolt active"></i>
-              <i class="fa-solid fa-bolt active"></i>
-              <i class="fa-solid fa-bolt active"></i>
-            </div>
           </div>
         </div>
 
@@ -264,7 +246,7 @@
     <div id="results-modal" class="modal-overlay hidden">
       <div class="modal-content results-modal-content">
         <h2><i class="fa-solid fa-award"></i> Performance Summary</h2>
-        <div class="rank-display" id="res-rank">SS</div>
+        <div class="rank-display" id="res-rank">SSS+</div>
         <div class="results-stats-grid">
           <div class="res-card"><span class="res-label">Final Score</span><span class="res-value" id="res-score">0</span></div>
           <div class="res-card"><span class="res-label">Max Combo</span><span class="res-value" id="res-max-combo">0x</span></div>
@@ -288,7 +270,8 @@
   </main>
 
   <script>
-    const API_BASE_URL = 'https://tri-game-arcade.onrender.com/api'; // Update to your live Render backend URL when deployed
+    const API_BASE_URL = 'https://tri-game-arcade.onrender.com/api';
+    
     let currentAuthUser = null;
     let authMode = 'login';
 
@@ -388,7 +371,7 @@
       }
     }
 
-    /* Fixed Dual-Mode RGB Bridge (WebHID with Instant Screen Glow Fallback) */
+    /* Robust RGB Bridge with WebHID and Screen Glow Fallback */
     class RGBDeviceBridge {
       constructor() { this.connected = false; }
       async requestDevice() {
@@ -403,7 +386,6 @@
           }
         } catch(e) { console.log("WebHID prompt skipped or unsupported."); }
         
-        // Instant Virtual Hardware RGB & Screen Glow Streamer Fallback
         this.connected = true;
         alert("💡 Virtual RGB Peripheral Streamer & Screen Glow Sync Activated Successfully!");
         this.triggerFlash(91, 192, 190);
@@ -419,13 +401,13 @@
     }
     const rgbBridge = new RGBDeviceBridge();
 
-    /* Canvas Background Engine */
+    /* Canvas Background Studio Engine */
     let bgCanvas, bgCtx, bgParticles = [], currentBgMode = 'video', beatPulseIntensity = 1.0;
     const bgPresets = [
-      { name: "Neon Surge", color1: "#5bc0be", color2: "#e63946", type: "missiles", lighting: "neon" },
-      { name: "Cyber Matrix", color1: "#00ff66", color2: "#003311", type: "matrix", lighting: "matrix-green" },
-      { name: "Deep Space", color1: "#48cae4", color2: "#90e0ef", type: "stars", lighting: "ambient" },
-      { name: "Synthwave Sunset", color1: "#f72585", color2: "#7209b7", type: "waves", lighting: "sunset" }
+      { name: "Neon Surge", color1: "#5bc0be", color2: "#e63946", lighting: "neon" },
+      { name: "Cyber Matrix", color1: "#00ff66", color2: "#003311", lighting: "matrix-green" },
+      { name: "Deep Space", color1: "#48cae4", color2: "#90e0ef", lighting: "ambient" },
+      { name: "Synthwave Sunset", color1: "#f72585", color2: "#7209b7", lighting: "sunset" }
     ];
 
     function initBackgroundStudio() {
@@ -487,15 +469,34 @@
       osc.start(); osc.stop(audioCtx.currentTime + 0.12);
     }
     function previewHitSound() { playHitSound('PERFECT'); }
-    function toggleHitSoundMute() {}
+
+    /* Expanded Grading Scale (SSS+ down to F with plus/minus tiers) */
+    function calculateDetailedRank(accuracy, misses) {
+      if (misses === 0 && accuracy === 100) return 'SSS+';
+      if (misses === 0 && accuracy >= 98) return 'SS';
+      if (misses === 0 && accuracy >= 95) return 'S';
+      if (accuracy >= 95) return 'A+';
+      if (accuracy >= 90) return 'A';
+      if (accuracy >= 85) return 'A-';
+      if (accuracy >= 80) return 'B+';
+      if (accuracy >= 75) return 'B';
+      if (accuracy >= 70) return 'B-';
+      if (accuracy >= 67) return 'C+';
+      if (accuracy >= 63) return 'C';
+      if (accuracy >= 60) return 'C-';
+      if (accuracy >= 55) return 'D+';
+      if (accuracy >= 50) return 'D';
+      if (accuracy >= 45) return 'D-';
+      return 'F';
+    }
 
     /* YouTube & Rhythm Gameplay Engine */
     let ytPlayer = null, currentVideoId = 'dQw4w9WgXcQ', rhythmScore = 0, rhythmCombo = 0, maxRhythmCombo = 0;
-    let totalHitsPerfect = 0, totalHitsGreat = 0, totalHitsGood = 0, totalMisses = 0;
+    let totalHitsPerfect = 0, totalMisses = 0;
     let rhythmNotes = [], rhythmLoopId = null, rhythmPlaying = false, isMenuHidden = false, activeDifficulty = 'medium';
     let songBPM = 120, beatInterval = 60 / songBPM, audioOffset = 0;
-    let playerHP = 100, MAX_HP = 100, currentMultiplier = 1, meterProgress = 0, isSurgeActive = false, surgeDuration = 0;
-    let surgeChargesRemaining = 3, consecutivePerfectStreak = 0, lastSpawnedLane = -1;
+    let playerHP = 100, currentMultiplier = 1;
+    let lastSpawnedLane = -1;
     let laneHeld = [false, false, false, false];
     let kbMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
 
@@ -573,14 +574,13 @@
       } else if (event.data === YT.PlayerState.PAUSED) {
         pauseRhythmGame();
       } else if (event.data === YT.PlayerState.ENDED) {
-        // FIXED: Song plays fully until actual YouTube ENDED state is triggered!
         stopRhythmGameAndSaveScore();
       }
     }
 
     function resetRhythmGameState() {
       playerHP = 100; rhythmScore = 0; rhythmCombo = 0; maxRhythmCombo = 0;
-      totalHitsPerfect = 0; totalHitsGreat = 0; totalHitsGood = 0; totalMisses = 0;
+      totalHitsPerfect = 0; totalMisses = 0;
       rhythmNotes = []; lastBeatTime = -1; lastSpawnedLane = -1;
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
     }
@@ -686,36 +686,47 @@
         if (playerHP <= 0) stopRhythmGameAndSaveScore();
       }
       if (rhythmCombo > maxRhythmCombo) maxRhythmCombo = rhythmCombo;
+
+      const totalHits = totalHitsPerfect + totalMisses;
+      const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
+      const liveRank = calculateDetailedRank(accuracy, totalMisses);
+
       document.getElementById('rhythm-score').innerText = rhythmScore;
       document.getElementById('side-rhythm-score').innerText = rhythmScore;
       document.getElementById('rhythm-combo').innerText = `${rhythmCombo}x`;
       document.getElementById('side-rhythm-combo').innerText = `${rhythmCombo}x`;
+      document.getElementById('side-rhythm-rank').innerText = liveRank;
+      document.getElementById('rhythm-live-rank').innerText = liveRank;
     }
 
     function processAndPostScore() {
       const totalHits = totalHitsPerfect + totalMisses;
       const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
+      const finalRank = calculateDetailedRank(accuracy, totalMisses);
       postScoreToMySQLDatabase({
-        videoId: currentVideoId, score: rhythmScore, maxCombo: maxRhythmCombo, accuracy: accuracy, rank: accuracy > 95 ? 'SS' : 'A'
+        videoId: currentVideoId, score: rhythmScore, maxCombo: maxRhythmCombo, accuracy: accuracy, rank: finalRank
       });
     }
 
     function showResultsSummaryModal() {
+      const totalHits = totalHitsPerfect + totalMisses;
+      const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
+      const finalRank = calculateDetailedRank(accuracy, totalMisses);
+
+      document.getElementById('res-rank').innerText = finalRank;
       document.getElementById('res-score').innerText = rhythmScore.toLocaleString();
       document.getElementById('res-max-combo').innerText = `${maxRhythmCombo}x`;
       document.getElementById('res-perfects').innerText = totalHitsPerfect;
+      document.getElementById('res-accuracy').innerText = `${accuracy}%`;
       document.getElementById('results-modal').classList.remove('hidden');
     }
     function closeResultsModal() { document.getElementById('results-modal').classList.add('hidden'); }
     function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.remove('hidden'); }
     function closeLeaderboardModal() { document.getElementById('leaderboard-modal').classList.add('hidden'); }
     function changeScreenResolution() {}
-    function activateSurgeBoost() {}
     function changeSongBPM(v) { songBPM = parseInt(v); beatInterval = 60 / songBPM; }
     function autoDetectSongBPM() { changeSongBPM(128); }
-    function handleTapTempo() {}
     function updateLatencyOffset(v) { audioOffset = parseInt(v)/1000; }
-    function changeHitSoundPreset() {}
 
     document.addEventListener('DOMContentLoaded', () => {
       initCanvasBackground();
