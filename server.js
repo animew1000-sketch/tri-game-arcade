@@ -1,21 +1,15 @@
-/*
-  Rhythm Surge - Clever Cloud MySQL & Render Backend
-  Configured to match your exact environment variables:
-  - MYSQL_ADDON_HOST
-  - MYSQL_ADDON_USER
-  - MYSQL_ADDON_PASSWORD
-  - MYSQL_ADDON_DB
-  - MYSQL_ADDON_PORT
-*/
-
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const path = require('path'); // <-- Added path module
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Serve static files (HTML, CSS, JS) from the current root directory
+app.use(express.static(path.join(__dirname)));
 
 // MySQL Connection Pool using your exact environment variables
 const pool = mysql.createPool({
@@ -129,5 +123,10 @@ app.get('/api/scores/:videoId', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// Fallback to serve index.html for root GET requests
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
