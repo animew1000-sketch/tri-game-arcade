@@ -82,7 +82,7 @@
         <div class="side-stat-card"><i class="fa-solid fa-clock"></i><div class="label">Time</div><div class="value" id="side-rhythm-timer">00:00 / 00:00</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-trophy"></i><div class="label">Score</div><div class="value" id="side-rhythm-score">0</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-fire"></i><div class="label">Streak</div><div class="value" id="side-rhythm-combo">0x</div></div>
-        <div class="side-stat-card"><i class="fa-solid fa-shield-heart"></i><div class="label">HP</div><div class="value" id="side-rhythm-hp">100</div></div>
+        <div class="side-stat-card"><i class="fa-solid fa-bolt"></i><div class="label">Surge</div><div class="value" id="side-surge-charges">3 / 3</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-bullseye"></i><div class="label">Rank</div><div class="value" id="side-rhythm-rank">-</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-check"></i><div class="label">Hits</div><div class="value" id="side-rhythm-hits">0</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-xmark"></i><div class="label">Miss</div><div class="value" id="side-rhythm-misses">0</div></div>
@@ -274,7 +274,6 @@
     
     let currentAuthUser = null;
     let authMode = 'login';
-    let isPlayerDead = false;
 
     function switchAuthTab(mode) {
       authMode = mode;
@@ -463,7 +462,7 @@
       rgbBridge.triggerFlash(91, 192, 190);
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.frequency.setValueAtTime(type === 'PERFECT' ? 880 : (type === 'GREAT' ? 660 : 520), audioCtx.currentTime);
+      osc.frequency.setValueAtTime(type === 'PERFECT' ? 880 : 440, audioCtx.currentTime);
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
       osc.connect(gain); gain.connect(audioCtx.destination);
@@ -471,21 +470,8 @@
     }
     function previewHitSound() { playHitSound('PERFECT'); }
 
-    /* Floating Feedback Notification Generator with Correct Lane Alignment */
-    function showFloatingFeedback(text, type, laneIdx) {
-      const layer = document.getElementById('floating-notification-layer');
-      const notif = document.createElement('div');
-      notif.className = `floating-notif ${type.toLowerCase()}`;
-      notif.innerText = text;
-      const leftPositions = [18, 38, 62, 82];
-      notif.style.left = `${leftPositions[laneIdx]}%`;
-      layer.appendChild(notif);
-      setTimeout(() => notif.remove(), 550);
-    }
-
-    /* Grading Scale (Dying = Automatic F) */
+    /* Expanded Grading Scale (SSS+ down to F with plus/minus tiers) */
     function calculateDetailedRank(accuracy, misses) {
-      if (isPlayerDead) return 'F';
       if (misses === 0 && accuracy === 100) return 'SSS+';
       if (misses === 0 && accuracy >= 98) return 'SS';
       if (misses === 0 && accuracy >= 95) return 'S';
@@ -506,7 +492,7 @@
 
     /* YouTube & Rhythm Gameplay Engine */
     let ytPlayer = null, currentVideoId = 'dQw4w9WgXcQ', rhythmScore = 0, rhythmCombo = 0, maxRhythmCombo = 0;
-    let totalHitsPerfect = 0, totalHitsGreat = 0, totalHitsGood = 0, totalMisses = 0;
+    let totalHitsPerfect = 0, totalMisses = 0;
     let rhythmNotes = [], rhythmLoopId = null, rhythmPlaying = false, isMenuHidden = false, activeDifficulty = 'medium';
     let songBPM = 120, beatInterval = 60 / songBPM, audioOffset = 0;
     let playerHP = 100, currentMultiplier = 1;
@@ -574,7 +560,7 @@
       if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
       pauseRhythmGame();
       if (isMenuHidden) toggleHUDMenu();
-      if (rhythmScore > 0 || totalHitsPerfect > 0 || isPlayerDead) {
+      if (rhythmScore > 0 || totalHitsPerfect > 0) {
         processAndPostScore();
         showResultsSummaryModal();
       }
@@ -593,17 +579,10 @@
     }
 
     function resetRhythmGameState() {
-      playerHP = 100; isPlayerDead = false; rhythmScore = 0; rhythmCombo = 0; maxRhythmCombo = 0;
-      totalHitsPerfect = 0; totalHitsGreat = 0; totalHitsGood = 0; totalMisses = 0;
+      playerHP = 100; rhythmScore = 0; rhythmCombo = 0; maxRhythmCombo = 0;
+      totalHitsPerfect = 0; totalMisses = 0;
       rhythmNotes = []; lastBeatTime = -1; lastSpawnedLane = -1;
       document.querySelectorAll('.rhythm-note').forEach(n => n.remove());
-      updateHPDISPLAY();
-    }
-
-    function updateHPDISPLAY() {
-      document.getElementById('top-hp-text').innerText = `${playerHP} / ${100} HP`;
-      document.getElementById('top-hp-fill').style.width = `${playerHP}%`;
-      document.getElementById('side-rhythm-hp').innerText = playerHP;
     }
 
     let lastBeatTime = -1;
@@ -671,28 +650,15 @@
       const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
       const hitBarY = stageHeight - 100;
 
-      const candidates = rhythmNotes.filter(n => n.lane === laneIdx && !n.hit && !n.completed && n.element);
+      const candidates = rhythmNotes.filter(n => n.lane === laneIdx && !n.hit && !n.completed && n.element && Math.abs(parseFloat(n.element.style.top) - hitBarY) <= 85);
       if (candidates.length > 0) {
         const note = candidates[0];
-        const noteTop = parseFloat(note.element.style.top);
-        const distance = Math.abs(noteTop - hitBarY);
-        
-        if (distance <= 110) {
-          note.hit = true;
-          note.completed = true;
-          if (note.element) note.element.remove();
-
-          if (distance <= 35) {
-            registerJudgement('PERFECT', laneIdx);
-          } else if (distance <= 70) {
-            registerJudgement('GREAT', laneIdx);
-          } else {
-            registerJudgement('GOOD', laneIdx);
-          }
-        }
+        note.hit = true;
+        note.completed = true;
+        if (note.element) note.element.remove();
+        registerJudgement('PERFECT', laneIdx);
       }
     }
-
     function releaseLaneInput(laneIdx) {
       laneHeld[laneIdx] = false;
       document.getElementById(`lane-${laneIdx}`).classList.remove('pressed');
@@ -715,28 +681,14 @@
       playHitSound(type);
       if (type === 'PERFECT') {
         rhythmCombo++; totalHitsPerfect++; rhythmScore += 300 * currentMultiplier;
-        showFloatingFeedback('PERFECT!', 'perfect', laneIdx);
-      } else if (type === 'GREAT') {
-        rhythmCombo++; totalHitsGreat++; rhythmScore += 200 * currentMultiplier;
-        showFloatingFeedback('GREAT!', 'great', laneIdx);
-      } else if (type === 'GOOD') {
-        rhythmCombo++; totalHitsGood++; rhythmScore += 100 * currentMultiplier;
-        showFloatingFeedback('GOOD', 'good', laneIdx);
       } else {
-        rhythmCombo = 0; totalMisses++; playerHP = Math.max(0, playerHP - 25);
-        showFloatingFeedback('MISS', 'miss', laneIdx);
-        updateHPDISPLAY();
-        if (playerHP <= 0) {
-          isPlayerDead = true;
-          stopRhythmGameAndSaveScore();
-          return;
-        }
+        rhythmCombo = 0; totalMisses++; playerHP = Math.max(0, playerHP - 12);
+        if (playerHP <= 0) stopRhythmGameAndSaveScore();
       }
       if (rhythmCombo > maxRhythmCombo) maxRhythmCombo = rhythmCombo;
 
-      const totalSuccessfulHits = totalHitsPerfect + totalHitsGreat + totalHitsGood;
-      const totalRecordedHits = totalSuccessfulHits + totalMisses;
-      const accuracy = totalRecordedHits > 0 ? Math.round((totalSuccessfulHits / totalRecordedHits) * 100) : 100;
+      const totalHits = totalHitsPerfect + totalMisses;
+      const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
       const liveRank = calculateDetailedRank(accuracy, totalMisses);
 
       document.getElementById('rhythm-score').innerText = rhythmScore;
@@ -745,14 +697,11 @@
       document.getElementById('side-rhythm-combo').innerText = `${rhythmCombo}x`;
       document.getElementById('side-rhythm-rank').innerText = liveRank;
       document.getElementById('rhythm-live-rank').innerText = liveRank;
-      document.getElementById('side-rhythm-hits').innerText = totalSuccessfulHits;
-      document.getElementById('side-rhythm-misses').innerText = totalMisses;
     }
 
     function processAndPostScore() {
-      const totalSuccessfulHits = totalHitsPerfect + totalHitsGreat + totalHitsGood;
-      const totalRecordedHits = totalSuccessfulHits + totalMisses;
-      const accuracy = totalRecordedHits > 0 ? Math.round((totalSuccessfulHits / totalRecordedHits) * 100) : 100;
+      const totalHits = totalHitsPerfect + totalMisses;
+      const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
       const finalRank = calculateDetailedRank(accuracy, totalMisses);
       postScoreToMySQLDatabase({
         videoId: currentVideoId, score: rhythmScore, maxCombo: maxRhythmCombo, accuracy: accuracy, rank: finalRank
@@ -760,20 +709,19 @@
     }
 
     function showResultsSummaryModal() {
-      const totalSuccessfulHits = totalHitsPerfect + totalHitsGreat + totalHitsGood;
-      const totalRecordedHits = totalSuccessfulHits + totalMisses;
-      const accuracy = totalRecordedHits > 0 ? Math.round((totalSuccessfulHits / totalRecordedHits) * 100) : 100;
+      const totalHits = totalHitsPerfect + totalMisses;
+      const accuracy = totalHits > 0 ? Math.round((totalHitsPerfect / totalHits) * 100) : 100;
       const finalRank = calculateDetailedRank(accuracy, totalMisses);
 
       document.getElementById('res-rank').innerText = finalRank;
       document.getElementById('res-score').innerText = rhythmScore.toLocaleString();
       document.getElementById('res-max-combo').innerText = `${maxRhythmCombo}x`;
-      document.getElementById('res-perfects').innerText = totalSuccessfulHits;
+      document.getElementById('res-perfects').innerText = totalHitsPerfect;
       document.getElementById('res-accuracy').innerText = `${accuracy}%`;
       document.getElementById('results-modal').classList.remove('hidden');
     }
     function closeResultsModal() { document.getElementById('results-modal').classList.add('hidden'); }
-    function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.add('hidden'); }
+    function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.remove('hidden'); }
     function closeLeaderboardModal() { document.getElementById('leaderboard-modal').classList.add('hidden'); }
     function changeScreenResolution() {}
     function changeSongBPM(v) { songBPM = parseInt(v); beatInterval = 60 / songBPM; }
