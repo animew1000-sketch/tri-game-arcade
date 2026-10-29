@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rhythm Haven - Full Window Arcade Station</title>
+  <title>Rhythm Surge - Full Window Arcade Station</title>
   
   <!-- Glowing Music Note SVG Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M470.38 1.51L150.38 50.36A32 32 0 0 0 128 81.33v286.83A111.4 111.4 0 0 0 80 352c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V188.8l288-43.9v143.23A111.4 111.4 0 0 0 400 288c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V32a32 32 0 0 0-29.62-30.49z'/></svg>">
@@ -65,7 +65,7 @@
   </div>
 
   <header id="main-header" class="header-overlay">
-    <h1><i class="fa-solid fa-music"></i> Rhythm Haven</h1>
+    <h1><i class="fa-solid fa-music"></i> Rhythm Surge</h1>
     <p>Tactical Beat Operations, Audio-Reactive RGB & Full-Window Arcade</p>
   </header>
 
@@ -194,6 +194,10 @@
             <div class="input-group">
               <label><i class="fa-solid fa-stopwatch"></i> Latency Calibration (<span id="latency-offset-val">0ms</span>)</label>
               <input type="range" id="latency-offset-slider" min="-200" max="200" value="0" step="5" oninput="updateLatencyOffset(this.value)">
+            </div>
+            <div class="input-group">
+              <label><i class="fa-solid fa-volume-high"></i> Music Volume (<span id="music-vol-val">100%</span>)</label>
+              <input type="range" id="music-vol-slider" min="0" max="100" value="100" step="1" oninput="updateMusicVolume(this.value)">
             </div>
           </div>
         </div>
@@ -950,18 +954,69 @@
     let surgeKey = ' ';
     let menuToggleKey = 'tab';
 
+    let detectedControllerBrand = 'xbox'; // default
     let gpBinds = [
-      { type: 'axis', index: 6, threshold: 0.3 }, // LT
-      { type: 'button', index: 4 },               // LB
-      { type: 'button', index: 5 },               // RB
-      { type: 'axis', index: 7, threshold: 0.3 }  // RT
+      { type: 'axis', index: 6, threshold: 0.2 }, // Lane 1 (LT / L2 / L)
+      { type: 'button', index: 4 },             // Lane 2 (LB / L1 / L)
+      { type: 'button', index: 5 },             // Lane 3 (RB / R1 / R)
+      { type: 'axis', index: 7, threshold: 0.2 }  // Lane 4 (RT / R2 / ZR)
     ];
-    let gpLabels = ['LT (Trig 6)', 'LB (Btn 4)', 'RB (Btn 5)', 'RT (Trig 7)'];
-
-    let gpSurgeBind = { type: 'button', index: 0 }; // A Button
-    let gpMenuBind = { type: 'button', index: 9 };  // Start
+    let gpSurgeBind = { type: 'button', index: 0 }; // Bottom Face (A / Cross / B)
+    let gpMenuBind = { type: 'button', index: 9 };  // Start / Options / +
     let gpPlayBind = { type: 'button', index: 13 }; // Dpad Down
     let gpStopBind = { type: 'button', index: 12 }; // Dpad Up
+
+    function getControllerBrand(idString) {
+      if (!idString) return 'xbox';
+      const lower = idString.toLowerCase();
+      if (lower.includes('playstation') || lower.includes('dualshock') || lower.includes('dualsense') || lower.includes('sony')) {
+        return 'playstation';
+      }
+      if (lower.includes('nintendo') || lower.includes('switch') || lower.includes('pro controller')) {
+        return 'nintendo';
+      }
+      return 'xbox'; // Default standard layout
+    }
+
+    function getButtonName(type, index) {
+      const brand = detectedControllerBrand;
+      if (type === 'axis') {
+        if (index === 6) return brand === 'playstation' ? 'L2 Trigger' : (brand === 'nintendo' ? 'ZL Trigger' : 'LT Trigger');
+        if (index === 7) return brand === 'playstation' ? 'R2 Trigger' : (brand === 'nintendo' ? 'ZR Trigger' : 'RT Trigger');
+        return `Axis ${index}`;
+      }
+      switch(index) {
+        case 0: return brand === 'playstation' ? 'Cross (✕)' : (brand === 'nintendo' ? 'B Button' : 'A Button');
+        case 1: return brand === 'playstation' ? 'Circle (◯)' : (brand === 'nintendo' ? 'A Button' : 'B Button');
+        case 2: return brand === 'playstation' ? 'Square (□)' : (brand === 'nintendo' ? 'Y Button' : 'X Button');
+        case 3: return brand === 'playstation' ? 'Triangle (△)' : (brand === 'nintendo' ? 'X Button' : 'Y Button');
+        case 4: return brand === 'playstation' ? 'L1 Bumper' : (brand === 'nintendo' ? 'L Button' : 'LB Bumper');
+        case 5: return brand === 'playstation' ? 'R1 Bumper' : (brand === 'nintendo' ? 'R Button' : 'RB Bumper');
+        case 6: return brand === 'playstation' ? 'L2 Trigger' : (brand === 'nintendo' ? 'ZL Trigger' : 'LT Trigger');
+        case 7: return brand === 'playstation' ? 'R2 Trigger' : (brand === 'nintendo' ? 'ZR Trigger' : 'RT Trigger');
+        case 8: return brand === 'playstation' ? 'Share / Create' : (brand === 'nintendo' ? 'Minus (-)' : 'Back / Select');
+        case 9: return brand === 'playstation' ? 'Options' : (brand === 'nintendo' ? 'Plus (+)' : 'Start / Menu');
+        case 10: return brand === 'playstation' ? 'L3 Stick Click' : 'L3 Stick Click';
+        case 11: return brand === 'playstation' ? 'R3 Stick Click' : 'R3 Stick Click';
+        case 12: return 'D-Pad Up';
+        case 13: return 'D-Pad Down';
+        case 14: return 'D-Pad Left';
+        case 15: return 'D-Pad Right';
+        case 16: return brand === 'playstation' ? 'PS Button' : (brand === 'nintendo' ? 'Home Button' : 'Xbox Guide');
+        default: return `Button ${index}`;
+      }
+    }
+
+    function refreshControllerUIlabels() {
+      for(let i=0; i<4; i++) {
+        const b = gpBinds[i];
+        document.getElementById(`gp-val-${i}`).innerText = getButtonName(b.type, b.index);
+      }
+      document.getElementById('gp-val-surge').innerText = getButtonName(gpSurgeBind.type, gpSurgeBind.index);
+      document.getElementById('gp-val-menu').innerText = getButtonName(gpMenuBind.type, gpMenuBind.index);
+      document.getElementById('gp-val-play').innerText = getButtonName(gpPlayBind.type, gpPlayBind.index);
+      document.getElementById('gp-val-stop').innerText = getButtonName(gpStopBind.type, gpStopBind.index);
+    }
 
     let currentlyRebindingLane = null;
     let isRebindingSurge = false;
@@ -1113,6 +1168,15 @@
       return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
+    
+    function updateMusicVolume(val) {
+      const vol = parseInt(val);
+      document.getElementById('music-vol-val').innerText = `${vol}%`;
+      if (ytPlayer && ytPlayer.setVolume) {
+        ytPlayer.setVolume(vol);
+      }
+    }
+
     function updateLatencyOffset(val) {
       audioOffset = parseFloat(val) / 1000;
       document.getElementById('latency-offset-val').innerText = `${parseInt(val) >= 0 ? '+' : ''}${parseInt(val)}ms`;
@@ -1209,20 +1273,32 @@
     function checkInputPressed(gamepad, bind) {
       if (!bind) return false;
       if (bind.type === 'button') {
-        return gamepad.buttons[bind.index] && gamepad.buttons[bind.index].pressed;
+        const btn = gamepad.buttons[bind.index];
+        return btn && (btn.pressed || btn.value > 0.3);
       } else if (bind.type === 'axis') {
-        const val = gamepad.axes[bind.index] || -1;
-        return val >= (bind.threshold !== undefined ? bind.threshold : 0.3) || val > 0;
+        const val = gamepad.axes[bind.index];
+        // Some browsers map triggers as axes ranging from -1 to 1 or 0 to 1
+        return val !== undefined && (val >= (bind.threshold !== undefined ? bind.threshold : 0.2) || val > 0.0);
       }
       return false;
     }
 
     function initGamepadSupport() {
+      window.addEventListener('gamepadconnected', (e) => {
+        detectedControllerBrand = getControllerBrand(e.gamepad.id);
+        refreshControllerUIlabels();
+        document.getElementById('rhythm-status').innerText = `🎮 Controller Connected: ${e.gamepad.id} (${detectedControllerBrand.toUpperCase()})`;
+      });
+
       function pollGamepad() {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
         let gp = null;
         for (let i = 0; i < gamepads.length; i++) {
-          if (gamepads[i] && gamepads[i].connected) { gp = gamepads[i]; break; }
+          if (gamepads[i] && gamepads[i].connected) { 
+            gp = gamepads[i]; 
+            detectedControllerBrand = getControllerBrand(gp.id);
+            break; 
+          }
         }
 
         if (gp) {
@@ -1245,7 +1321,6 @@
             const detected = detectNewInputBinding();
             if (detected) {
               gpBinds[currentlyRebindingGpLane] = detected;
-              gpLabels[currentlyRebindingGpLane] = detected.label;
               document.getElementById(`gp-val-${currentlyRebindingGpLane}`).innerText = detected.label;
               currentlyRebindingGpLane = null;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
@@ -1420,8 +1495,7 @@
       if (event.data === YT.PlayerState.PLAYING) {
         if (!rhythmPlaying) {
           startPreciseAudioClock(ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0);
-          const fullDur = ytPlayer.getDuration ? ytPlayer.getDuration() : 180;
-          detectedSongEndDuration = fullDur > 240 ? fullDur * 0.82 : Math.max(30, fullDur - 5);
+// detectedSongEndDuration check removed for natural full track playback.
           startRhythmGameLoop();
           if (!isMenuHidden) toggleHUDMenu();
         }
@@ -1470,10 +1544,7 @@
     let lastBeatTime = -1;
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
-      if (detectedSongEndDuration > 0 && currentTime >= detectedSongEndDuration) {
-        stopRhythmGameAndSaveScore();
-        return;
-      }
+      // Removed premature time cut-off. The song will naturally conclude when YouTube fires PlayerState.ENDED or when manually stopped.
       
       let subdivision = 1.0;
       if (activeDifficulty === 'easy') subdivision = 1.5;
@@ -1535,7 +1606,7 @@
     }
 
     function spawnSingleNote(beatTime, lane, duration) {
-      rhythmNotes.push({ id: Math.random().toString(36).substr(2, 9), time: beatTime + 1.25, duration: duration, lane: lane, hit: false, holding: false, completed: false, element: null });
+      rhythmNotes.push({ id: Math.random().toString(36).substr(2, 9), time: beatTime + 1.25, duration: duration, lane: lane, hit: false, holding: false, completed: false, element: null, lastTickTime: 0, catchOffset: 0 });
     }
 
     function startRhythmGameLoop() {
@@ -1600,12 +1671,23 @@
             }
 
             if (note.holding) {
-              const remainingDuration = (note.time + note.duration) - currentTime;
-              const currentPixelHeight = Math.max(0, remainingDuration * scrollSpeed);
-              topPos = hitBarY - currentPixelHeight;
-              note.element.style.top = `${topPos}px`;
-              note.element.style.height = `${currentPixelHeight}px`;
+              // Zero-delay precise timing: elapsed time strictly relative to note.time
+              const elapsedDuration = Math.max(0, currentTime - note.time);
+              const remainingDuration = Math.max(0, (note.time + note.duration) - currentTime);
+              const upwardPixelHeight = remainingDuration * scrollSpeed;
+              
+              topPos = hitBarY;
+              note.element.style.top = `${hitBarY - upwardPixelHeight}px`;
+              note.element.style.height = `${upwardPixelHeight}px`;
               note.element.classList.add('is-holding');
+
+              // Award smooth score ticks while holding
+              if (currentTime - note.lastTickTime >= 0.25) {
+                note.lastTickTime = currentTime;
+                rhythmScore += 50 * currentMultiplier;
+                document.getElementById('rhythm-score').innerText = Math.floor(rhythmScore);
+                document.getElementById('side-rhythm-score').innerText = Math.floor(rhythmScore);
+              }
             } else {
               if (note.element) {
                 note.element.style.top = `${topPos}px`;
@@ -1618,10 +1700,18 @@
 
             if (note.holding) {
               if (!laneHeld[note.lane]) {
-                note.holding = false;
-                note.completed = true;
-                if (note.element) note.element.remove();
-                registerJudgement('MISS', note.lane);
+                // Grace window: if within 0.1s of completion, count as success!
+                if (currentTime >= (note.time + note.duration) - 0.1) {
+                  note.holding = false;
+                  note.completed = true;
+                  if (note.element) note.element.remove();
+                  registerJudgement('PERFECT', note.lane);
+                } else {
+                  note.holding = false;
+                  note.completed = true;
+                  if (note.element) note.element.remove();
+                  registerJudgement('GOOD', note.lane);
+                }
               } else if (currentTime >= note.time + note.duration) {
                 note.holding = false;
                 note.completed = true;
@@ -1665,6 +1755,11 @@
         
         if (note.duration > 0) {
           note.holding = true;
+          note.hit = true;
+          // If caught late, shift note.time forward to current time so only the remaining unmissed part is played!
+          if (currentTime > note.time) {
+            note.time = currentTime;
+          }
           playHitSound('PERFECT');
           spawnFloatingJudgementText("HOLD...", laneIdx, true);
         } else {
@@ -1688,10 +1783,20 @@
 
         rhythmNotes.forEach(note => {
           if (note.lane === laneIdx && note.holding) {
-            note.holding = false;
-            note.completed = true;
-            if (note.element) note.element.remove();
-            registerJudgement('MISS', laneIdx);
+            // Check if released too early before the end (only lose health if missing the end)
+            const remainingDuration = (note.time + note.duration) - currentTime;
+            if (remainingDuration > 0.15) {
+              note.holding = false;
+              note.completed = true;
+              if (note.element) note.element.remove();
+              registerJudgement('MISS', laneIdx); // Misses the end -> loses health
+            } else {
+              // Released right near the end -> counts as success!
+              note.holding = false;
+              note.completed = true;
+              if (note.element) note.element.remove();
+              registerJudgement('PERFECT', laneIdx);
+            }
           }
         });
       }
