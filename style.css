@@ -141,11 +141,33 @@ header p {
 
 .panel-header-row h2 { font-size: 1.2rem; color: #f8f9fa; }
 .panel-quick-actions { display: flex; gap: 10px; }
-.command-grid-layout { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+
+.command-grid-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
 .command-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 180px; }
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 180px;
+}
+
 .input-group.flex-grow { flex: 2; }
-.input-group label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.input-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
 input[type="text"], input[type="password"], input[type="email"], select {
   background: #1e293b;
@@ -213,7 +235,13 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 .stat-card i { font-size: 1.2rem; color: #5bc0be; }
 .stat-info .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; }
 .stat-info .value { font-size: 1rem; font-weight: 700; color: #f8f9fa; }
-.status-msg { text-align: center; font-size: 0.8rem; color: #94a3b8; font-style: italic; }
+
+.status-msg {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-style: italic;
+}
 
 .viewport-stage {
   position: fixed;
@@ -223,7 +251,7 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   margin-top: 0; box-shadow: none; border: none;
   z-index: 10; pointer-events: none;
 }
-.viewport-stage * { pointer-events: auto; }
+.viewport-stage.active { pointer-events: auto; }
 .viewport-stage.stage-surge-active { box-shadow: inset 0 0 60px rgba(252, 163, 17, 0.6); }
 
 .rhythm-track-container-full {
@@ -253,13 +281,55 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   border-radius: 6px; left: 50%; transform: translateX(-50%);
   box-shadow: 0 0 15px rgba(91, 192, 190, 0.8); z-index: 4;
 }
-.rhythm-note.hold-note {
-  background: linear-gradient(180deg, #f72585, #7209b7);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 15px rgba(247, 37, 133, 0.8);
+
+/* Original Hold Note Colors with Enhanced Head & Tail Visibility */
+
+@keyframes holdNoteFlow {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
 }
 
+.rhythm-note.hold-note {
+  background: linear-gradient(180deg, rgba(247, 37, 133, 0.85), rgba(114, 9, 183, 0.7)),
+              repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.25) 10px, rgba(255, 255, 255, 0.25) 20px);
+  background-size: 100% 100%, 100% 40px;
+  animation: holdNoteFlow 0.6s linear infinite;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5), 0 0 22px rgba(247, 37, 133, 0.95);
+}
+.rhythm-note.hold-note::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  right: -5px;
+  height: 20px;
+  background: linear-gradient(90deg, #ffffff, #ff007f, #ffffff);
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 18px #ff007f, 0 0 35px #ff007f, inset 0 0 8px #ffffff;
+}
+.rhythm-note.hold-note::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -5px;
+  right: -5px;
+  height: 20px;
+  background: linear-gradient(90deg, #ffffff, #7209b7, #ffffff);
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 18px #7209b7, 0 0 35px #7209b7, inset 0 0 8px #ffffff;
+}
+
+
 .floating-notif-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 25; }
+
 .floating-judgement-popup {
   position: absolute; bottom: 130px; transform: translateX(-50%);
   font-size: 1.4rem; font-weight: 900; color: #94a3b8; text-shadow: 0 0 10px rgba(0,0,0,0.8);
@@ -296,17 +366,20 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 }
 .gh-multiplier-title { font-size: 0.7rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px; }
 .gh-multiplier-badge { font-size: 1.5rem; font-weight: 900; color: #fca311; margin-bottom: 10px; }
+
 .gh-meter-bar-wrapper {
   width: 12px; height: 140px; background: #1e293b; margin: 0 auto 12px auto;
   border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
 }
 .gh-meter-fill { width: 100%; height: 0%; background: linear-gradient(180deg, #fca311, #e63946); transition: height 0.1s ease; }
+
 .gh-meter-surge-btn {
   background: #334155; color: #94a3b8; font-size: 0.65rem; font-weight: 700;
   padding: 6px 4px; border-radius: 6px; cursor: pointer; margin-bottom: 8px; border: 1px solid #475569;
 }
 .gh-meter-surge-btn.active { background: #fca311; color: #07090e; box-shadow: 0 0 10px #fca311; }
 .gh-meter-surge-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+
 .surge-charge-indicator, .perfect-streak-box { font-size: 0.65rem; color: #94a3b8; margin-bottom: 6px; }
 .surge-bolts { display: flex; justify-content: center; gap: 4px; margin-top: 2px; color: #fca311; }
 .surge-bolts i { opacity: 0.3; }
@@ -340,8 +413,9 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 
 .keybind-mapper-grid-4lane { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
 .keybind-slot {
-  background: #1e293b; border: 1px solid #334155; color: #f8f9fa;
-  padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center;
+  background: #1e293b; border: 1px solid #334155;
+  padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;
+  text-align: center; color: #f8f9fa;
 }
 .keybind-slot:hover { border-color: #5bc0be; }
 .keybind-slot.listening { background: #5bc0be; color: #07090e; border-color: #00f5d4; }
@@ -352,14 +426,16 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 .mapper-section.hidden { display: none; }
 
 .modal-overlay {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
   background: rgba(7, 9, 14, 0.85); backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center; z-index: 1000;
 }
 .modal-overlay.hidden { display: none; }
 
 .modal-content {
-  background: #0f172a; border: 1px solid rgba(91, 192, 190, 0.3); border-radius: 16px;
+  background: #0f172a; border: 1px solid rgba(91, 192, 190, 0.3);
+  border-radius: 16px;
   padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); text-align: center;
 }
 .modal-content h3 { color: #5bc0be; margin-bottom: 15px; }
@@ -378,17 +454,23 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 .rhythm-side-hud {
   position: fixed; top: 20px; right: 20px; background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(91, 192, 190, 0.3); border-radius: 12px; padding: 12px;
-  display: flex; flex-direction: column; gap: 8px; z-index: 50; backdrop-filter: blur(8px); width: 160px;
+  display: flex; flex-direction: column; gap: 8px; z-index: 50;
+  backdrop-filter: blur(8px); width: 160px;
 }
 .rhythm-side-hud.hidden { display: none; }
 .side-stat-card { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
 .side-stat-card i { color: #5bc0be; width: 16px; }
-.side-stat-card .label { color: #94a3b8; flex: 1; }
+.side-stat-card label { color: #94a3b8; flex: 1; }
 .side-stat-card .value { font-weight: 700; color: #f8f9fa; }
 
 .menu-hint-banner {
   position: fixed; top: 20px; right: 20px; background: rgba(91, 192, 190, 0.15);
-  border: 1px solid #5bc0be; color: #5bc0be; padding: 6px 14px; border-radius: 20px;
-  font-size: 0.8rem; font-weight: 600; cursor: pointer; z-index: 50; backdrop-filter: blur(6px);
+  border: 1px solid #5bc0be; color: #5bc0be; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; z-index: 50;
+  backdrop-filter: blur(6px);
 }
 .menu-hint-banner:hover { background: #5bc0be; color: #07090e; }
+
+.rhythm-note.hold-note.is-holding {
+  filter: brightness(1.35) saturate(1.2);
+  box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.8), 0 0 30px #ff007f;}

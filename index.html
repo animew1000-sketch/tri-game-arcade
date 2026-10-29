@@ -13,7 +13,7 @@
 </head>
 <body>
 
-  <!-- Pilot Login / Sign-Up Modal (Optional for Playing, Mandatory for Posting Scores) -->
+  <!-- Pilot Login / Sign-Up Modal -->
   <div id="login-modal" class="modal-overlay">
     <div class="modal-content login-modal-content">
       <h2><i class="fa-solid fa-id-card-clip"></i> Pilot Authentication</h2>
@@ -61,7 +61,6 @@
     </div>
     <canvas id="missile-bg-canvas"></canvas>
     <div id="bg-lighting-overlay" class="lighting-ambient"></div>
-    <!-- Hardware RGB Peripheral Glow Flash Overlay -->
     <div id="rgb-hardware-glow-flash" class="rgb-glow-overlay"></div>
   </div>
 
@@ -79,7 +78,7 @@
         <i class="fa-solid fa-eye"></i> [<span id="menu-key-label">TAB</span> / <span id="gp-menu-label">START</span> / Tap] Menu
       </div>
 
-      <!-- Side Overlay Stats Panel (Active when menu is hidden) -->
+      <!-- Side Overlay Stats Panel -->
       <div class="rhythm-side-hud hidden" id="side-hud">
         <div class="side-stat-card"><i class="fa-solid fa-user-astronaut"></i><div class="label">Pilot</div><div class="value" id="side-pilot-name">Guest</div></div>
         <div class="side-stat-card"><i class="fa-solid fa-clock"></i><div class="label">Time</div><div class="value" id="side-rhythm-timer">00:00 / 00:00</div></div>
@@ -133,16 +132,17 @@
               <label><i class="fa-solid fa-gamepad"></i> Input Mode</label>
               <select id="control-mode-select" onchange="switchControlMode()">
                 <option value="keyboard" selected>Keyboard (4-Lanes: A-S-K-L)</option>
-                <option value="controller-4lane">Controller: 4-Lanes (A-X-Y-B)</option>
-                <option value="controller-2lane">Controller: 2-Lanes (LT / RT)</option>
+                <option value="controller-4lane">Controller: 4-Lanes (Triggers + Bumpers)</option>
+                <option value="controller-2lane">Controller: 2-Lanes (LT / RT Triggers)</option>
               </select>
             </div>
             <div class="input-group">
               <label><i class="fa-solid fa-gauge-high"></i> Difficulty Preset</label>
               <select id="rhythm-diff-select">
                 <option value="easy">Easy (Quarter Notes • 12s Surge)</option>
-                <option value="medium" selected>Medium (Streamlined Holds • 8s Surge)</option>
-                <option value="hard">Hard (Sixteenth Streams • 5s Surge)</option>
+                <option value="normal">Normal (Balanced Notes • 8s Surge)</option>
+                <option value="hard" selected>Hard (Spaced Streams • 5s Surge)</option>
+                <option value="expert">Expert (Insane Speed • 3s Surge)</option>
               </select>
             </div>
             <div class="input-group action-btn-group">
@@ -373,17 +373,17 @@
           </div>
         </div>
         <div id="mapper-sec-controller" class="mapper-section hidden">
-          <p>Click slot and press gamepad button to rebind:</p>
+          <p>Click slot and press gamepad button or pull trigger to rebind:</p>
           <div class="keybind-mapper-grid-4lane">
-            <button class="keybind-slot" id="gp-bind-0" onclick="startRebindingGamepad(0)">Lane 1: <span id="gp-val-0">A (0)</span></button>
-            <button class="keybind-slot" id="gp-bind-1" onclick="startRebindingGamepad(1)">Lane 2: <span id="gp-val-1">X (2)</span></button>
-            <button class="keybind-slot" id="gp-bind-2" onclick="startRebindingGamepad(2)">Lane 3: <span id="gp-val-2">Y (3)</span></button>
-            <button class="keybind-slot" id="gp-bind-3" onclick="startRebindingGamepad(3)">Lane 4: <span id="gp-val-3">B (1)</span></button>
+            <button class="keybind-slot" id="gp-bind-0" onclick="startRebindingGamepad(0)">Lane 1: <span id="gp-val-0">LT (Trig 6)</span></button>
+            <button class="keybind-slot" id="gp-bind-1" onclick="startRebindingGamepad(1)">Lane 2: <span id="gp-val-1">LB (Btn 4)</span></button>
+            <button class="keybind-slot" id="gp-bind-2" onclick="startRebindingGamepad(2)">Lane 3: <span id="gp-val-2">RB (Btn 5)</span></button>
+            <button class="keybind-slot" id="gp-bind-3" onclick="startRebindingGamepad(3)">Lane 4: <span id="gp-val-3">RT (Trig 7)</span></button>
           </div>
           <p style="margin-top: 15px;">Controller System Controls:</p>
           <div class="keybind-mapper-grid-4lane">
-            <button class="keybind-slot" id="gp-bind-surge" onclick="startRebindingGamepadSurge()">Surge 8X: <span id="gp-val-surge">LB (4)</span></button>
-            <button class="keybind-slot" id="gp-bind-menu" onclick="startRebindingGamepadMenu()">Toggle Menu: <span id="gp-val-menu">START (9)</span></button>
+            <button class="keybind-slot" id="gp-bind-surge" onclick="startRebindingGamepadSurge()">Surge 8X: <span id="gp-val-surge">A (Btn 0)</span></button>
+            <button class="keybind-slot" id="gp-bind-menu" onclick="startRebindingGamepadMenu()">Toggle Menu: <span id="gp-val-menu">START (Btn 9)</span></button>
             <button class="keybind-slot" id="gp-bind-play" onclick="startRebindingGamepadPlay()">Start / Pause: <span id="gp-val-play">DPAD DOWN (13)</span></button>
             <button class="keybind-slot" id="gp-bind-stop" onclick="startRebindingGamepadStop()">Stop Track: <span id="gp-val-stop">DPAD UP (12)</span></button>
           </div>
@@ -427,9 +427,9 @@
 
   <script>
     /* Backend API Connector (Clever Cloud MySQL Backend) */
-    const API_BASE_URL = 'https://tri-game-arcade.onrender.com/api'; // Update with your deployed backend URL on Render/Clever Cloud
-    let currentAuthUser = null; // null means Guest (playing is allowed, posting score requires login)
-    let authMode = 'login'; // 'login' or 'signup'
+    const API_BASE_URL = 'https://tri-game-arcade.onrender.com/api';
+    let currentAuthUser = null;
+    let authMode = 'login';
 
     function switchAuthTab(mode) {
       authMode = mode;
@@ -950,12 +950,29 @@
     let surgeKey = ' ';
     let menuToggleKey = 'tab';
 
-    let gpBinds = [0, 2, 3, 1];
-    let gpLabels = ['A (0)', 'X (2)', 'Y (3)', 'B (1)'];
+    let gpBinds = [
+      { type: 'axis', index: 6, threshold: 0.3 }, // LT
+      { type: 'button', index: 4 },               // LB
+      { type: 'button', index: 5 },               // RB
+      { type: 'axis', index: 7, threshold: 0.3 }  // RT
+    ];
+    let gpLabels = ['LT (Trig 6)', 'LB (Btn 4)', 'RB (Btn 5)', 'RT (Trig 7)'];
+
+    let gpSurgeBind = { type: 'button', index: 0 }; // A Button
+    let gpMenuBind = { type: 'button', index: 9 };  // Start
+    let gpPlayBind = { type: 'button', index: 13 }; // Dpad Down
+    let gpStopBind = { type: 'button', index: 12 }; // Dpad Up
+
     let currentlyRebindingLane = null;
     let isRebindingSurge = false;
     let isRebindingMenu = false;
     let currentlyRebindingGpLane = null;
+    let isRebindingGpSurge = false;
+    let isRebindingGpMenu = false;
+    let isRebindingGpPlay = false;
+    let isRebindingGpStop = false;
+
+    let prevGpButtonStates = {};
 
     function openKeybindModal() { document.getElementById('keybind-modal').classList.remove('hidden'); }
     function closeKeybindModal() { resetRebindStates(); document.getElementById('keybind-modal').classList.add('hidden'); updateControlLabels(); }
@@ -989,18 +1006,42 @@
       resetRebindStates();
       currentlyRebindingGpLane = laneIdx;
       document.getElementById(`gp-bind-${laneIdx}`).classList.add('listening');
-      document.getElementById(`gp-val-${laneIdx}`).innerText = "Press Btn...";
+      document.getElementById(`gp-val-${laneIdx}`).innerText = "Press Btn / Pull Trig...";
     }
-    function startRebindingGamepadSurge() {}
-    function startRebindingGamepadMenu() {}
-    function startRebindingGamepadPlay() {}
-    function startRebindingGamepadStop() {}
+    function startRebindingGamepadSurge() {
+      resetRebindStates();
+      isRebindingGpSurge = true;
+      document.getElementById('gp-bind-surge').classList.add('listening');
+      document.getElementById('gp-val-surge').innerText = "Press Btn / Pull Trig...";
+    }
+    function startRebindingGamepadMenu() {
+      resetRebindStates();
+      isRebindingGpMenu = true;
+      document.getElementById('gp-bind-menu').classList.add('listening');
+      document.getElementById('gp-val-menu').innerText = "Press Btn...";
+    }
+    function startRebindingGamepadPlay() {
+      resetRebindStates();
+      isRebindingGpPlay = true;
+      document.getElementById('gp-bind-play').classList.add('listening');
+      document.getElementById('gp-val-play').innerText = "Press Btn...";
+    }
+    function startRebindingGamepadStop() {
+      resetRebindStates();
+      isRebindingGpStop = true;
+      document.getElementById('gp-bind-stop').classList.add('listening');
+      document.getElementById('gp-val-stop').innerText = "Press Btn...";
+    }
 
     function resetRebindStates() {
       currentlyRebindingLane = null;
       isRebindingSurge = false;
       isRebindingMenu = false;
       currentlyRebindingGpLane = null;
+      isRebindingGpSurge = false;
+      isRebindingGpMenu = false;
+      isRebindingGpPlay = false;
+      isRebindingGpStop = false;
       document.querySelectorAll('.keybind-slot').forEach(b => b.classList.remove('listening'));
     }
 
@@ -1039,7 +1080,9 @@
       if (key === surgeKey) { e.preventDefault(); activateSurgeBoost(); return; }
 
       if (kbMap[key] !== undefined && rhythmPlaying) {
-        triggerLaneInput(kbMap[key]);
+        if (!e.repeat) {
+          triggerLaneInput(kbMap[key]);
+        }
       }
     });
 
@@ -1163,6 +1206,17 @@
       }
     }
 
+    function checkInputPressed(gamepad, bind) {
+      if (!bind) return false;
+      if (bind.type === 'button') {
+        return gamepad.buttons[bind.index] && gamepad.buttons[bind.index].pressed;
+      } else if (bind.type === 'axis') {
+        const val = gamepad.axes[bind.index] || -1;
+        return val >= (bind.threshold !== undefined ? bind.threshold : 0.3) || val > 0;
+      }
+      return false;
+    }
+
     function initGamepadSupport() {
       function pollGamepad() {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -1170,18 +1224,105 @@
         for (let i = 0; i < gamepads.length; i++) {
           if (gamepads[i] && gamepads[i].connected) { gp = gamepads[i]; break; }
         }
+
         if (gp) {
-          if (currentlyRebindingGpLane !== null) {
+          function detectNewInputBinding() {
             for (let b = 0; b < gp.buttons.length; b++) {
               if (gp.buttons[b] && gp.buttons[b].pressed) {
-                gpBinds[currentlyRebindingGpLane] = b;
-                gpLabels[currentlyRebindingGpLane] = `Btn ${b}`;
-                document.getElementById(`gp-val-${currentlyRebindingGpLane}`).innerText = `Btn ${b}`;
-                currentlyRebindingGpLane = null;
-                document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
-                break;
+                return { type: 'button', index: b, label: `Btn ${b}` };
               }
             }
+            for (let a = 0; a < gp.axes.length; a++) {
+              const val = gp.axes[a];
+              if (val > 0.4 || val < -0.4) {
+                return { type: 'axis', index: a, threshold: 0.3, label: `Axis ${a}` };
+              }
+            }
+            return null;
+          }
+
+          if (currentlyRebindingGpLane !== null) {
+            const detected = detectNewInputBinding();
+            if (detected) {
+              gpBinds[currentlyRebindingGpLane] = detected;
+              gpLabels[currentlyRebindingGpLane] = detected.label;
+              document.getElementById(`gp-val-${currentlyRebindingGpLane}`).innerText = detected.label;
+              currentlyRebindingGpLane = null;
+              document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+            }
+          } else if (isRebindingGpSurge) {
+            const detected = detectNewInputBinding();
+            if (detected) {
+              gpSurgeBind = detected;
+              document.getElementById('gp-val-surge').innerText = detected.label;
+              isRebindingGpSurge = false;
+              document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+            }
+          } else if (isRebindingGpMenu) {
+            const detected = detectNewInputBinding();
+            if (detected) {
+              gpMenuBind = detected;
+              document.getElementById('gp-val-menu').innerText = detected.label;
+              isRebindingGpMenu = false;
+              document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+            }
+          } else if (isRebindingGpPlay) {
+            const detected = detectNewInputBinding();
+            if (detected) {
+              gpPlayBind = detected;
+              document.getElementById('gp-val-play').innerText = detected.label;
+              isRebindingGpPlay = false;
+              document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+            }
+          } else if (isRebindingGpStop) {
+            const detected = detectNewInputBinding();
+            if (detected) {
+              gpStopBind = detected;
+              document.getElementById('gp-val-stop').innerText = detected.label;
+              isRebindingGpStop = false;
+              document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+            }
+          } else {
+            for (let lane = 0; lane < activeLaneCount; lane++) {
+              const bind = gpBinds[lane];
+              const isPressed = checkInputPressed(gp, bind);
+              const wasPressed = prevGpButtonStates[`lane_${lane}`] || false;
+
+              if (isPressed && !wasPressed) {
+                if (rhythmPlaying) triggerLaneInput(lane);
+              } else if (!isPressed && wasPressed) {
+                releaseLaneInput(lane);
+              }
+              prevGpButtonStates[`lane_${lane}`] = isPressed;
+            }
+
+            const surgePressed = checkInputPressed(gp, gpSurgeBind);
+            const surgeWasPressed = prevGpButtonStates['surge'] || false;
+            if (surgePressed && !surgeWasPressed) {
+              activateSurgeBoost();
+            }
+            prevGpButtonStates['surge'] = surgePressed;
+
+            const menuPressed = checkInputPressed(gp, gpMenuBind);
+            const menuWasPressed = prevGpButtonStates['menu'] || false;
+            if (menuPressed && !menuWasPressed) {
+              toggleHUDMenu();
+            }
+            prevGpButtonStates['menu'] = menuPressed;
+
+            const playPressed = checkInputPressed(gp, gpPlayBind);
+            const playWasPressed = prevGpButtonStates['play'] || false;
+            if (playPressed && !playWasPressed) {
+              togglePlayPauseRhythm();
+            }
+            prevGpButtonStates['play'] = playPressed;
+
+            const stopPressed = checkInputPressed(gp, gpStopBind);
+            const stopWasPressed = prevGpButtonStates['stop'] || false;
+            if (stopPressed && !stopWasPressed) {
+              stopRhythmGameAndSaveScore();
+            }
+            prevGpButtonStates['stop'] = stopPressed;
           }
         }
         requestAnimationFrame(pollGamepad);
@@ -1333,7 +1474,13 @@
         stopRhythmGameAndSaveScore();
         return;
       }
-      let subdivision = activeDifficulty === 'easy' ? 1.0 : (activeDifficulty === 'medium' ? 0.5 : 0.25);
+      
+      let subdivision = 1.0;
+      if (activeDifficulty === 'easy') subdivision = 1.5;
+      else if (activeDifficulty === 'normal') subdivision = 1.0;
+      else if (activeDifficulty === 'hard') subdivision = 0.6;
+      else if (activeDifficulty === 'expert') subdivision = 0.35;
+
       const currentBeatInterval = beatInterval * subdivision;
       const targetBeatTime = Math.floor(currentTime / currentBeatInterval) * currentBeatInterval;
 
@@ -1342,15 +1489,48 @@
         beatPulseIntensity = 1.35;
 
         const availableLanes = getAvailableLanes(currentTime);
-        const targetLane = pickRandomLane(availableLanes);
-        if (targetLane === -1) return;
-        lastSpawnedLane = targetLane;
-        
-        let holdDuration = 0;
-        if (activeDifficulty === 'medium' && Math.random() < 0.25) holdDuration = currentBeatInterval * 0.8;
-        else if (activeDifficulty === 'hard' && Math.random() < 0.35) holdDuration = currentBeatInterval * 1.2;
+        if (availableLanes.length === 0) return;
 
-        spawnSingleNote(targetBeatTime, targetLane, holdDuration);
+        // Check active hold notes count
+        const activeHoldNotesCount = rhythmNotes.filter(n => n.duration > 0 && !n.completed).length;
+
+        // Determine if we should spawn a hold note
+        let wantHold = false;
+        let holdDuration = 0;
+        if (activeDifficulty === 'normal' && activeHoldNotesCount === 0 && Math.random() < 0.22) {
+          wantHold = true;
+          holdDuration = currentBeatInterval * 0.8;
+        } else if (activeDifficulty === 'hard' && activeHoldNotesCount < 2 && Math.random() < 0.3) {
+          wantHold = true;
+          holdDuration = currentBeatInterval * 1.1;
+        } else if (activeDifficulty === 'expert' && activeHoldNotesCount < 3 && Math.random() < 0.38) {
+          wantHold = true;
+          holdDuration = currentBeatInterval * 1.4;
+        }
+
+        // Pick primary lane
+        const primaryLane = pickRandomLane(availableLanes);
+        if (primaryLane === -1) return;
+        lastSpawnedLane = primaryLane;
+
+        spawnSingleNote(targetBeatTime, primaryLane, wantHold ? holdDuration : 0);
+
+        // Multi-note (chord) feature for normal, hard, and expert
+        let allowMulti = false; // Multi-notes removed per request
+        let multiProb = activeDifficulty === 'expert' ? 0.45 : (activeDifficulty === 'hard' ? 0.3 : 0.15);
+
+        if (allowMulti && Math.random() < multiProb && availableLanes.length > 1) {
+          // For Hard: ensure multi-notes are not on adjacent/neighboring join lines (lane diff >= 2)
+          let validSecondaryLanes = availableLanes.filter(l => l !== primaryLane);
+          if (activeDifficulty === 'hard') {
+            validSecondaryLanes = validSecondaryLanes.filter(l => Math.abs(l - primaryLane) >= 2);
+          }
+          if (validSecondaryLanes.length > 0) {
+            const secondaryLane = validSecondaryLanes[Math.floor(Math.random() * validSecondaryLanes.length)];
+            // If primary is a hold note, secondary shouldn't be a hold note to keep it clean
+            spawnSingleNote(targetBeatTime, secondaryLane, 0);
+          }
+        }
       }
     }
 
@@ -1370,7 +1550,7 @@
         document.getElementById('side-rhythm-timer').innerText = `${formatTime(rawCurrentTime)} / ${formatTime(totalDuration)}`;
 
         const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'hard' ? 560 : 460;
+        const scrollSpeed = activeDifficulty === 'expert' ? 620 : (activeDifficulty === 'hard' ? 520 : (activeDifficulty === 'normal' ? 460 : 400));
         const hitBarY = stageHeight - 100;
 
         if (isSurgeActive) {
@@ -1404,9 +1584,36 @@
               note.element = el;
             }
 
-            const topPos = hitBarY - (timeDiff * scrollSpeed);
-            if (note.element) {
+            let topPos = hitBarY - (timeDiff * scrollSpeed);
+            
+            if (!note.hit && !note.completed && laneHeld[note.lane] && Math.abs(topPos - hitBarY) <= 50) {
+              note.hit = true;
+              if (note.duration > 0) {
+                note.holding = true;
+                playHitSound('PERFECT');
+                spawnFloatingJudgementText("HOLD...", note.lane, true);
+              } else {
+                note.completed = true;
+                if (note.element) note.element.remove();
+                registerJudgement('PERFECT', note.lane);
+              }
+            }
+
+            if (note.holding) {
+              const remainingDuration = (note.time + note.duration) - currentTime;
+              const currentPixelHeight = Math.max(0, remainingDuration * scrollSpeed);
+              topPos = hitBarY - currentPixelHeight;
               note.element.style.top = `${topPos}px`;
+              note.element.style.height = `${currentPixelHeight}px`;
+              note.element.classList.add('is-holding');
+            } else {
+              if (note.element) {
+                note.element.style.top = `${topPos}px`;
+                if (note.duration > 0) {
+                  const pixelHeight = note.duration * scrollSpeed;
+                  note.element.style.height = `${pixelHeight}px`;
+                }
+              }
             }
 
             if (note.holding) {
@@ -1459,7 +1666,7 @@
         if (note.duration > 0) {
           note.holding = true;
           playHitSound('PERFECT');
-          spawnFloatingJudgementText("PERFECT!", laneIdx, true);
+          spawnFloatingJudgementText("HOLD...", laneIdx, true);
         } else {
           note.completed = true;
           if (note.element) note.element.remove();
@@ -1484,7 +1691,7 @@
             note.holding = false;
             note.completed = true;
             if (note.element) note.element.remove();
-            registerJudgement('GOOD', laneIdx);
+            registerJudgement('MISS', laneIdx);
           }
         });
       }
