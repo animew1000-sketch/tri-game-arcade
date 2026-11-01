@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rhythm Haven - Full Window Arcade Station</title>
+  <title>Rhythm Surge - Full Window Arcade Station</title>
   
   <!-- Glowing Music Note SVG Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%235bc0be' d='M470.38 1.51L150.38 50.36A32 32 0 0 0 128 81.33v286.83A111.4 111.4 0 0 0 80 352c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V188.8l288-43.9v143.23A111.4 111.4 0 0 0 400 288c-44.18 0-80 28.65-80 64s35.82 64 80 64 80-28.65 80-64V32a32 32 0 0 0-29.62-30.49z'/></svg>">
@@ -65,7 +65,7 @@
   </div>
 
   <header id="main-header" class="header-overlay">
-    <h1><i class="fa-solid fa-music"></i> Rhythm Haven</h1>
+    <h1><i class="fa-solid fa-music"></i> Rhythm Surge</h1>
     <p>Tactical Beat Operations, Audio-Reactive RGB & Full-Window Arcade</p>
   </header>
 
@@ -954,7 +954,51 @@
     let surgeKey = ' ';
     let menuToggleKey = 'tab';
 
-    let detectedControllerBrand = 'xbox'; // default
+    let detectedControllerBrand = 'xbox';
+
+    function getChartStorageKey(videoId, diff) {
+      return `rhythm_chart_${videoId}_${diff}`;
+    }
+
+    function saveCurrentChartToStorage() {
+      if (!currentVideoId || rhythmNotes.length === 0) return;
+      const key = getChartStorageKey(currentVideoId, activeDifficulty);
+      // Save serializable note data (time, duration, lane)
+      const serializableNotes = rhythmNotes.map(n => ({
+        time: n.time,
+        duration: n.duration,
+        lane: n.lane
+      }));
+      localStorage.setItem(key, JSON.stringify(serializableNotes));
+    }
+
+    function tryLoadChartFromStorage() {
+      if (!currentVideoId) return false;
+      const key = getChartStorageKey(currentVideoId, activeDifficulty);
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            rhythmNotes = parsed.map(n => ({
+              id: Math.random().toString(36).substr(2, 9),
+              time: n.time,
+              duration: n.duration,
+              lane: n.lane,
+              hit: false,
+              holding: false,
+              completed: false,
+              element: null,
+              lastTickTime: 0,
+              catchOffset: 0
+            }));
+            document.getElementById('rhythm-status').innerText = `⚡ Loaded saved rhythm track for Video ID: ${currentVideoId} (${activeDifficulty.toUpperCase()})`;
+            return true;
+          }
+        } catch(e) { console.error("Error loading cached chart", e); }
+      }
+      return false;
+    } // default
     let gpBinds = [
       { type: 'axis', index: 6, threshold: 0.2 }, // Lane 1 (LT / L2 / L)
       { type: 'button', index: 4 },             // Lane 2 (LB / L1 / L)
@@ -1421,7 +1465,13 @@
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
         resetRhythmGameState();
-        document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track to play!`;
+        
+        // Try loading saved chart for this song and difficulty
+        if (tryLoadChartFromStorage()) {
+          document.getElementById('rhythm-status').innerText = `⚡ Reusing saved rhythm track for Video ID: ${videoId} (${activeDifficulty.toUpperCase()})! Press Start Track to play!`;
+        } else {
+          document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track to play!`;
+        }
       }
     }
 
@@ -1481,6 +1531,10 @@
       pauseRhythmGame();
       resetPreciseAudioClock();
       if (isMenuHidden) toggleHUDMenu();
+      
+      // Save chart to localStorage so it is reused next time this song is played
+      saveCurrentChartToStorage();
+
       if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalMisses > 0) {
         processAndPostScore();
         showResultsSummaryModal();
@@ -1964,10 +2018,23 @@
     function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.remove('hidden'); }
     function closeLeaderboardModal() { document.getElementById('leaderboard-modal').classList.add('hidden'); }
 
+        function detectAndApplyMobileMode() {
+      const isMobile = (navigator.maxTouchPoints > 0) || (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) || (window.innerWidth <= 768);
+      if (isMobile) {
+        // Automatically hide menu on mobile to launch straight into the Magic Tiles 3 waterfall stage
+        const menuElem = document.getElementById('rhythm-hud');
+        if (menuElem && !menuElem.classList.contains('menu-hidden')) {
+          toggleHUDMenu();
+        }
+        document.getElementById('rhythm-status').innerText = '📱 Mobile Touch Mode Active (Magic Tiles 3 Waterfall)';
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       initCanvasBackground();
       initYouTubeAPI();
       initGamepadSupport();
+      detectAndApplyMobileMode();
     });
   </script>
 </body>
