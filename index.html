@@ -191,6 +191,12 @@
               </div>
             </div>
 
+            <!-- Custom MP3 Hit Sound Upload -->
+            <div class="input-group">
+              <label><i class="fa-solid fa-file-audio"></i> Custom MP3 Hit Sound</label>
+              <input type="file" id="custom-audio-file-input" accept="audio/mp3, audio/wav, audio/*" onchange="loadCustomHitSoundFile(event)" style="background: #1e293b; border: 1px solid #334155; color: #f8f9fa; padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
+            </div>
+
             <div class="input-group">
               <label><i class="fa-solid fa-stopwatch"></i> Latency Calibration (<span id="latency-offset-val">0ms</span>)</label>
               <input type="range" id="latency-offset-slider" min="-200" max="200" value="0" step="5" oninput="updateLatencyOffset(this.value)">
@@ -827,6 +833,7 @@
     let audioCtx = null;
     let selectedHitSoundPreset = 'arcade';
     let isHitSoundMuted = false;
+    let customHitAudioBuffer = null;
 
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -834,6 +841,25 @@
     }
 
     function changeHitSoundPreset(val) { selectedHitSoundPreset = val; }
+
+    function loadCustomHitSoundFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const arrayBuffer = e.target.result;
+        if (!audioCtx) initAudioContext();
+        try {
+          customHitAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          document.getElementById('rhythm-status').innerText = `🎵 Custom hit sound loaded successfully: ${file.name}`;
+        } catch (err) {
+          console.error("Error decoding custom audio file", err);
+          alert("Failed to decode audio file. Please try a standard .mp3 or .wav file.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
     function toggleHitSoundMute() {
       isHitSoundMuted = !isHitSoundMuted;
@@ -856,10 +882,58 @@
       if (!audioCtx) return;
 
       const now = audioCtx.currentTime;
-      const preset = selectedHitSoundPreset || 'arcade';
+      beatPulseIntensity = 1.6;
+      rgbBridge.triggerFlash(252, 163, 17);
 
-      beatPulseIntensity = 1.5;
-      rgbBridge.triggerFlash(91, 192, 190);
+      // If a custom MP3/WAV file was uploaded, play it as the hit sound!
+      if (customHitAudioBuffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = customHitAudioBuffer;
+        
+        // If 8x Surge is active, speed up the custom sample for an epic high-octane pitch!
+        if (isSurgeActive) {
+          source.playbackRate.value = 1.5; 
+        } else {
+          source.playbackRate.value = 1.0;
+        }
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.8, now);
+
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        source.start(now);
+        return;
+      }
+
+      // 8x Surge Overdrive Synth Sound
+      if (isSurgeActive) {
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(1760, now);
+        osc1.frequency.exponentialRampToValueAtTime(3520, now + 0.15);
+
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(880, now);
+        
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.18);
+        osc2.stop(now + 0.18);
+        return;
+      }
+
+      const preset = selectedHitSoundPreset || 'arcade';
 
       if (preset === 'click' || type === 'CLICK') {
         const bufferSize = audioCtx.sampleRate * 0.03;
