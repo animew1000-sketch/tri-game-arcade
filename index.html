@@ -885,29 +885,24 @@
       beatPulseIntensity = 1.6;
       rgbBridge.triggerFlash(252, 163, 17);
 
-      // If a custom MP3/WAV file was uploaded, play it as the hit sound!
-      if (customHitAudioBuffer) {
-        const source = audioCtx.createBufferSource();
-        source.buffer = customHitAudioBuffer;
-        
-        // If 8x Surge is active, speed up the custom sample for an epic high-octane pitch!
-        if (isSurgeActive) {
-          source.playbackRate.value = 1.5; 
-        } else {
-          source.playbackRate.value = 1.0;
+      // EXCLUSIVE 8X SURGE SOUND: Plays ONLY when 8x Surge is active!
+      if (isSurgeActive) {
+        // If you uploaded a custom MP3/WAV file, speed it up for 8x Surge
+        if (customHitAudioBuffer) {
+          const source = audioCtx.createBufferSource();
+          source.buffer = customHitAudioBuffer;
+          source.playbackRate.value = 1.5; // High-octane surge pitch
+
+          const gainNode = audioCtx.createGain();
+          gainNode.gain.setValueAtTime(0.8, now);
+
+          source.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          source.start(now);
+          return;
         }
 
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.setValueAtTime(0.8, now);
-
-        source.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        source.start(now);
-        return;
-      }
-
-      // 8x Surge Overdrive Synth Sound
-      if (isSurgeActive) {
+        // Otherwise, play the default epic 8x Surge overdrive synth sound
         const osc1 = audioCtx.createOscillator();
         const osc2 = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -933,6 +928,7 @@
         return;
       }
 
+      // NORMAL NOTES: Play your selected dropdown preset sound strictly (unaffected by 8x Surge logic)
       const preset = selectedHitSoundPreset || 'arcade';
 
       if (preset === 'click' || type === 'CLICK') {
