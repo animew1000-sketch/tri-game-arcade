@@ -254,7 +254,7 @@
           <div class="gh-multiplier-title">MULTIPLIER</div>
           <div class="gh-multiplier-meter-container-inner"></div>
           <div class="gh-meter-surge-btn disabled" id="surge-btn" onclick="activateSurgeBoost()">
-            <i class="fa-solid fa-bolt"></i> 8X SURGE
+            <i class="fa-solid fa-bolt"></i> <span id="surge-btn-label">8X SURGE</span>
           </div>
           <div class="gh-multiplier-badge" id="gh-multiplier-val">1x</div>
           <div class="gh-meter-bar-wrapper">
@@ -834,10 +834,21 @@
     let selectedHitSoundPreset = 'arcade';
     let isHitSoundMuted = false;
     let customSurgeAudioBuffer = null;
+    let activeOscillators = [];
 
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function stopAllActiveAudioNodes() {
+      activeOscillators.forEach(osc => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch(e) {}
+      });
+      activeOscillators = [];
     }
 
     function changeHitSoundPreset(val) { selectedHitSoundPreset = val; }
@@ -883,7 +894,6 @@
 
       const now = audioCtx.currentTime;
 
-      // If a custom MP3/WAV file was uploaded, play it exclusively when 8x Surge activates!
       if (customSurgeAudioBuffer) {
         const source = audioCtx.createBufferSource();
         source.buffer = customSurgeAudioBuffer;
@@ -898,7 +908,6 @@
         return;
       }
 
-      // Default epic 8x Surge activation overdrive sound effect
       const osc1 = audioCtx.createOscillator();
       const osc2 = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -921,6 +930,7 @@
       osc1.start(now);
       osc2.start(now);
       osc1.stop(now + 0.35);
+      osc2.stop(now + 0.35);
     }
 
     function playHitSound(type) {
@@ -997,6 +1007,7 @@
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.15);
+        activeOscillators.push(osc);
       }
     }
 
@@ -1026,51 +1037,7 @@
     let kbLabels = ['A', 'S', 'K', 'L'];
     let surgeKey = ' ';
     let menuToggleKey = 'tab';
-
     let detectedControllerBrand = 'xbox';
-
-    function getChartStorageKey(videoId, diff) {
-      return `rhythm_chart_${videoId}_${diff}`;
-    }
-
-    function saveCurrentChartToStorage() {
-      if (!currentVideoId || rhythmNotes.length === 0) return;
-      const key = getChartStorageKey(currentVideoId, activeDifficulty);
-      const serializableNotes = rhythmNotes.map(n => ({
-        time: n.time,
-        duration: n.duration,
-        lane: n.lane
-      }));
-      localStorage.setItem(key, JSON.stringify(serializableNotes));
-    }
-
-    function tryLoadChartFromStorage() {
-      if (!currentVideoId) return false;
-      const key = getChartStorageKey(currentVideoId, activeDifficulty);
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            rhythmNotes = parsed.map(n => ({
-              id: Math.random().toString(36).substr(2, 9),
-              time: n.time,
-              duration: n.duration,
-              lane: n.lane,
-              hit: false,
-              holding: false,
-              completed: false,
-              element: null,
-              lastTickTime: 0,
-              catchOffset: 0
-            }));
-            document.getElementById('rhythm-status').innerText = `⚡ Loaded saved rhythm track for Video ID: ${currentVideoId} (${activeDifficulty.toUpperCase()})`;
-            return true;
-          }
-        } catch(e) { console.error("Error loading cached chart", e); }
-      }
-      return false;
-    }
 
     let gpBinds = [
       { type: 'axis', index: 6, threshold: 0.2 },
@@ -1143,7 +1110,6 @@
     let isRebindingGpMenu = false;
     let isRebindingGpPlay = false;
     let isRebindingGpStop = false;
-
     let prevGpButtonStates = {};
 
     function openKeybindModal() { document.getElementById('keybind-modal').classList.remove('hidden'); }
@@ -1268,11 +1234,10 @@
     let currentVideoId = 'dQw4w9WgXcQ';
     let rhythmScore = 0, rhythmCombo = 0, maxRhythmCombo = 0;
     let totalHitsPerfect = 0, totalHitsGreat = 0, totalHitsGood = 0, totalMisses = 0;
-    let rhythmNotes = [], rhythmLoopId = null, rhythmPlaying = false, isMenuHidden = false, activeDifficulty = 'medium';
+    let rhythmNotes = [], rhythmLoopId = null, rhythmPlaying = false, isMenuHidden = false, activeDifficulty = 'hard';
     let songBPM = 120, beatInterval = 60 / songBPM, audioOffset = 0;
     let currentInputMode = 'keyboard', activeLaneCount = 4;
     let laneHeld = [false, false, false, false];
-
     let audioClockStartTime = 0, audioClockOffset = 0, isAudioClockRunning = false;
     let playerHP = 100, MAX_HP = 100, currentMultiplier = 1, meterProgress = 0, isSurgeActive = false, surgeDuration = 0, surgeMaxDuration = 8.0;
     let surgeChargesRemaining = 3, consecutivePerfectStreak = 0, lastSpawnedLane = -1;
@@ -1536,12 +1501,7 @@
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
         resetRhythmGameState();
-        
-        if (tryLoadChartFromStorage()) {
-          document.getElementById('rhythm-status').innerText = `⚡ Reusing saved rhythm track for Video ID: ${videoId} (${activeDifficulty.toUpperCase()})! Press Start Track to play!`;
-        } else {
-          document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track to play!`;
-        }
+        document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track to play!`;
       }
     }
 
@@ -1602,8 +1562,6 @@
       resetPreciseAudioClock();
       if (isMenuHidden) toggleHUDMenu();
       
-      saveCurrentChartToStorage();
-
       if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalMisses > 0) {
         processAndPostScore();
         showResultsSummaryModal();
@@ -1666,7 +1624,6 @@
     let lastBeatTime = -1;
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
-      
       let subdivision = 1.0;
       if (activeDifficulty === 'easy') subdivision = 1.5;
       else if (activeDifficulty === 'normal') subdivision = 1.0;
@@ -1674,19 +1631,25 @@
       else if (activeDifficulty === 'expert') subdivision = 0.35;
 
       const currentBeatInterval = beatInterval * subdivision;
-      const targetBeatTime = Math.floor(currentTime / currentBeatInterval) * currentBeatInterval;
+      const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight || 800;
+      const scrollSpeed = activeDifficulty === 'expert' ? 620 : (activeDifficulty === 'hard' ? 520 : (activeDifficulty === 'normal' ? 460 : 400));
+      const hitBarY = stageHeight - 100;
+      const travelTime = hitBarY / scrollSpeed;
 
-      if (targetBeatTime > lastBeatTime) {
-        lastBeatTime = targetBeatTime;
-        beatPulseIntensity = 1.35;
+      // Look ahead so notes spawn at the top of the screen immediately as music starts
+      const horizonTime = currentTime + travelTime;
 
-        const availableLanes = getAvailableLanes(currentTime);
-        if (availableLanes.length === 0) return;
+      while (lastBeatTime + currentBeatInterval <= horizonTime) {
+        lastBeatTime = lastBeatTime < 0 ? 0 : lastBeatTime + currentBeatInterval;
+        const beatTime = lastBeatTime;
+
+        const availableLanes = getAvailableLanes(beatTime);
+        if (availableLanes.length === 0) continue;
 
         const activeHoldNotesCount = rhythmNotes.filter(n => n.duration > 0 && !n.completed).length;
-
         let wantHold = false;
         let holdDuration = 0;
+
         if (activeDifficulty === 'normal' && activeHoldNotesCount === 0 && Math.random() < 0.22) {
           wantHold = true;
           holdDuration = currentBeatInterval * 0.8;
@@ -1699,15 +1662,26 @@
         }
 
         const primaryLane = pickRandomLane(availableLanes);
-        if (primaryLane === -1) return;
+        if (primaryLane === -1) continue;
         lastSpawnedLane = primaryLane;
 
-        spawnSingleNote(targetBeatTime, primaryLane, wantHold ? holdDuration : 0);
+        spawnSingleNote(beatTime, primaryLane, wantHold ? holdDuration : 0);
       }
     }
 
     function spawnSingleNote(beatTime, lane, duration) {
-      rhythmNotes.push({ id: Math.random().toString(36).substr(2, 9), time: beatTime + 1.25, duration: duration, lane: lane, hit: false, holding: false, completed: false, element: null, lastTickTime: 0, catchOffset: 0 });
+      rhythmNotes.push({ 
+        id: Math.random().toString(36).substr(2, 9), 
+        time: beatTime, 
+        duration: duration, 
+        lane: lane, 
+        hit: false, 
+        holding: false, 
+        completed: false, 
+        element: null, 
+        lastTickTime: 0, 
+        catchOffset: 0 
+      });
     }
 
     function startRhythmGameLoop() {
@@ -1730,7 +1704,6 @@
           meterProgress = Math.max(0, (surgeDuration / surgeMaxDuration) * 100);
           updateGHMeterUI();
 
-          // Play warning ticks & audio feedback during final 1.5 seconds of Surge
           if (surgeDuration <= 1.5 && Math.floor(surgeDuration * 10) % 3 === 0) {
             playHitSound('CLICK');
           }
@@ -1749,7 +1722,8 @@
           const timeDiff = note.time - currentTime;
           const tailTimeDiff = (note.time + note.duration) - currentTime;
 
-          if (timeDiff <= 1.25 && tailTimeDiff >= -0.35 && !note.completed) {
+          const travelTime = hitBarY / scrollSpeed;
+          if (timeDiff <= travelTime && tailTimeDiff >= -0.35 && !note.completed) {
             if (!note.element) {
               const el = document.createElement('div');
               let className = `rhythm-note lane-${note.lane}`;
@@ -1760,7 +1734,6 @@
                 if (isSurgeActive) className += ' surge-active-note';
               }
               el.className = className;
-              
               if (note.duration > 0) {
                 const pixelHeight = note.duration * scrollSpeed;
                 el.style.height = `${pixelHeight}px`;
@@ -1784,7 +1757,7 @@
             }
 
             let topPos = hitBarY - (timeDiff * scrollSpeed);
-            
+
             if (!note.hit && !note.completed && laneHeld[note.lane] && Math.abs(topPos - hitBarY) <= 50) {
               note.hit = true;
               if (note.duration > 0) {
@@ -1801,7 +1774,6 @@
             if (note.holding) {
               const remainingDuration = Math.max(0, (note.time + note.duration) - currentTime);
               const upwardPixelHeight = remainingDuration * scrollSpeed;
-              
               topPos = hitBarY;
               note.element.style.top = `${hitBarY - upwardPixelHeight}px`;
               note.element.style.height = `${upwardPixelHeight}px`;
@@ -1876,7 +1848,6 @@
       if (candidates.length > 0) {
         const note = candidates[0];
         note.hit = true;
-        
         if (note.duration > 0) {
           note.holding = true;
           playHitSound('PERFECT');
@@ -1884,12 +1855,10 @@
         } else {
           note.completed = true;
           if (note.element) note.element.remove();
-          
           const topDiff = Math.abs(parseFloat(note.element.style.top) - hitBarY);
           let judgement = 'PERFECT';
           if (topDiff > 32) judgement = 'GOOD';
           else if (topDiff > 16) judgement = 'GREAT';
-
           registerJudgement(judgement, laneIdx);
         }
       }
@@ -1932,7 +1901,6 @@
         meterProgress = 100;
         playerHP = Math.min(MAX_HP, playerHP + 25);
         
-        // Play the dedicated activation sound effect exclusively right here!
         playSurgeActivationSound();
         
         const stage = document.getElementById('full-viewport-rhythm-stage');
@@ -1973,7 +1941,7 @@
         surgeBtn.innerText = `⚡ 8X SURGE (${surgeChargesRemaining} LEFT)`;
       } else {
         surgeBtn.classList.add('disabled');
-        surgeBtn.innerText = '⚡ OUT OF SURGES';
+        surgeBtn.innerText = 'OUT OF SURGES';
       }
     }
 

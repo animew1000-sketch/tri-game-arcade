@@ -254,7 +254,6 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 .viewport-stage.active { pointer-events: auto; }
 .viewport-stage.stage-surge-active { box-shadow: inset 0 0 60px rgba(252, 163, 17, 0.6); }
 
-/* Stage Camera Shake Animation */
 @keyframes stageShake {
   0% { transform: translate(0, 0); }
   20% { transform: translate(-6px, 4px); }
@@ -268,7 +267,7 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 }
 
 .rhythm-track-container-full {
-  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   width: 440px; height: 100%; display: flex; z-index: 3;
 }
 
@@ -286,6 +285,7 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
 .rhythm-hit-line-full {
   position: absolute; bottom: 100px; left: 0; width: 100%; height: 5px;
   background: #5bc0be; box-shadow: 0 0 20px #5bc0be, 0 0 40px #5bc0be;
+  z-index: 5;
 }
 
 .rhythm-note {
@@ -309,6 +309,7 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   border-radius: 6px;
   box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5), 0 0 22px rgba(247, 37, 133, 0.95);
 }
+
 .rhythm-note.hold-note::before {
   content: '';
   position: absolute;
@@ -317,6 +318,7 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   border: 2px solid #ffffff; border-radius: 10px;
   box-shadow: 0 0 18px #ff007f, 0 0 35px #ff007f, inset 0 0 8px #ffffff;
 }
+
 .rhythm-note.hold-note::after {
   content: '';
   position: absolute;
@@ -479,7 +481,6 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.8), 0 0 30px #ff007f;
 }
 
-/* Fix Mobile HUD Overlap & Lane Obscuring */
 @media (max-width: 768px), (pointer: coarse) {
   body {
     overflow: hidden;
@@ -538,7 +539,6 @@ input[type="range"] { accent-color: #5bc0be; margin-top: 8px; }
   }
 }
 
-/* Reinforced Surge Note Styles */
 div.rhythm-note.surge-active-note {
   background: linear-gradient(135deg, #fca311, #ff6b00) !important;
   box-shadow: 0 0 25px #fca311, 0 0 45px #ff6b00 !important;
