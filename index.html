@@ -191,10 +191,10 @@
               </div>
             </div>
 
-            <!-- Custom MP3 Hit Sound Upload -->
+            <!-- Custom MP3 Surge Activation Sound Uploader -->
             <div class="input-group">
-              <label><i class="fa-solid fa-file-audio"></i> Custom MP3 Hit Sound</label>
-              <input type="file" id="custom-audio-file-input" accept="audio/mp3, audio/wav, audio/*" onchange="loadCustomHitSoundFile(event)" style="background: #1e293b; border: 1px solid #334155; color: #f8f9fa; padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
+              <label><i class="fa-solid fa-file-audio"></i> Custom Surge Activation MP3</label>
+              <input type="file" id="custom-audio-file-input" accept="audio/mp3, audio/wav, audio/*" onchange="loadCustomSurgeSoundFile(event)" style="background: #1e293b; border: 1px solid #334155; color: #f8f9fa; padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
             </div>
 
             <div class="input-group">
@@ -833,7 +833,7 @@
     let audioCtx = null;
     let selectedHitSoundPreset = 'arcade';
     let isHitSoundMuted = false;
-    let customHitAudioBuffer = null;
+    let customSurgeAudioBuffer = null;
 
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -842,7 +842,7 @@
 
     function changeHitSoundPreset(val) { selectedHitSoundPreset = val; }
 
-    function loadCustomHitSoundFile(event) {
+    function loadCustomSurgeSoundFile(event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -851,8 +851,8 @@
         const arrayBuffer = e.target.result;
         if (!audioCtx) initAudioContext();
         try {
-          customHitAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-          document.getElementById('rhythm-status').innerText = `🎵 Custom hit sound loaded successfully: ${file.name}`;
+          customSurgeAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          document.getElementById('rhythm-status').innerText = `🎵 Custom Surge activation sound loaded successfully: ${file.name}`;
         } catch (err) {
           console.error("Error decoding custom audio file", err);
           alert("Failed to decode audio file. Please try a standard .mp3 or .wav file.");
@@ -876,6 +876,53 @@
 
     function previewHitSound() { if (!isHitSoundMuted) playHitSound('PERFECT'); }
 
+    function playSurgeActivationSound() {
+      if (isHitSoundMuted) return;
+      if (!audioCtx) initAudioContext();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      // If a custom MP3/WAV file was uploaded, play it exclusively when 8x Surge activates!
+      if (customSurgeAudioBuffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = customSurgeAudioBuffer;
+        source.playbackRate.value = 1.2;
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.9, now);
+
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        source.start(now);
+        return;
+      }
+
+      // Default epic 8x Surge activation overdrive sound effect
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(440, now);
+      osc1.frequency.exponentialRampToValueAtTime(1760, now + 0.3);
+
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(220, now);
+      osc2.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+      
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.35);
+    }
+
     function playHitSound(type) {
       if (isHitSoundMuted) return;
       if (!audioCtx) initAudioContext();
@@ -885,50 +932,6 @@
       beatPulseIntensity = 1.6;
       rgbBridge.triggerFlash(252, 163, 17);
 
-      // EXCLUSIVE 8X SURGE SOUND: Plays ONLY when 8x Surge is active!
-      if (isSurgeActive) {
-        // If you uploaded a custom MP3/WAV file, speed it up for 8x Surge
-        if (customHitAudioBuffer) {
-          const source = audioCtx.createBufferSource();
-          source.buffer = customHitAudioBuffer;
-          source.playbackRate.value = 1.5; // High-octane surge pitch
-
-          const gainNode = audioCtx.createGain();
-          gainNode.gain.setValueAtTime(0.8, now);
-
-          source.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          source.start(now);
-          return;
-        }
-
-        // Otherwise, play the default epic 8x Surge overdrive synth sound
-        const osc1 = audioCtx.createOscillator();
-        const osc2 = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc1.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(1760, now);
-        osc1.frequency.exponentialRampToValueAtTime(3520, now + 0.15);
-
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(880, now);
-        
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + 0.18);
-        osc2.stop(now + 0.18);
-        return;
-      }
-
-      // NORMAL NOTES: Play your selected dropdown preset sound strictly (unaffected by 8x Surge logic)
       const preset = selectedHitSoundPreset || 'arcade';
 
       if (preset === 'click' || type === 'CLICK') {
@@ -1928,6 +1931,9 @@
         surgeDuration = surgeMaxDuration;
         meterProgress = 100;
         playerHP = Math.min(MAX_HP, playerHP + 25);
+        
+        // Play the dedicated activation sound effect exclusively right here!
+        playSurgeActivationSound();
         
         const stage = document.getElementById('full-viewport-rhythm-stage');
         stage.classList.add('stage-surge-active', 'surge-shake');
