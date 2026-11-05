@@ -270,16 +270,16 @@
         </div>
 
         <div class="rhythm-track-container-full" id="rhythm-track-container">
-          <div class="rhythm-lane-full" id="lane-0" ontouchstart="handleTouchLaneStart(event, 0)" ontouchend="handleTouchLaneEnd(event, 0)" onmousedown="triggerLaneInput(0)" onmouseup="releaseLaneInput(0)" onmouseleave="releaseLaneInput(0)">
+          <div class="rhythm-lane-full" id="lane-0" ontouchstart="handleTouchLaneStart(event, 0)" ontouchend="handleTouchLaneEnd(event, 0)" ontouchcancel="handleTouchLaneEnd(event, 0)" onmousedown="triggerLaneInput(0)" onmouseup="releaseLaneInput(0)" onmouseleave="releaseLaneInput(0)">
             <span class="lane-key" id="key-label-0">A</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-1" ontouchstart="handleTouchLaneStart(event, 1)" ontouchend="handleTouchLaneEnd(event, 1)" onmousedown="triggerLaneInput(1)" onmouseup="releaseLaneInput(1)" onmouseleave="releaseLaneInput(1)">
+          <div class="rhythm-lane-full" id="lane-1" ontouchstart="handleTouchLaneStart(event, 1)" ontouchend="handleTouchLaneEnd(event, 1)" ontouchcancel="handleTouchLaneEnd(event, 1)" onmousedown="triggerLaneInput(1)" onmouseup="releaseLaneInput(1)" onmouseleave="releaseLaneInput(1)">
             <span class="lane-key" id="key-label-1">S</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-2" ontouchstart="handleTouchLaneStart(event, 2)" ontouchend="handleTouchLaneEnd(event, 2)" onmousedown="triggerLaneInput(2)" onmouseup="releaseLaneInput(2)" onmouseleave="releaseLaneInput(2)">
+          <div class="rhythm-lane-full" id="lane-2" ontouchstart="handleTouchLaneStart(event, 2)" ontouchend="handleTouchLaneEnd(event, 2)" ontouchcancel="handleTouchLaneEnd(event, 2)" onmousedown="triggerLaneInput(2)" onmouseup="releaseLaneInput(2)" onmouseleave="releaseLaneInput(2)">
             <span class="lane-key" id="key-label-2">K</span>
           </div>
-          <div class="rhythm-lane-full" id="lane-3" ontouchstart="handleTouchLaneStart(event, 3)" ontouchend="handleTouchLaneEnd(event, 3)" onmousedown="triggerLaneInput(3)" onmouseup="releaseLaneInput(3)" onmouseleave="releaseLaneInput(3)">
+          <div class="rhythm-lane-full" id="lane-3" ontouchstart="handleTouchLaneStart(event, 3)" ontouchend="handleTouchLaneEnd(event, 3)" ontouchcancel="handleTouchLaneEnd(event, 3)" onmousedown="triggerLaneInput(3)" onmouseup="releaseLaneInput(3)" onmouseleave="releaseLaneInput(3)">
             <span class="lane-key" id="key-label-3">L</span>
           </div>
           <div class="rhythm-hit-line-full" id="rhythm-hit-line"></div>
@@ -861,7 +861,7 @@
       beatPulseIntensity = 1.5;
       rgbBridge.triggerFlash(91, 192, 190);
 
-      if (preset === 'click') {
+      if (preset === 'click' || type === 'CLICK') {
         const bufferSize = audioCtx.sampleRate * 0.03;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -928,12 +928,12 @@
     }
 
     /* Floating Pop-up Notification for Perfect Notes */
-    function spawnFloatingJudgementText(text, laneIdx, isPerfect = false) {
+    function spawnFloatingJudgementText(text, laneIdx, isPerfect = false, isSurge = false) {
       const layer = document.getElementById('floating-notification-layer');
       if (!layer) return;
 
       const notif = document.createElement('div');
-      notif.className = `floating-judgement-popup ${isPerfect ? 'perfect-flash' : ''}`;
+      notif.className = `floating-judgement-popup ${isSurge ? 'surge-perfect-flash' : (isPerfect ? 'perfect-flash' : '')}`;
       notif.innerText = text;
 
       const laneElem = document.getElementById(`lane-${laneIdx}`);
@@ -963,7 +963,6 @@
     function saveCurrentChartToStorage() {
       if (!currentVideoId || rhythmNotes.length === 0) return;
       const key = getChartStorageKey(currentVideoId, activeDifficulty);
-      // Save serializable note data (time, duration, lane)
       const serializableNotes = rhythmNotes.map(n => ({
         time: n.time,
         duration: n.duration,
@@ -998,17 +997,18 @@
         } catch(e) { console.error("Error loading cached chart", e); }
       }
       return false;
-    } // default
+    }
+
     let gpBinds = [
-      { type: 'axis', index: 6, threshold: 0.2 }, // Lane 1 (LT / L2 / L)
-      { type: 'button', index: 4 },             // Lane 2 (LB / L1 / L)
-      { type: 'button', index: 5 },             // Lane 3 (RB / R1 / R)
-      { type: 'axis', index: 7, threshold: 0.2 }  // Lane 4 (RT / R2 / ZR)
+      { type: 'axis', index: 6, threshold: 0.2 },
+      { type: 'button', index: 4 },
+      { type: 'button', index: 5 },
+      { type: 'axis', index: 7, threshold: 0.2 }
     ];
-    let gpSurgeBind = { type: 'button', index: 0 }; // Bottom Face (A / Cross / B)
-    let gpMenuBind = { type: 'button', index: 9 };  // Start / Options / +
-    let gpPlayBind = { type: 'button', index: 13 }; // Dpad Down
-    let gpStopBind = { type: 'button', index: 12 }; // Dpad Up
+    let gpSurgeBind = { type: 'button', index: 0 };
+    let gpMenuBind = { type: 'button', index: 9 };
+    let gpPlayBind = { type: 'button', index: 13 };
+    let gpStopBind = { type: 'button', index: 12 };
 
     function getControllerBrand(idString) {
       if (!idString) return 'xbox';
@@ -1019,7 +1019,7 @@
       if (lower.includes('nintendo') || lower.includes('switch') || lower.includes('pro controller')) {
         return 'nintendo';
       }
-      return 'xbox'; // Default standard layout
+      return 'xbox';
     }
 
     function getButtonName(type, index) {
@@ -1202,7 +1202,7 @@
 
     let audioClockStartTime = 0, audioClockOffset = 0, isAudioClockRunning = false;
     let playerHP = 100, MAX_HP = 100, currentMultiplier = 1, meterProgress = 0, isSurgeActive = false, surgeDuration = 0, surgeMaxDuration = 8.0;
-    let surgeChargesRemaining = 3, consecutivePerfectStreak = 0, lastSpawnedLane = -1, detectedSongEndDuration = 0;
+    let surgeChargesRemaining = 3, consecutivePerfectStreak = 0, lastSpawnedLane = -1;
     let tapTimes = [];
 
     function formatTime(seconds) {
@@ -1212,7 +1212,6 @@
       return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    
     function updateMusicVolume(val) {
       const vol = parseInt(val);
       document.getElementById('music-vol-val').innerText = `${vol}%`;
@@ -1321,7 +1320,6 @@
         return btn && (btn.pressed || btn.value > 0.3);
       } else if (bind.type === 'axis') {
         const val = gamepad.axes[bind.index];
-        // Some browsers map triggers as axes ranging from -1 to 1 or 0 to 1
         return val !== undefined && (val >= (bind.threshold !== undefined ? bind.threshold : 0.2) || val > 0.0);
       }
       return false;
@@ -1466,7 +1464,6 @@
         ytPlayer.loadVideoById(videoId);
         resetRhythmGameState();
         
-        // Try loading saved chart for this song and difficulty
         if (tryLoadChartFromStorage()) {
           document.getElementById('rhythm-status').innerText = `⚡ Reusing saved rhythm track for Video ID: ${videoId} (${activeDifficulty.toUpperCase()})! Press Start Track to play!`;
         } else {
@@ -1532,7 +1529,6 @@
       resetPreciseAudioClock();
       if (isMenuHidden) toggleHUDMenu();
       
-      // Save chart to localStorage so it is reused next time this song is played
       saveCurrentChartToStorage();
 
       if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalMisses > 0) {
@@ -1549,7 +1545,6 @@
       if (event.data === YT.PlayerState.PLAYING) {
         if (!rhythmPlaying) {
           startPreciseAudioClock(ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0);
-// detectedSongEndDuration check removed for natural full track playback.
           startRhythmGameLoop();
           if (!isMenuHidden) toggleHUDMenu();
         }
@@ -1598,7 +1593,6 @@
     let lastBeatTime = -1;
     function checkDynamicBeatPeak(currentTime) {
       activeDifficulty = document.getElementById('rhythm-diff-select').value;
-      // Removed premature time cut-off. The song will naturally conclude when YouTube fires PlayerState.ENDED or when manually stopped.
       
       let subdivision = 1.0;
       if (activeDifficulty === 'easy') subdivision = 1.5;
@@ -1616,10 +1610,8 @@
         const availableLanes = getAvailableLanes(currentTime);
         if (availableLanes.length === 0) return;
 
-        // Check active hold notes count
         const activeHoldNotesCount = rhythmNotes.filter(n => n.duration > 0 && !n.completed).length;
 
-        // Determine if we should spawn a hold note
         let wantHold = false;
         let holdDuration = 0;
         if (activeDifficulty === 'normal' && activeHoldNotesCount === 0 && Math.random() < 0.22) {
@@ -1633,29 +1625,11 @@
           holdDuration = currentBeatInterval * 1.4;
         }
 
-        // Pick primary lane
         const primaryLane = pickRandomLane(availableLanes);
         if (primaryLane === -1) return;
         lastSpawnedLane = primaryLane;
 
         spawnSingleNote(targetBeatTime, primaryLane, wantHold ? holdDuration : 0);
-
-        // Multi-note (chord) feature for normal, hard, and expert
-        let allowMulti = false; // Multi-notes removed per request
-        let multiProb = activeDifficulty === 'expert' ? 0.45 : (activeDifficulty === 'hard' ? 0.3 : 0.15);
-
-        if (allowMulti && Math.random() < multiProb && availableLanes.length > 1) {
-          // For Hard: ensure multi-notes are not on adjacent/neighboring join lines (lane diff >= 2)
-          let validSecondaryLanes = availableLanes.filter(l => l !== primaryLane);
-          if (activeDifficulty === 'hard') {
-            validSecondaryLanes = validSecondaryLanes.filter(l => Math.abs(l - primaryLane) >= 2);
-          }
-          if (validSecondaryLanes.length > 0) {
-            const secondaryLane = validSecondaryLanes[Math.floor(Math.random() * validSecondaryLanes.length)];
-            // If primary is a hold note, secondary shouldn't be a hold note to keep it clean
-            spawnSingleNote(targetBeatTime, secondaryLane, 0);
-          }
-        }
       }
     }
 
@@ -1682,6 +1656,12 @@
           surgeDuration -= 0.016;
           meterProgress = Math.max(0, (surgeDuration / surgeMaxDuration) * 100);
           updateGHMeterUI();
+
+          // Play warning ticks & audio feedback during final 1.5 seconds of Surge
+          if (surgeDuration <= 1.5 && Math.floor(surgeDuration * 10) % 3 === 0) {
+            playHitSound('CLICK');
+          }
+
           if (surgeDuration <= 0) {
             isSurgeActive = false;
             document.getElementById('full-viewport-rhythm-stage').classList.remove('stage-surge-active');
@@ -1715,7 +1695,6 @@
               document.getElementById(`lane-${note.lane}`).appendChild(el);
               note.element = el;
             } else {
-              // Dynamically update surge class if surge status changes while note is on screen
               if (note.duration > 0) {
                 if (isSurgeActive) {
                   if (!note.element.classList.contains('surge-active-hold')) note.element.classList.add('surge-active-hold');
@@ -1730,6 +1709,7 @@
                 }
               }
             }
+
             let topPos = hitBarY - (timeDiff * scrollSpeed);
             
             if (!note.hit && !note.completed && laneHeld[note.lane] && Math.abs(topPos - hitBarY) <= 50) {
@@ -1737,7 +1717,7 @@
               if (note.duration > 0) {
                 note.holding = true;
                 playHitSound('PERFECT');
-                spawnFloatingJudgementText("HOLD...", note.lane, true);
+                spawnFloatingJudgementText("HOLD...", note.lane, true, isSurgeActive);
               } else {
                 note.completed = true;
                 if (note.element) note.element.remove();
@@ -1746,8 +1726,6 @@
             }
 
             if (note.holding) {
-              // Zero-delay precise timing: elapsed time strictly relative to note.time
-              const elapsedDuration = Math.max(0, currentTime - note.time);
               const remainingDuration = Math.max(0, (note.time + note.duration) - currentTime);
               const upwardPixelHeight = remainingDuration * scrollSpeed;
               
@@ -1756,7 +1734,6 @@
               note.element.style.height = `${upwardPixelHeight}px`;
               note.element.classList.add('is-holding');
 
-              // Award smooth score ticks while holding
               if (currentTime - note.lastTickTime >= 0.25) {
                 note.lastTickTime = currentTime;
                 rhythmScore += 50 * currentMultiplier;
@@ -1775,7 +1752,6 @@
 
             if (note.holding) {
               if (!laneHeld[note.lane]) {
-                // Grace window: if within 0.1s of completion, count as success!
                 if (currentTime >= (note.time + note.duration) - 0.1) {
                   note.holding = false;
                   note.completed = true;
@@ -1830,13 +1806,8 @@
         
         if (note.duration > 0) {
           note.holding = true;
-          note.hit = true;
-          // If caught late, shift note.time forward to current time so only the remaining unmissed part is played!
-          if (currentTime > note.time) {
-            note.time = currentTime;
-          }
           playHitSound('PERFECT');
-          spawnFloatingJudgementText("HOLD...", laneIdx, true);
+          spawnFloatingJudgementText("HOLD...", laneIdx, true, isSurgeActive);
         } else {
           note.completed = true;
           if (note.element) note.element.remove();
@@ -1856,17 +1827,16 @@
         laneHeld[laneIdx] = false;
         document.getElementById(`lane-${laneIdx}`).classList.remove('pressed');
 
+        const currentTime = getPreciseAudioClockTime() + audioOffset;
         rhythmNotes.forEach(note => {
           if (note.lane === laneIdx && note.holding) {
-            // Check if released too early before the end (only lose health if missing the end)
             const remainingDuration = (note.time + note.duration) - currentTime;
             if (remainingDuration > 0.15) {
               note.holding = false;
               note.completed = true;
               if (note.element) note.element.remove();
-              registerJudgement('MISS', laneIdx); // Misses the end -> loses health
+              registerJudgement('MISS', laneIdx);
             } else {
-              // Released right near the end -> counts as success!
               note.holding = false;
               note.completed = true;
               if (note.element) note.element.remove();
@@ -1888,7 +1858,11 @@
         surgeDuration = surgeMaxDuration;
         meterProgress = 100;
         playerHP = Math.min(MAX_HP, playerHP + 25);
-        document.getElementById('full-viewport-rhythm-stage').classList.add('stage-surge-active');
+        
+        const stage = document.getElementById('full-viewport-rhythm-stage');
+        stage.classList.add('stage-surge-active', 'surge-shake');
+        setTimeout(() => stage.classList.remove('surge-shake'), 250);
+
         updateTopHealthUI();
         updateGHMeterUI();
         document.getElementById('rhythm-status').innerText = '⚡ 8X SURGE OVERDRIVE ACTIVATED! (+25 HP)';
@@ -1932,7 +1906,7 @@
       if (type === 'PERFECT') {
         rhythmCombo++; totalHitsPerfect++; consecutivePerfectStreak++;
         rhythmScore += 300 * currentMultiplier;
-        spawnFloatingJudgementText("PERFECT!", laneIdx, true);
+        spawnFloatingJudgementText(isSurgeActive ? "SURGE PERFECT!" : "PERFECT!", laneIdx, true, isSurgeActive);
         if (consecutivePerfectStreak >= 10 && surgeChargesRemaining < 3) {
           surgeChargesRemaining++;
           consecutivePerfectStreak = 0;
@@ -1941,15 +1915,15 @@
       } else if (type === 'GREAT') {
         rhythmCombo++; totalHitsGreat++; consecutivePerfectStreak = 0;
         rhythmScore += 150 * currentMultiplier;
-        spawnFloatingJudgementText("GREAT", laneIdx, false);
+        spawnFloatingJudgementText("GREAT", laneIdx, false, false);
       } else if (type === 'GOOD') {
         rhythmCombo++; totalHitsGood++; consecutivePerfectStreak = 0;
         rhythmScore += 50 * currentMultiplier;
-        spawnFloatingJudgementText("GOOD", laneIdx, false);
+        spawnFloatingJudgementText("GOOD", laneIdx, false, false);
       } else if (type === 'MISS') {
         rhythmCombo = 0; consecutivePerfectStreak = 0; totalMisses++;
         playerHP = Math.max(0, playerHP - 10);
-        spawnFloatingJudgementText("MISS", laneIdx, false);
+        spawnFloatingJudgementText("MISS", laneIdx, false, false);
         updateTopHealthUI();
         if (playerHP <= 0) stopRhythmGameAndSaveScore();
       }
@@ -2039,10 +2013,9 @@
     function openLeaderboardModal() { fetchVideoLeaderboardFromMySQL(currentVideoId); document.getElementById('leaderboard-modal').classList.remove('hidden'); }
     function closeLeaderboardModal() { document.getElementById('leaderboard-modal').classList.add('hidden'); }
 
-        function detectAndApplyMobileMode() {
+    function detectAndApplyMobileMode() {
       const isMobile = (navigator.maxTouchPoints > 0) || (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) || (window.innerWidth <= 768);
       if (isMobile) {
-        // Automatically hide menu on mobile to launch straight into the Magic Tiles 3 waterfall stage
         const menuElem = document.getElementById('rhythm-hud');
         if (menuElem && !menuElem.classList.contains('menu-hidden')) {
           toggleHUDMenu();
