@@ -145,11 +145,54 @@
                 <option value="expert">Expert (Insane Speed • 3s Surge)</option>
               </select>
             </div>
+            <div class="input-group">
+              <label><i class="fa-solid fa-bolt-lightning"></i> Scroll Speed (<span id="scroll-speed-val">520px</span>)</label>
+              <select id="scroll-speed-select" onchange="changeScrollSpeed(this.value)">
+                <option value="400">400px (Slow)</option>
+                <option value="520" selected>520px (Normal)</option>
+                <option value="640">640px (Fast)</option>
+                <option value="800">800px (Hyper)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label><i class="fa-solid fa-gauge"></i> Practice Speed (<span id="practice-speed-val">1.0x</span>)</label>
+              <select id="practice-speed-select" onchange="changePracticeSpeed(this.value)">
+                <option value="0.75">0.75x (Practice Slow)</option>
+                <option value="1.0" selected>1.0x (Normal Speed)</option>
+                <option value="1.25">1.25x (Accelerated)</option>
+              </select>
+            </div>
             <div class="input-group action-btn-group">
               <label>&nbsp;</label>
               <button class="btn btn-primary-action" onclick="loadYouTubeRhythmSong()">
                 <i class="fa-solid fa-play"></i> Convert & Play
               </button>
+            </div>
+          </div>
+
+          <!-- Modifiers & Health Modes Row -->
+          <div class="command-row">
+            <div class="input-group flex-grow">
+              <label><i class="fa-solid fa-sliders"></i> Dynamic Note Modifiers</label>
+              <div class="modifiers-grid">
+                <label class="modifier-checkbox-label">
+                  <input type="checkbox" id="mod-hidden" onchange="toggleModifier('hidden')"> Hidden (Fade-Out)
+                </label>
+                <label class="modifier-checkbox-label">
+                  <input type="checkbox" id="mod-random" onchange="toggleModifier('random')"> Random / Shuffle
+                </label>
+                <label class="modifier-checkbox-label">
+                  <input type="checkbox" id="mod-mirror" onchange="toggleModifier('mirror')"> Mirror Mode (A <-> K Swap)
+                </label>
+              </div>
+            </div>
+            <div class="input-group">
+              <label><i class="fa-solid fa-skull"></i> Health / Difficulty Mode</label>
+              <select id="health-mode-select" onchange="changeHealthMode(this.value)">
+                <option value="normal" selected>Normal Health Drain</option>
+                <option value="hard-drain">Aggressive Drain</option>
+                <option value="sudden-death">Sudden Death (1 Miss = Fail)</option>
+              </select>
             </div>
           </div>
 
@@ -191,7 +234,6 @@
               </div>
             </div>
 
-            <!-- Custom MP3 Surge Activation Sound Uploader -->
             <div class="input-group">
               <label><i class="fa-solid fa-file-audio"></i> Custom Surge Activation MP3</label>
               <input type="file" id="custom-audio-file-input" accept="audio/mp3, audio/wav, audio/*" onchange="loadCustomSurgeSoundFile(event)" style="background: #1e293b; border: 1px solid #334155; color: #f8f9fa; padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
@@ -211,7 +253,7 @@
         <!-- Playback Control Toolbar -->
         <div class="rhythm-playback-toolbar">
           <button class="btn btn-playback btn-start-track" id="rhythm-play-btn" onclick="togglePlayPauseRhythm()">
-            <i class="fa-solid fa-play"></i> Start Track
+            <i class="fa-solid fa-play"></i> Start Track (10s Prep Buffer)
           </button>
           <button class="btn btn-playback btn-stop" id="rhythm-stop-btn" onclick="stopRhythmGameAndSaveScore()">
             <i class="fa-solid fa-stop"></i> Stop & Record Score
@@ -592,9 +634,10 @@
     }
     const rgbBridge = new RGBDeviceBridge();
 
-    /* Full-Screen Canvas & 20 Audio-Reactive Presets Engine */
+    /* Full-Screen Canvas & 20 Audio-Reactive Presets Engine with Visualizer */
     let bgCanvas, bgCtx;
     let bgParticles = [];
+    let hitSparks = [];
     let currentBgMode = 'video';
     let activePresetIndex = 0;
     let customBgConfig = { color1: '#5bc0be', color2: '#e63946', type: 'missiles', lighting: 'ambient' };
@@ -681,7 +724,7 @@
       if (mode === 'video') {
         wrapper.className = 'bg-mode-video';
         ytContainer.style.display = 'block';
-        canvas.style.display = 'none';
+        canvas.style.display = 'block';
         btnVideo.classList.add('active');
         btnCustom.classList.remove('active');
         controlsArea.classList.add('hidden');
@@ -735,6 +778,23 @@
       };
     }
 
+    function spawnHitSparks(x, y) {
+      for (let i = 0; i < 15; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 6;
+        hitSparks.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 2 + Math.random() * 3,
+          color: Math.random() > 0.5 ? '#00f5d4' : '#5bc0be',
+          life: 1.0,
+          decay: 0.03 + Math.random() * 0.04
+        });
+      }
+    }
+
     function animateCanvasBackground() {
       bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
       const type = customBgConfig.type;
@@ -742,6 +802,29 @@
       const c2 = customBgConfig.color2;
 
       beatPulseIntensity = Math.max(1.0, beatPulseIntensity - 0.04);
+
+      if (rhythmPlaying) {
+        const barCount = 32;
+        const barWidth = bgCanvas.width / barCount;
+        bgCtx.fillStyle = 'rgba(91, 192, 190, 0.18)';
+        for (let i = 0; i < barCount; i++) {
+          const height = Math.abs(Math.sin((Date.now() * 0.005) + (i * 0.4))) * (80 * beatPulseIntensity);
+          bgCtx.fillRect(i * barWidth + 2, bgCanvas.height - height, barWidth - 4, height);
+        }
+      }
+
+      hitSparks.forEach((spark, idx) => {
+        spark.x += spark.vx;
+        spark.y += spark.vy;
+        spark.life -= spark.decay;
+        bgCtx.fillStyle = spark.color;
+        bgCtx.globalAlpha = Math.max(0, spark.life);
+        bgCtx.beginPath();
+        bgCtx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
+        bgCtx.fill();
+        bgCtx.globalAlpha = 1.0;
+        if (spark.life <= 0) hitSparks.splice(idx, 1);
+      });
 
       bgParticles.forEach((p, idx) => {
         p.y += p.vy * beatPulseIntensity;
@@ -841,16 +924,6 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function stopAllActiveAudioNodes() {
-      activeOscillators.forEach(osc => {
-        try {
-          osc.stop();
-          osc.disconnect();
-        } catch(e) {}
-      });
-      activeOscillators = [];
-    }
-
     function changeHitSoundPreset(val) { selectedHitSoundPreset = val; }
 
     function loadCustomSurgeSoundFile(event) {
@@ -887,11 +960,41 @@
 
     function previewHitSound() { if (!isHitSoundMuted) playHitSound('PERFECT'); }
 
+    function playSurgeActivationSessionRumble() {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let gp of gamepads) {
+        if (gp && gp.vibrationActuator) {
+          gp.vibrationActuator.playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: 400,
+            weakMagnitude: 0.8,
+            strongMagnitude: 1.0
+          }).catch(err => {});
+        }
+      }
+    }
+
+    function playHitVibration(type) {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let gp of gamepads) {
+        if (gp && gp.vibrationActuator) {
+          const mag = type === 'PERFECT' ? 0.5 : (type === 'MISS' ? 0.9 : 0.3);
+          gp.vibrationActuator.playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: type === 'MISS' ? 200 : 80,
+            weakMagnitude: mag,
+            strongMagnitude: mag
+          }).catch(err => {});
+        }
+      }
+    }
+
     function playSurgeActivationSound() {
       if (isHitSoundMuted) return;
       if (!audioCtx) initAudioContext();
       if (!audioCtx) return;
 
+      playSurgeActivationSessionRumble();
       const now = audioCtx.currentTime;
 
       if (customSurgeAudioBuffer) {
@@ -934,6 +1037,7 @@
     }
 
     function playHitSound(type) {
+      playHitVibration(type);
       if (isHitSoundMuted) return;
       if (!audioCtx) initAudioContext();
       if (!audioCtx) return;
@@ -1011,7 +1115,6 @@
       }
     }
 
-    /* Floating Pop-up Notification for Perfect Notes */
     function spawnFloatingJudgementText(text, laneIdx, isPerfect = false, isSurge = false) {
       const layer = document.getElementById('floating-notification-layer');
       if (!layer) return;
@@ -1024,6 +1127,7 @@
       if (laneElem) {
         const rect = laneElem.getBoundingClientRect();
         notif.style.left = `${rect.left + rect.width / 2}px`;
+        spawnHitSparks(rect.left + rect.width / 2, rect.top + 100);
       } else {
         notif.style.left = `50%`;
       }
@@ -1032,7 +1136,7 @@
       setTimeout(() => { notif.remove(); }, 600);
     }
 
-    /* Control Scheme Mapper & Keybindings Engine */
+    /* Control Scheme Mapper & Keybindings Engine with LocalStorage Persistence */
     let kbMap = { 'a': 0, 's': 1, 'k': 2, 'l': 3 };
     let kbLabels = ['A', 'S', 'K', 'L'];
     let surgeKey = ' ';
@@ -1049,6 +1153,37 @@
     let gpMenuBind = { type: 'button', index: 9 };
     let gpPlayBind = { type: 'button', index: 13 };
     let gpStopBind = { type: 'button', index: 12 };
+
+    function saveKeybindingsToLocalStorage() {
+      try {
+        const data = { kbMap, kbLabels, surgeKey, menuToggleKey, gpBinds, gpSurgeBind, gpMenuBind, gpPlayBind, gpStopBind };
+        localStorage.setItem('rhythm_surge_keybinds', JSON.stringify(data));
+      } catch(e) {}
+    }
+
+    function loadKeybindingsFromLocalStorage() {
+      try {
+        const cached = localStorage.getItem('rhythm_surge_keybinds');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.kbMap) kbMap = parsed.kbMap;
+          if (parsed.kbLabels) kbLabels = parsed.kbLabels;
+          if (parsed.surgeKey) surgeKey = parsed.surgeKey;
+          if (parsed.menuToggleKey) menuToggleKey = parsed.menuToggleKey;
+          if (parsed.gpBinds) gpBinds = parsed.gpBinds;
+          if (parsed.gpSurgeBind) gpSurgeBind = parsed.gpSurgeBind;
+          if (parsed.gpMenuBind) gpMenuBind = parsed.gpMenuBind;
+          if (parsed.gpPlayBind) gpPlayBind = parsed.gpPlayBind;
+          if (parsed.gpStopBind) gpStopBind = parsed.gpStopBind;
+          
+          for (let i = 0; i < 4; i++) {
+            if (kbLabels[i]) {
+              document.getElementById(`kb-val-${i}`).innerText = kbLabels[i];
+            }
+          }
+        }
+      } catch(e) {}
+    }
 
     function getControllerBrand(idString) {
       if (!idString) return 'xbox';
@@ -1113,7 +1248,12 @@
     let prevGpButtonStates = {};
 
     function openKeybindModal() { document.getElementById('keybind-modal').classList.remove('hidden'); }
-    function closeKeybindModal() { resetRebindStates(); document.getElementById('keybind-modal').classList.add('hidden'); updateControlLabels(); }
+    function closeKeybindModal() { 
+      resetRebindStates(); 
+      document.getElementById('keybind-modal').classList.add('hidden'); 
+      updateControlLabels(); 
+      saveKeybindingsToLocalStorage();
+    }
     function switchMapperTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.mapper-section').forEach(s => s.classList.add('hidden'));
@@ -1195,6 +1335,7 @@
         currentlyRebindingLane = null;
         document.querySelectorAll('.keybind-slot').forEach(b => b.classList.remove('listening'));
         updateControlLabels();
+        saveKeybindingsToLocalStorage();
         return;
       }
       if (isRebindingSurge) {
@@ -1203,6 +1344,7 @@
         document.getElementById('kb-val-surge').innerText = e.key === ' ' ? 'SPACE' : e.key.toUpperCase();
         isRebindingSurge = false;
         document.querySelectorAll('.keybind-slot').forEach(b => b.classList.remove('listening'));
+        saveKeybindingsToLocalStorage();
         return;
       }
       if (isRebindingMenu) {
@@ -1211,6 +1353,7 @@
         document.getElementById('kb-val-menu').innerText = e.key.toUpperCase();
         isRebindingMenu = false;
         document.querySelectorAll('.keybind-slot').forEach(b => b.classList.remove('listening'));
+        saveKeybindingsToLocalStorage();
         return;
       }
 
@@ -1219,17 +1362,28 @@
 
       if (kbMap[key] !== undefined && rhythmPlaying) {
         if (!e.repeat) {
-          triggerLaneInput(kbMap[key]);
+          let targetLane = kbMap[key];
+          // Mirror Mode mapping logic: Swap 0 <-> 3 and 1 <-> 2
+          if (activeModifiers.mirror) {
+            targetLane = (activeLaneCount - 1) - targetLane;
+          }
+          triggerLaneInput(targetLane);
         }
       }
     });
 
     window.addEventListener('keyup', (e) => {
       const key = e.key.toLowerCase();
-      if (kbMap[key] !== undefined) releaseLaneInput(kbMap[key]);
+      if (kbMap[key] !== undefined) {
+        let targetLane = kbMap[key];
+        if (activeModifiers.mirror) {
+          targetLane = (activeLaneCount - 1) - targetLane;
+        }
+        releaseLaneInput(targetLane);
+      }
     });
 
-    /* YouTube & Rhythm Gameplay Engine */
+    /* YouTube & Rhythm Gameplay Engine + 10s Prep Buffer & Fixed Mirror Mode */
     let ytPlayer = null;
     let currentVideoId = 'dQw4w9WgXcQ';
     let rhythmScore = 0, rhythmCombo = 0, maxRhythmCombo = 0;
@@ -1237,11 +1391,37 @@
     let rhythmNotes = [], rhythmLoopId = null, rhythmPlaying = false, isMenuHidden = false, activeDifficulty = 'hard';
     let songBPM = 120, beatInterval = 60 / songBPM, audioOffset = 0;
     let currentInputMode = 'keyboard', activeLaneCount = 4;
+    let scrollSpeedSetting = 520;
+    let practiceSpeedMultiplier = 1.0;
+    let activeModifiers = { hidden: false, random: false, mirror: false };
+    let healthMode = 'normal';
     let laneHeld = [false, false, false, false];
     let audioClockStartTime = 0, audioClockOffset = 0, isAudioClockRunning = false;
     let playerHP = 100, MAX_HP = 100, currentMultiplier = 1, meterProgress = 0, isSurgeActive = false, surgeDuration = 0, surgeMaxDuration = 8.0;
     let surgeChargesRemaining = 3, consecutivePerfectStreak = 0, lastSpawnedLane = -1;
     let tapTimes = [];
+    let prepBufferCountdownActive = false;
+
+    function toggleModifier(modName) {
+      activeModifiers[modName] = document.getElementById(`mod-${modName}`).checked;
+    }
+
+    function changeHealthMode(val) {
+      healthMode = val;
+    }
+
+    function changeScrollSpeed(val) {
+      scrollSpeedSetting = parseInt(val);
+      document.getElementById('scroll-speed-val').innerText = `${scrollSpeedSetting}px`;
+    }
+
+    function changePracticeSpeed(val) {
+      practiceSpeedMultiplier = parseFloat(val);
+      document.getElementById('practice-speed-val').innerText = `${practiceSpeedMultiplier}x`;
+      if (ytPlayer && ytPlayer.setPlaybackRate) {
+        ytPlayer.setPlaybackRate(practiceSpeedMultiplier);
+      }
+    }
 
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -1404,6 +1584,7 @@
               document.getElementById(`gp-val-${currentlyRebindingGpLane}`).innerText = detected.label;
               currentlyRebindingGpLane = null;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+              saveKeybindingsToLocalStorage();
             }
           } else if (isRebindingGpSurge) {
             const detected = detectNewInputBinding();
@@ -1412,6 +1593,7 @@
               document.getElementById('gp-val-surge').innerText = detected.label;
               isRebindingGpSurge = false;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+              saveKeybindingsToLocalStorage();
             }
           } else if (isRebindingGpMenu) {
             const detected = detectNewInputBinding();
@@ -1420,6 +1602,7 @@
               document.getElementById('gp-val-menu').innerText = detected.label;
               isRebindingGpMenu = false;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+              saveKeybindingsToLocalStorage();
             }
           } else if (isRebindingGpPlay) {
             const detected = detectNewInputBinding();
@@ -1428,6 +1611,7 @@
               document.getElementById('gp-val-play').innerText = detected.label;
               isRebindingGpPlay = false;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+              saveKeybindingsToLocalStorage();
             }
           } else if (isRebindingGpStop) {
             const detected = detectNewInputBinding();
@@ -1436,17 +1620,23 @@
               document.getElementById('gp-val-stop').innerText = detected.label;
               isRebindingGpStop = false;
               document.querySelectorAll('.keybind-slot').forEach(sl => sl.classList.remove('listening'));
+              saveKeybindingsToLocalStorage();
             }
           } else {
             for (let lane = 0; lane < activeLaneCount; lane++) {
+              let targetLane = lane;
+              if (activeModifiers.mirror) {
+                targetLane = (activeLaneCount - 1) - lane;
+              }
+
               const bind = gpBinds[lane];
               const isPressed = checkInputPressed(gp, bind);
               const wasPressed = prevGpButtonStates[`lane_${lane}`] || false;
 
               if (isPressed && !wasPressed) {
-                if (rhythmPlaying) triggerLaneInput(lane);
+                if (rhythmPlaying) triggerLaneInput(targetLane);
               } else if (!isPressed && wasPressed) {
-                releaseLaneInput(lane);
+                releaseLaneInput(targetLane);
               }
               prevGpButtonStates[`lane_${lane}`] = isPressed;
             }
@@ -1500,8 +1690,9 @@
       currentVideoId = videoId;
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
+        if (ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(practiceSpeedMultiplier);
         resetRhythmGameState();
-        document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track to play!`;
+        document.getElementById('rhythm-status').innerText = `Stage initialized (Video ID: ${videoId}). Press Start Track for 10s prep buffer!`;
       }
     }
 
@@ -1539,15 +1730,35 @@
       return (audioCtx.currentTime - audioClockStartTime) + audioClockOffset;
     }
 
+    /* 10-Second Preparation Buffer Implementation */
     function togglePlayPauseRhythm() {
       if (!ytPlayer) return;
-      if (!rhythmPlaying) {
-        ytPlayer.playVideo();
-        startPreciseAudioClock(ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0);
-        startRhythmGameLoop();
+      if (!rhythmPlaying && !prepBufferCountdownActive) {
+        prepBufferCountdownActive = true;
+        let countdown = 10;
+        document.getElementById('rhythm-play-btn').innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Preparing (${countdown}s)...`;
+        document.getElementById('rhythm-status').innerText = `⏳ Preparing player... Music and video start in ${countdown} seconds. Get ready!`;
+        
         if (!isMenuHidden) toggleHUDMenu();
-        document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i> Pause Track';
-      } else {
+
+        const prepInterval = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            document.getElementById('rhythm-play-btn').innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Preparing (${countdown}s)...`;
+            document.getElementById('rhythm-status').innerText = `⏳ Preparing player... ${countdown} seconds remaining.`;
+          } else {
+            clearInterval(prepInterval);
+            prepBufferCountdownActive = false;
+            ytPlayer.playVideo();
+            if (ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(practiceSpeedMultiplier);
+            startPreciseAudioClock(ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0);
+            startRhythmGameLoop();
+            document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i> Pause Track';
+            document.getElementById('rhythm-status').innerText = '🎵 Track operational! Tactical rhythm in progress.';
+          }
+        }, 1000);
+
+      } else if (rhythmPlaying) {
         pauseRhythmGame();
         ytPlayer.pauseVideo();
         pausePreciseAudioClock();
@@ -1560,6 +1771,7 @@
       if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
       pauseRhythmGame();
       resetPreciseAudioClock();
+      prepBufferCountdownActive = false;
       if (isMenuHidden) toggleHUDMenu();
       
       if (rhythmScore > 0 || totalHitsPerfect > 0 || totalHitsGreat > 0 || totalMisses > 0) {
@@ -1567,23 +1779,26 @@
         showResultsSummaryModal();
       }
       resetRhythmGameState();
-      document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Start Track';
+      document.getElementById('rhythm-play-btn').innerHTML = '<i class="fa-solid fa-play"></i> Start Track (10s Prep Buffer)';
     }
 
     function onPlayerError(e) { document.getElementById('rhythm-status').innerText = "Playback Error! YouTube blocked embeds for this video ID."; }
 
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.PLAYING) {
-        if (!rhythmPlaying) {
+        if (!rhythmPlaying && !prepBufferCountdownActive) {
+          if (ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(practiceSpeedMultiplier);
           startPreciseAudioClock(ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0);
           startRhythmGameLoop();
           if (!isMenuHidden) toggleHUDMenu();
         }
       } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-        pauseRhythmGame();
-        pausePreciseAudioClock();
-        if (isMenuHidden) toggleHUDMenu();
-        if (event.data === YT.PlayerState.ENDED) stopRhythmGameAndSaveScore();
+        if (!prepBufferCountdownActive) {
+          pauseRhythmGame();
+          pausePreciseAudioClock();
+          if (isMenuHidden) toggleHUDMenu();
+          if (event.data === YT.PlayerState.ENDED) stopRhythmGameAndSaveScore();
+        }
       }
     }
 
@@ -1632,11 +1847,10 @@
 
       const currentBeatInterval = beatInterval * subdivision;
       const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight || 800;
-      const scrollSpeed = activeDifficulty === 'expert' ? 620 : (activeDifficulty === 'hard' ? 520 : (activeDifficulty === 'normal' ? 460 : 400));
+      const scrollSpeed = scrollSpeedSetting;
       const hitBarY = stageHeight - 100;
       const travelTime = hitBarY / scrollSpeed;
 
-      // Look ahead so notes spawn at the top of the screen immediately as music starts
       const horizonTime = currentTime + travelTime;
 
       while (lastBeatTime + currentBeatInterval <= horizonTime) {
@@ -1661,10 +1875,14 @@
           holdDuration = currentBeatInterval * 1.4;
         }
 
-        const primaryLane = pickRandomLane(availableLanes);
+        let primaryLane = pickRandomLane(availableLanes);
         if (primaryLane === -1) continue;
-        lastSpawnedLane = primaryLane;
 
+        if (activeModifiers.random) {
+          primaryLane = Math.floor(Math.random() * activeLaneCount);
+        }
+
+        lastSpawnedLane = primaryLane;
         spawnSingleNote(beatTime, primaryLane, wantHold ? holdDuration : 0);
       }
     }
@@ -1696,7 +1914,7 @@
         document.getElementById('side-rhythm-timer').innerText = `${formatTime(rawCurrentTime)} / ${formatTime(totalDuration)}`;
 
         const stageHeight = document.getElementById('full-viewport-rhythm-stage').clientHeight;
-        const scrollSpeed = activeDifficulty === 'expert' ? 620 : (activeDifficulty === 'hard' ? 520 : (activeDifficulty === 'normal' ? 460 : 400));
+        const scrollSpeed = scrollSpeedSetting;
         const hitBarY = stageHeight - 100;
 
         if (isSurgeActive) {
@@ -1757,6 +1975,17 @@
             }
 
             let topPos = hitBarY - (timeDiff * scrollSpeed);
+
+            if (activeModifiers.hidden) {
+              const distanceToHitBar = hitBarY - topPos;
+              const fadeThreshold = hitBarY * 0.45;
+              if (distanceToHitBar > 0) {
+                const opacityVal = Math.max(0, 1.0 - (distanceToHitBar / fadeThreshold));
+                note.element.style.opacity = opacityVal;
+              }
+            } else {
+              note.element.style.opacity = '1.0';
+            }
 
             if (!note.hit && !note.completed && laneHeld[note.lane] && Math.abs(topPos - hitBarY) <= 50) {
               note.hit = true;
@@ -1966,10 +2195,22 @@
         spawnFloatingJudgementText("GOOD", laneIdx, false, false);
       } else if (type === 'MISS') {
         rhythmCombo = 0; consecutivePerfectStreak = 0; totalMisses++;
-        playerHP = Math.max(0, playerHP - 10);
+
+        if (healthMode === 'sudden-death') {
+          playerHP = 0;
+        } else if (healthMode === 'hard-drain') {
+          playerHP = Math.max(0, playerHP - 25);
+        } else {
+          playerHP = Math.max(0, playerHP - 10);
+        }
+
         spawnFloatingJudgementText("MISS", laneIdx, false, false);
         updateTopHealthUI();
-        if (playerHP <= 0) stopRhythmGameAndSaveScore();
+        if (playerHP <= 0) {
+          document.getElementById('rhythm-status').innerText = '💀 SONG FAILED: Health depleted or Sudden Death triggered!';
+          stopRhythmGameAndSaveScore();
+          return;
+        }
       }
 
       if (!isSurgeActive) {
@@ -2031,6 +2272,15 @@
         rank: calculateDetailedRank(accuracy, totalMisses, totalHitsPerfect, totalHitsGreat, totalHitsGood),
         date: new Date().toLocaleDateString()
       };
+      
+      try {
+        const bestKey = `rhythm_surge_best_${currentVideoId}`;
+        const prevBest = parseInt(localStorage.getItem(bestKey) || '0');
+        if (record.score > prevBest) {
+          localStorage.setItem(bestKey, record.score);
+        }
+      } catch(e) {}
+
       postScoreToMySQLDatabase(record);
     }
 
@@ -2069,6 +2319,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      loadKeybindingsFromLocalStorage();
       initCanvasBackground();
       initYouTubeAPI();
       initGamepadSupport();
