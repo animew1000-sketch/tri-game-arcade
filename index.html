@@ -57,7 +57,7 @@
   <!-- Full-Screen Dynamic Background Canvas, YouTube Player & Ambient Lighting Layer -->
   <div id="custom-bg-wrapper" class="bg-mode-video">
     <div class="yt-background-player-fullscreen" id="yt-player-fullscreen-container">
-      <div id="yt-player"></div>`
+      <div id="yt-player"></div>
     </div>
     <canvas id="missile-bg-canvas"></canvas>
     <div id="bg-lighting-overlay" class="lighting-ambient"></div>
@@ -1976,16 +1976,16 @@
 
             if (activeModifiers.hidden) {
               const distanceToHitBar = hitBarY - topPos;
-              const totalTravelDistance = hitBarY; // Full travel distance down the screen
-              const fadeStartDistance = totalTravelDistance * (2 / 3); // Starts fading at 2/3 down
-              const remainingFadeDistance = totalTravelDistance * (1 / 3); // Final 1/3 is fully visible for reaction
+              const totalTravelDistance = hitBarY; 
+              const fadeStartDistance = totalTravelDistance * (2 / 3); 
+              const remainingFadeDistance = totalTravelDistance * (1 / 3); 
 
               if (distanceToHitBar >= fadeStartDistance) {
                 const progressIntoFade = distanceToHitBar - fadeStartDistance;
                 const opacityVal = Math.max(0, 1.0 - (progressIntoFade / remainingFadeDistance));
                 note.element.style.opacity = opacityVal;
               } else {
-                note.element.style.opacity = '1.0'; // Fully visible in the top 2/3 spawn area
+                note.element.style.opacity = '1.0'; 
               }
             } else {
               note.element.style.opacity = '1.0';
