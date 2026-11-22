@@ -13,16 +13,15 @@ app.use(express.static(path.join(__dirname)));
 
 // MySQL Connection Pool using your exact environment variables
 const pool = mysql.createPool({
-  host: process.env.MYSQL_ADDON_HOST,
-  user: process.env.MYSQL_ADDON_USER,
-  password: process.env.MYSQL_ADDON_PASSWORD,
-  database: process.env.MYSQL_ADDON_DB,
-  port: process.env.MYSQL_ADDON_PORT || 3306,
+  host: (process.env.MYSQL_ADDON_HOST || '').trim(),
+  user: (process.env.MYSQL_ADDON_USER || '').trim(),
+  password: (process.env.MYSQL_ADDON_PASSWORD || '').trim(),
+  database: (process.env.MYSQL_ADDON_DB || '').trim(),
+  port: Number((process.env.MYSQL_ADDON_PORT || '3306').trim()),
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 4,
   queueLimit: 0
 });
-
 // Initialize Database Tables
 async function initDB() {
   try {
